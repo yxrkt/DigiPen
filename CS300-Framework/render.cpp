@@ -56,7 +56,7 @@ struct Edge
 template <typename T>
 bool IsInRange(T val, T low, T high)
 {
-  return (val >= low && val <= high) ? true : false;
+  return (val > low && val <= high) ? true : false;
 }
 
   // Set the x boundaries
@@ -107,15 +107,13 @@ void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
   float fScale = vLightN * vPolyN;
   memcpy(rgba, &colDif[0], 4 * sizeof(float));
   for (unsigned i = 0; i < 3; ++i)
-    rgba[i] *= fScale;
+    rgba[i] = abs(rgba[i] * fScale);
 }
 
   // Edge containers
 std::list<Edge> EdgeTable;
-std::set<Edge> ActiveEdgeList;
+std::list<Edge> ActiveEdgeList;
 
-  // Iterators
-typedef std::set<Edge>::iterator EdgeSetIt;
 typedef std::list<Edge>::iterator EdgeListIt;
 
 // End My Interface
@@ -157,7 +155,7 @@ void DrawScene(Scene& scene, int width, int height)
 
     // for each object
   size_t nObjects = scene.objects.size();
-  for (size_t i = 0; i < 1/*nObjects*/; ++i)
+  for (size_t i = 0; i < nObjects; ++i)
   {
     Object &obj = scene.objects[i];
 
@@ -175,12 +173,13 @@ void DrawScene(Scene& scene, int width, int height)
       v3Light.normalize();
       SetColor(v3Light, poly[0].N, obj.Kd, rgba);
 
-        // Get pixel coords for polygon
+        // Get pixel coords for polygon & push edges
       size_t nVerts = poly.size();
       for (size_t k = 0; k < nVerts; ++k)
       {
+          // current vertex
         Vector4D v4T = scene.viewing.Transform(poly[k].V);
-        Vector3D v3S = *(Vector3D *) &scene.projection.Transform(v4T).Hdiv();
+        Vector3D v3S = ultra_cast<Vector3D>(scene.projection.Transform(v4T).Hdiv());
         v3S[0] = (v3S[0] + 1.f) * width / 2.f;
         v3S[1] = (v3S[1] + 1.f) * height / 2.f;
 
@@ -190,7 +189,7 @@ void DrawScene(Scene& scene, int width, int height)
         // put vertices in correct order
       for (size_t k = 0; k < nVerts; ++k)
       {
-        unsigned nNext = (k + 1) % nVerts;
+        unsigned nNext = poly[k].prevIndex;
 
           // skip horizontal edges
         if ((int) vVertices[k][1] == (int) vVertices[nNext][1])
@@ -210,15 +209,50 @@ void DrawScene(Scene& scene, int width, int height)
       }
 
       ActiveEdgeList.clear();
-      EdgeSetIt sIt;
-      EdgeListIt lIt;
+      EdgeListIt ETIt, AELIt;
       size_t nEdges = EdgeTable.size();
 
+        // Cull / clip edges
+      ETIt = EdgeTable.begin();
+      while (ETIt != EdgeTable.end())
+      {
+          // y culling
+        if (ETIt->v1[1] < 0.f || ETIt->v0[1] >= height)
+          EdgeTable.erase(ETIt++);
+        else
+        {
+            // y clipping
+          if (ETIt->v0[1] < 0)
+          {
+            ETIt->x += (-ETIt->v0[1] * ETIt->dx);
+            ETIt->z += (-ETIt->v0[1] * ETIt->dz);
+          }
+          else if (ETIt->v1[1] >= height)
+          {
+            float fYMax = (float) (height - 1);
+            float fYDif = ETIt->v1[1] - fYMax;
+            ETIt->v1[1]  = fYMax;
+            ETIt->v1[0] -= (fYDif * ETIt->dx);
+            ETIt->v1[2] -= (fYDif * ETIt->dz);
+          }
+          ++ETIt;
+        }
+      }
+
         // Initialize values
-      //for (lIt = EdgeTable.begin(); lIt != EdgeTable.end(); ++lIt)
-      //{
-      //  if ()
-      //}
+      ETIt = EdgeTable.begin();
+      while (ETIt != EdgeTable.end())
+      {
+        if ((int) ETIt->v0[1] == 0)
+        {
+          ActiveEdgeList.push_back(*ETIt);
+          EdgeTable.erase(ETIt++);
+        }
+        else
+          ++ETIt;
+      }
+
+      ActiveEdgeList.sort();
 
         // for each scanline
       for (int y = 0; y < height; ++y)
@@ -226,13 +260,13 @@ void DrawScene(Scene& scene, int width, int height)
         if (!(ActiveEdgeList.size() % 2)) // TEMP SOLUTION FOR ODD NO. OF EDGES IN AEL
         {
             // draw by pair
-          for (sIt = ActiveEdgeList.begin(); sIt != ActiveEdgeList.end(); ++sIt)
+          for (AELIt = ActiveEdgeList.begin(); AELIt != ActiveEdgeList.end(); ++AELIt)
           {
-            EdgeSetIt sItPrev = sIt++;
-            float z           = sItPrev->z;
-            float dzdx        = (sIt->z - sItPrev->z) / (sIt->x - sItPrev->x);
+            EdgeListIt AELItPrev = AELIt++;
+            float z              = AELItPrev->z;
+            float dzdx           = (AELIt->z - AELItPrev->z) / (AELIt->x - AELItPrev->x);
 
-            int x0 = (int) sItPrev->x, x1 = (int) sIt->x;
+            int x0 = (int) AELItPrev->x, x1 = (int) AELIt->x;
             SetBounds(x0, x1);
             for (int x = x0; x < x1; ++x)
             {
@@ -253,42 +287,32 @@ void DrawScene(Scene& scene, int width, int height)
         }
 
           // insert edges into AEL
-        lIt = EdgeTable.begin();
-        while (lIt != EdgeTable.end())
+        ETIt = EdgeTable.begin();
+        while (ETIt != EdgeTable.end())
         {
-          if (IsInRange((float) y, lIt->v0[1], lIt->v1[1]))
+          if (IsInRange((float) y, ETIt->v0[1], ETIt->v1[1]))
           {
-              // if there is no element in the position
-            if (ActiveEdgeList.find(*lIt) == ActiveEdgeList.end())
-            {
-              ActiveEdgeList.insert(*lIt);
-              EdgeTable.erase(lIt++);
-            }
-              // otherwise, it is on a shared vertex
-            else
-            {
-              EdgeSetIt sIt2 = ActiveEdgeList.find(*lIt);
-              EdgeTable.push_front(*sIt2);
-              EdgeTable.front().Inc();
-              lIt->Inc();
-              ActiveEdgeList.erase(sIt2);
-            }
+            ActiveEdgeList.push_back(*ETIt);
+            EdgeTable.erase(ETIt++);
           }
           else
-            ++lIt;
+            ++ETIt;
         }
 
           // increment edges on AEL & remove passed edges
-        sIt = ActiveEdgeList.begin();
-        while (sIt != ActiveEdgeList.end())
+        AELIt = ActiveEdgeList.begin();
+        while (AELIt != ActiveEdgeList.end())
         {
-          sIt->Inc();
+          AELIt->Inc();
 
-          if (!IsInRange((float) y, sIt->v0[1], sIt->v1[1]))
-            ActiveEdgeList.erase(sIt++);
+          if (!IsInRange((float) y, AELIt->v0[1], AELIt->v1[1]))
+            ActiveEdgeList.erase(AELIt++);
           else
-            ++sIt;
+            ++AELIt;
         }
+
+          // sort the AEL
+        ActiveEdgeList.sort();
 
       } // [END] for each scanline
     } // [END] for each polygon
