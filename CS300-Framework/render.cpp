@@ -16,36 +16,44 @@
 
 // =============================================================================
 // My Interface
-float *zBuf;
-int w, h;
 
+  
+float *zBuf;    // depth buffer
+int w, h;       // screen width & height
+
+  // Edge data
 struct Edge
 {
+    // default ctor: not to be used
   Edge() : bastard(true) {}
+
   Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1), x(_v0[0]), z(_v0[2]), bastard(false)
   {
     dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
     dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
   }
 
+    // Increment x & z values (used for each scanline)
   void Inc()
   {
     x += dx;
     z += dz;
   }
 
-  Vector3D v0, v1;
-  float dx, dz;
-  float x, z;
-  bool bastard;
+  Vector3D v0, v1;          // start and end vertices
+  float dx, dz;             // incremental values for x and z
+  float x, z;               // current x & z values
+  bool bastard;             // true if illegitimately constructed (default ctor)
 };
 
+  // Generic range checker
 template <typename T>
 bool IsInRange(T val, T low, T high)
 {
   return (val >= low && val <= high) ? true : false;
 }
 
+  // Set the x boundaries
 void SetBounds(int &low, int &high)
 {
   int max = w - 1;
@@ -71,16 +79,39 @@ void SetBounds(int &low, int &high)
   }
 }
 
+  // For casting point to vector
+template <typename T, typename U>
+T ultra_cast(U u) { return (*(T *) &u); }
+
+  // Retrieve value in z buffer
 float &ZBuf(unsigned x, unsigned y)
 {
   return zBuf[w * y + x];
 }
 
+  // Vector3D dot product
+float operator*(const Vector3D &lhs, const Vector3D &rhs)
+{
+  return (lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]);
+}
+
+  // Set the polygon color
+void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
+{
+  float fScale = vLightN * vPolyN;
+  memcpy(rgba, &colDif[0], 4 * sizeof(float));
+  for (unsigned i = 0; i < 3; ++i)
+    rgba[i] *= fScale;
+}
+
+  // Edge containers
 std::list<Edge> EdgeTable;
 std::map<float, Edge> ActiveEdgeList;
 
+  // Iterators
 typedef std::map<float, Edge>::iterator EdgeMapIt;
 typedef std::list<Edge>::iterator EdgeListIt;
+
 // End My Interface
 // =============================================================================
 
@@ -106,7 +137,7 @@ void DrawScene(Scene& scene, int width, int height)
 
   // ---------------------------------------------------------------------------
 	// Student rendering code goes here
-
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBegin(GL_POINTS);
 
   w = width;
@@ -126,11 +157,17 @@ void DrawScene(Scene& scene, int width, int height)
 
       // for each polygon
     size_t nPolys = obj.polygons.size();
-    for (size_t j = 0; j < 1/*nPolys*/; ++j)
+    for (size_t j = 0; j < nPolys; ++j)
     {
       EdgeTable.clear();
       APolygon &poly = obj.polygons[j];
       std::vector<Vector3D> vVertices;
+
+        // Set polygon color
+      float rgba[4];
+      Vector3D v3Light = ultra_cast<Vector3D>(scene.lights[0].position);
+      v3Light.normalize();
+      SetColor(v3Light, poly[0].N, obj.Kd, rgba);
 
         // Get pixel coords for polygon
       size_t nVerts = poly.size();
@@ -150,7 +187,7 @@ void DrawScene(Scene& scene, int width, int height)
         unsigned nNext = (k + 1) % nVerts;
 
           // skip horizontal edges
-        if (vVertices[k][1] == vVertices[nNext][1])
+        if ((int) vVertices[k][1] == (int) vVertices[nNext][1])
           continue;
 
         if (vVertices[k][1] < vVertices[nNext][1])
@@ -171,6 +208,12 @@ void DrawScene(Scene& scene, int width, int height)
       EdgeListIt lIt;
       size_t nEdges = EdgeTable.size();
 
+        // Initialize values
+      //for (lIt = EdgeTable.begin(); lIt != EdgeTable.end(); ++lIt)
+      //{
+      //  if ()
+      //}
+
         // for each scanline
       for (int y = 0; y < height; ++y)
       {
@@ -183,14 +226,14 @@ void DrawScene(Scene& scene, int width, int height)
             float z           = mItPrev->second.z;
             float dzdx        = (mIt->second.z - mItPrev->second.z) / (mIt->second.x - mItPrev->second.x);
 
-            int x0 = (unsigned) (mItPrev->second.x), x1 = (unsigned) mIt->second.x;
+            int x0 = (int) (mItPrev->second.x), x1 = (int) mIt->second.x;
             SetBounds(x0, x1);
             for (int x = x0; x < x1; ++x)
             {
               if (z < ZBuf(x, y))
               {
                 ZBuf(x, y) = z;
-                glColor3f(.5f, .5f, .5f);
+                glColor4fv(rgba);
                 glVertex2i(x, y);
               }
               z += dzdx;
@@ -200,7 +243,7 @@ void DrawScene(Scene& scene, int width, int height)
 
         else
         {
-          int LOLDAVID = 0;
+          //MessageBox(NULL, "ERROR ERROR ERROR", "AEL ERROR", MB_ICONERROR);
         }
 
           // insert edges into AEL
@@ -209,8 +252,20 @@ void DrawScene(Scene& scene, int width, int height)
         {
           if (IsInRange((float) y, lIt->v0[1], lIt->v1[1]))
           {
-            ActiveEdgeList[lIt->x] = *lIt;
-            EdgeTable.erase(lIt++);
+              // if there is no element in the position
+            if (ActiveEdgeList[lIt->x].bastard)
+            {
+              ActiveEdgeList[lIt->x] = *lIt;
+              EdgeTable.erase(lIt++);
+            }
+              // otherwise, it is on a vertex
+            else
+            {
+              EdgeTable.push_front(ActiveEdgeList[lIt->x]);
+              EdgeTable.front().Inc();
+              lIt->Inc();
+              ActiveEdgeList.erase(lIt++->v0[0]);
+            }
           }
           else
             ++lIt;
