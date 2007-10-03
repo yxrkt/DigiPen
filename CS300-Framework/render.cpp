@@ -198,6 +198,11 @@ void DrawScene(Scene& scene, int width, int height)
           }
         } // [END] TEMP SOLUTION
 
+        else
+        {
+          int LOLDAVID = 0;
+        }
+
           // insert edges into AEL
         lIt = EdgeTable.begin();
         while (lIt != EdgeTable.end())
