@@ -8,7 +8,7 @@
 // Copyright Å© 2007 DigiPen Institute of Technology
 ////////////////////////////////////////////////////////////////////////
 
-#include <map>
+#include <set>
 #include <list>
 
 #include "framework.h"
@@ -38,6 +38,12 @@ struct Edge
   {
     x += dx;
     z += dz;
+  }
+
+    // For sorting edges in a set
+  bool operator <(const Edge &rhs) const
+  {
+    return (this->x < rhs.x) ? true : false;
   }
 
   Vector3D v0, v1;          // start and end vertices
@@ -106,10 +112,10 @@ void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
 
   // Edge containers
 std::list<Edge> EdgeTable;
-std::map<float, Edge> ActiveEdgeList;
+std::set<Edge> ActiveEdgeList;
 
   // Iterators
-typedef std::map<float, Edge>::iterator EdgeMapIt;
+typedef std::set<Edge>::iterator EdgeSetIt;
 typedef std::list<Edge>::iterator EdgeListIt;
 
 // End My Interface
@@ -204,7 +210,7 @@ void DrawScene(Scene& scene, int width, int height)
       }
 
       ActiveEdgeList.clear();
-      EdgeMapIt mIt;
+      EdgeSetIt sIt;
       EdgeListIt lIt;
       size_t nEdges = EdgeTable.size();
 
@@ -220,13 +226,13 @@ void DrawScene(Scene& scene, int width, int height)
         if (!(ActiveEdgeList.size() % 2)) // TEMP SOLUTION FOR ODD NO. OF EDGES IN AEL
         {
             // draw by pair
-          for (mIt = ActiveEdgeList.begin(); mIt != ActiveEdgeList.end(); ++mIt)
+          for (sIt = ActiveEdgeList.begin(); sIt != ActiveEdgeList.end(); ++sIt)
           {
-            EdgeMapIt mItPrev = mIt++;
-            float z           = mItPrev->second.z;
-            float dzdx        = (mIt->second.z - mItPrev->second.z) / (mIt->second.x - mItPrev->second.x);
+            EdgeSetIt sItPrev = sIt++;
+            float z           = sItPrev->z;
+            float dzdx        = (sIt->z - sItPrev->z) / (sIt->x - sItPrev->x);
 
-            int x0 = (int) (mItPrev->second.x), x1 = (int) mIt->second.x;
+            int x0 = (int) sItPrev->x, x1 = (int) sIt->x;
             SetBounds(x0, x1);
             for (int x = x0; x < x1; ++x)
             {
@@ -253,18 +259,19 @@ void DrawScene(Scene& scene, int width, int height)
           if (IsInRange((float) y, lIt->v0[1], lIt->v1[1]))
           {
               // if there is no element in the position
-            if (ActiveEdgeList[lIt->x].bastard)
+            if (ActiveEdgeList.find(*lIt) == ActiveEdgeList.end())
             {
-              ActiveEdgeList[lIt->x] = *lIt;
+              ActiveEdgeList.insert(*lIt);
               EdgeTable.erase(lIt++);
             }
-              // otherwise, it is on a vertex
+              // otherwise, it is on a shared vertex
             else
             {
-              EdgeTable.push_front(ActiveEdgeList[lIt->x]);
+              EdgeSetIt sIt2 = ActiveEdgeList.find(*lIt);
+              EdgeTable.push_front(*sIt2);
               EdgeTable.front().Inc();
               lIt->Inc();
-              ActiveEdgeList.erase(lIt++->v0[0]);
+              ActiveEdgeList.erase(sIt2);
             }
           }
           else
@@ -272,15 +279,15 @@ void DrawScene(Scene& scene, int width, int height)
         }
 
           // increment edges on AEL & remove passed edges
-        mIt = ActiveEdgeList.begin();
-        while (mIt != ActiveEdgeList.end())
+        sIt = ActiveEdgeList.begin();
+        while (sIt != ActiveEdgeList.end())
         {
-          mIt->second.Inc();
+          sIt->Inc();
 
-          if (!IsInRange((float) y, mIt->second.v0[1], mIt->second.v1[1]))
-            ActiveEdgeList.erase(mIt++);
+          if (!IsInRange((float) y, sIt->v0[1], sIt->v1[1]))
+            ActiveEdgeList.erase(sIt++);
           else
-            ++mIt;
+            ++sIt;
         }
 
       } // [END] for each scanline
