@@ -27,10 +27,14 @@ struct Edge
     // default ctor: not to be used
   Edge() : bastard(true) {}
 
-  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1), x(_v0[0]), z(_v0[2]), bastard(false)
+  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1)//, x(_v0[0]), z(_v0[2]), bastard(false)
   {
     dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
     dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
+
+    float yMantisa = v0[1] - (int) v0[1];
+    x    = v0[0] + yMantisa * dx;
+    z    = v0[2] + yMantisa * dz;
   }
 
     // Increment x & z values (used for each scanline)
