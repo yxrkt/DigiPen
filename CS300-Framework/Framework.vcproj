@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="Framework"
 	ProjectGUID="{B197EB0B-5838-415D-A327-8737A8C01C68}"
+	RootNamespace="Framework"
 	>
 	<Platforms>
 		<Platform
@@ -45,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories=".\glut32"
-				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
+				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE,_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"

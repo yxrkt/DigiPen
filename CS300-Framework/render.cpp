@@ -25,7 +25,7 @@ int w, h;       // screen width & height
   // Edge data
 struct Edge
 {
-  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1)//, x(_v0[0]), z(_v0[2])
+  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1), x(_v0[0]), z(_v0[2])
   {
     if (_v1[1] - _v0[1])
     {
@@ -38,10 +38,6 @@ struct Edge
       dx   = _v1[0] - _v0[0];
       dz   = _v1[2] - _v0[2];
     }
-
-    float yMantissa = ceil(v0[1]) - v0[1];
-    x    = v0[0] + yMantissa * dx;
-    z    = v0[2] + yMantissa * dz;
   }
 
     // Increment x & z values (used for each scanline)
@@ -54,7 +50,12 @@ struct Edge
     // For sorting edges in the AEL
   bool operator <(const Edge &rhs) const
   {
-    return (this->x < rhs.x) ? true : false;
+    if (x < rhs.x)
+      return true;
+    else if (x > rhs.x)
+      return false;
+    else
+      return (dx < rhs.dx) ? true : false;
   }
 
   Vector3D v0, v1;          // start and end vertices
@@ -65,8 +66,6 @@ struct Edge
   // Generic range checker
 bool IsInRange(float val, float low, float high)
 {
-  //val = (float) FloatToInt(val);
-  val = ceil(val);
   return (val >= low && val < high) ? true : false;
 }
 
@@ -125,7 +124,7 @@ void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
   float fScale = vLightN * vPolyN;
   memcpy(rgba, &colDif[0], 4 * sizeof(float));
   for (unsigned i = 0; i < 3; ++i)
-    rgba[i] = abs(rgba[i] * fScale);
+    rgba[i] = rgba[i] * fScale;
 }
 
   // Edge containers
@@ -191,6 +190,13 @@ void DrawScene(Scene& scene, int width, int height)
       v3Light.normalize();
       SetColor(v3Light, poly[0].N, obj.Kd, rgba);
 
+        // make the A object blue both sides
+      if (i == 2)
+      {
+        for (int c = 0; c < 3; ++c)
+          rgba[c] = abs(rgba[c]);
+      }
+
         // Get pixel coords for polygon & push edges
       size_t nVerts = poly.size();
       for (size_t k = 0; k < nVerts; ++k)
@@ -245,7 +251,7 @@ void DrawScene(Scene& scene, int width, int height)
             ETIt->x += (-ETIt->v0[1] * ETIt->dx);
             ETIt->z += (-ETIt->v0[1] * ETIt->dz);
           }
-          else if (ETIt->v1[1] >= height)
+          else if (ETIt->v1[1] > height)
           {
             float fYMax = (float) (height - 1);
             float fYDif = ETIt->v1[1] - fYMax;
@@ -261,7 +267,7 @@ void DrawScene(Scene& scene, int width, int height)
       ETIt = EdgeTable.begin();
       while (ETIt != EdgeTable.end())
       {
-        if ((int) ceil(ETIt->v0[1]) <= 0)
+        if ((ETIt->v0[1] <= 0) && (ETIt->v0[1] != ETIt->v1[1]) && (ETIt->v1[1] != 0.f))
         {
           ActiveEdgeList.push_back(*ETIt);
           EdgeTable.erase(ETIt++);
