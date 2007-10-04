@@ -27,12 +27,21 @@ struct Edge
 {
   Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1)//, x(_v0[0]), z(_v0[2])
   {
-    dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
-    dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
+    if (_v1[1] - _v0[1])
+    {
+      dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
+      dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
+    }
 
-    float yMantisa = v0[1] - (int) v0[1];
-    x    = v0[0] + yMantisa * dx;
-    z    = v0[2] + yMantisa * dz;
+    else
+    {
+      dx   = _v1[0] - _v0[0];
+      dz   = _v1[2] - _v0[2];
+    }
+
+    float yMantissa = ceil(v0[1]) - v0[1];
+    x    = v0[0] + yMantissa * dx;
+    z    = v0[2] + yMantissa * dz;
   }
 
     // Increment x & z values (used for each scanline)
@@ -54,10 +63,11 @@ struct Edge
 };
 
   // Generic range checker
-template <typename T>
-bool IsInRange(T val, T low, T high)
+bool IsInRange(float val, float low, float high)
 {
-  return (val > low && val <= high) ? true : false;
+  //val = (float) FloatToInt(val);
+  val = ceil(val);
+  return (val >= low && val < high) ? true : false;
 }
 
   // Set the x boundaries
@@ -84,6 +94,13 @@ void SetBounds(int &low, int &high)
     low = high;
     return;
   }
+}
+
+int FloatToInt(const float &f)
+{
+  if (f >= 0)
+    return (int) (f + .5f);
+  return (int) (f - .5f);
 }
 
   // For casting point to vector
@@ -181,8 +198,8 @@ void DrawScene(Scene& scene, int width, int height)
           // current vertex
         Vector4D v4T = scene.viewing.Transform(poly[k].V);
         Vector3D v3S = ultra_cast<Vector3D>(scene.projection.Transform(v4T).Hdiv());
-        v3S[0] = (v3S[0] + 1.f) * width / 2.f;
-        v3S[1] = (v3S[1] + 1.f) * height / 2.f;
+        v3S[0] = (float) FloatToInt((v3S[0] + 1.f) * width / 2.f);
+        v3S[1] = (float) FloatToInt((v3S[1] + 1.f) * height / 2.f);
 
         vVertices.push_back(v3S);
       }
@@ -240,11 +257,11 @@ void DrawScene(Scene& scene, int width, int height)
         }
       }
 
-        // Initialize values
+        // Set values for scanline 0
       ETIt = EdgeTable.begin();
       while (ETIt != EdgeTable.end())
       {
-        if ((int) ETIt->v0[1] <= 0)
+        if ((int) ceil(ETIt->v0[1]) <= 0)
         {
           ActiveEdgeList.push_back(*ETIt);
           EdgeTable.erase(ETIt++);
@@ -258,33 +275,25 @@ void DrawScene(Scene& scene, int width, int height)
         // for each scanline
       for (int y = 0; y < height; ++y)
       {
-        if (!(ActiveEdgeList.size() % 2)) // TEMP SOLUTION FOR ODD NO. OF EDGES IN AEL
+          // draw by pair
+        for (AELIt = ActiveEdgeList.begin(); AELIt != ActiveEdgeList.end(); ++AELIt)
         {
-            // draw by pair
-          for (AELIt = ActiveEdgeList.begin(); AELIt != ActiveEdgeList.end(); ++AELIt)
+          EdgeListIt AELItPrev = AELIt++;
+          float z              = AELItPrev->z;
+          float dzdx           = (AELIt->z - AELItPrev->z) / (AELIt->x - AELItPrev->x);
+
+          int x0 = FloatToInt(AELItPrev->x), x1 = FloatToInt(AELIt->x);
+          SetBounds(x0, x1);
+          for (int x = x0; x < x1; ++x)
           {
-            EdgeListIt AELItPrev = AELIt++;
-            float z              = AELItPrev->z;
-            float dzdx           = (AELIt->z - AELItPrev->z) / (AELIt->x - AELItPrev->x);
-
-            int x0 = (int) ceil(AELItPrev->x), x1 = (int) ceil(AELIt->x);
-            SetBounds(x0, x1);
-            for (int x = x0; x < x1; ++x)
+            if (z < ZBuf(x, y))
             {
-              if (z < ZBuf(x, y))
-              {
-                ZBuf(x, y) = z;
-                glColor4fv(rgba);
-                glVertex2i(x, y);
-              }
-              z += dzdx;
+              ZBuf(x, y) = z;
+              glColor4fv(rgba);
+              glVertex2i(x, y);
             }
+            z += dzdx;
           }
-        } // [END] TEMP SOLUTION
-
-        else
-        {
-          //MessageBox(NULL, "ERROR ERROR ERROR", "AEL ERROR", MB_ICONERROR);
         }
 
           // insert edges into AEL
