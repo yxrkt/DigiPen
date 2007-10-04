@@ -10,6 +10,7 @@
 
 #include <set>
 #include <list>
+#include <algorithm>
 
 #include "framework.h"
 #include "scenelib.h"
@@ -24,10 +25,7 @@ int w, h;       // screen width & height
   // Edge data
 struct Edge
 {
-    // default ctor: not to be used
-  Edge() : bastard(true) {}
-
-  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1)//, x(_v0[0]), z(_v0[2]), bastard(false)
+  Edge(const Vector3D &_v0, const Vector3D &_v1) : v0(_v0), v1(_v1)//, x(_v0[0]), z(_v0[2])
   {
     dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
     dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
@@ -44,7 +42,7 @@ struct Edge
     z += dz;
   }
 
-    // For sorting edges in a set
+    // For sorting edges in the AEL
   bool operator <(const Edge &rhs) const
   {
     return (this->x < rhs.x) ? true : false;
@@ -53,7 +51,6 @@ struct Edge
   Vector3D v0, v1;          // start and end vertices
   float dx, dz;             // incremental values for x and z
   float x, z;               // current x & z values
-  bool bastard;             // true if illegitimately constructed (default ctor)
 };
 
   // Generic range checker
@@ -66,7 +63,7 @@ bool IsInRange(T val, T low, T high)
   // Set the x boundaries
 void SetBounds(int &low, int &high)
 {
-  int max = w - 1;
+  int max = w;
 
   if (low < 0)
     low = 0;
@@ -247,7 +244,7 @@ void DrawScene(Scene& scene, int width, int height)
       ETIt = EdgeTable.begin();
       while (ETIt != EdgeTable.end())
       {
-        if ((int) ETIt->v0[1] == 0)
+        if ((int) ETIt->v0[1] <= 0)
         {
           ActiveEdgeList.push_back(*ETIt);
           EdgeTable.erase(ETIt++);
@@ -270,7 +267,7 @@ void DrawScene(Scene& scene, int width, int height)
             float z              = AELItPrev->z;
             float dzdx           = (AELIt->z - AELItPrev->z) / (AELIt->x - AELItPrev->x);
 
-            int x0 = (int) AELItPrev->x, x1 = (int) AELIt->x;
+            int x0 = (int) ceil(AELItPrev->x), x1 = (int) ceil(AELIt->x);
             SetBounds(x0, x1);
             for (int x = x0; x < x1; ++x)
             {
@@ -291,6 +288,7 @@ void DrawScene(Scene& scene, int width, int height)
         }
 
           // insert edges into AEL
+        bool bSort = false;
         ETIt = EdgeTable.begin();
         while (ETIt != EdgeTable.end())
         {
@@ -298,6 +296,7 @@ void DrawScene(Scene& scene, int width, int height)
           {
             ActiveEdgeList.push_back(*ETIt);
             EdgeTable.erase(ETIt++);
+            bSort = true;
           }
           else
             ++ETIt;
@@ -316,7 +315,7 @@ void DrawScene(Scene& scene, int width, int height)
         }
 
           // sort the AEL
-        ActiveEdgeList.sort();
+        if (bSort) ActiveEdgeList.sort();
 
       } // [END] for each scanline
     } // [END] for each polygon
