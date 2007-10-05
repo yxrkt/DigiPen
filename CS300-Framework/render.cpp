@@ -8,9 +8,7 @@
 // Copyright Å© 2007 DigiPen Institute of Technology
 ////////////////////////////////////////////////////////////////////////
 
-#include <set>
 #include <list>
-#include <algorithm>
 
 #include "framework.h"
 #include "scenelib.h"
@@ -104,10 +102,10 @@ int FloatToInt(const float &f)
 
   // For casting point to vector
 template <typename T, typename U>
-T ultra_cast(U u) { return (*(T *) &u); }
+T bybyte_cast(U u) { return (*(T *) &u); }
 
   // Retrieve value in z buffer
-float &ZBuf(unsigned x, unsigned y)
+float &ZBuf(int x, int y)
 {
   return zBuf[w * y + x];
 }
@@ -186,7 +184,7 @@ void DrawScene(Scene& scene, int width, int height)
 
         // Set polygon color
       float rgba[4];
-      Vector3D v3Light = ultra_cast<Vector3D>(scene.lights[0].position);
+      Vector3D v3Light = bybyte_cast<Vector3D>(scene.lights[0].position);
       v3Light.normalize();
       SetColor(v3Light, poly[0].N, obj.Kd, rgba);
 
@@ -203,7 +201,7 @@ void DrawScene(Scene& scene, int width, int height)
       {
           // current vertex
         Vector4D v4T = scene.viewing.Transform(poly[k].V);
-        Vector3D v3S = ultra_cast<Vector3D>(scene.projection.Transform(v4T).Hdiv());
+        Vector3D v3S = bybyte_cast<Vector3D>(scene.projection.Transform(v4T).Hdiv());
         v3S[0] = (float) FloatToInt((v3S[0] + 1.f) * width / 2.f);
         v3S[1] = (float) FloatToInt((v3S[1] + 1.f) * height / 2.f);
 
