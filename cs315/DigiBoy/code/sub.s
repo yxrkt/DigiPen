@@ -52,6 +52,10 @@ _vmov
 	add		a,$08
 	ld		($fe08),a
 	ld		($fe0c),a
+	ld		($fe10),a
+	ld		($fe14),a
+	ld		($fe18),a
+	ld		($fe1c),a
 	
 	ld		a,(height)					; increment height counter
 	inc		a
@@ -74,6 +78,10 @@ _vfall
 	add		a,$08
 	ld		($fe08),a
 	ld		($fe0c),a
+	ld		($fe10),a
+	ld		($fe14),a
+	ld		($fe18),a
+	ld		($fe1c),a
 	
 	ld		a,(height)					; increment height counter
 	dec		a
@@ -129,9 +137,13 @@ _movr_cont
 	inc		a
 	ld		($fe01),a
 	ld		($fe09),a
+	ld		($fe11),a
+	ld		($fe19),a
 	add		a,$08
 	ld		($fe05),a
 	ld		($fe0d),a
+	ld		($fe15),a
+	ld		($fe1d),a
 	
 	dec		c
 	jr		_loop_movr
@@ -172,9 +184,13 @@ _movl_cont
 	dec		a
 	ld		($fe01),a
 	ld		($fe09),a
+	ld		($fe11),a
+	ld		($fe19),a
 	add		a,$08
 	ld		($fe05),a
 	ld		($fe0d),a
+	ld		($fe15),a
+	ld		($fe1d),a
 	
 	dec		c
 	jr		_loop_movl
