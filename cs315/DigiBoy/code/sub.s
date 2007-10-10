@@ -102,7 +102,7 @@ _done_movev
 
 moveh
 
-	ld		b,4
+	ld		c,4
 	call	animate_player
 
 	xor		a
@@ -215,27 +215,28 @@ _done_moveh
 
 ;---------------------------------------
 ;	Walking animation for the player
-;	params: b -- time per frame
+;	params: c -- time per frame
 ;---------------------------------------
 animate_player
 	ld		a,(atimer)
 	inc		a
-	cp		b
-	jr		_done_animplayer
+	ld		(atimer),a
+	cp		c
+	jr		nz,_done_animplayer
 	
 	xor		a
 	ld		(atimer),a
 	
 	ld		a,($fe1e)
 	cp		7
-	jr		z,_2nd_pframe
+	jr		_2nd_pframe
 
 _1st_pframe	
 	ld		a,7
 	jr		_change_frame
 
 _2nd_pframe
-	ld		a,8
+	ld		a,7
 
 _change_frame
 	ld		($fe1e),a
