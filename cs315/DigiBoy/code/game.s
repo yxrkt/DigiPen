@@ -70,6 +70,7 @@ game_init
 	
 	ld		(height),a				; initialize variables
 	ld		(bjump),a
+	ld		(atimer),a
 	
 	ld		a,1
 	ld		(brface),a

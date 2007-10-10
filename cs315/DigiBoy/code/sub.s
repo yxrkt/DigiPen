@@ -102,6 +102,9 @@ _done_movev
 
 moveh
 
+	ld		b,4
+	call	animate_player
+
 	xor		a
 	cp		b
 	jr		z,_go_left
@@ -116,8 +119,8 @@ _go_right
 	ld		c,d
 	jr		z,_loop_movr
 	
-	; scroll right
 	ld		a,d
+	
 _scroll_right
 	call	scroll_right
 	
@@ -128,7 +131,7 @@ _loop_movr
 	jp		z,_done_moveh
 	
 	ld		a,($fe01)					; stop at right boundary
-	cp		154
+	cp		152
 	jr		z,_done_moveh
 	
 	ld		a,(scx)						; approaching right boundary
@@ -178,7 +181,7 @@ _loop_movl
 	jr		z,_done_moveh
 	
 	ld		a,($fe01)					; stop at left boundary
-	cp		6
+	cp		8
 	jr		z,_done_moveh
 	
 	ld		a,(scx)						; approaching left boundary
@@ -207,6 +210,37 @@ _movl_cont
 	jr		_loop_movl
 	
 _done_moveh
+	ret
+
+
+;---------------------------------------
+;	Walking animation for the player
+;	params: b -- time per frame
+;---------------------------------------
+animate_player
+	ld		a,(atimer)
+	inc		a
+	cp		b
+	jr		_done_animplayer
+	
+	xor		a
+	ld		(atimer),a
+	
+	ld		a,($fe1e)
+	cp		7
+	jr		z,_2nd_pframe
+
+_1st_pframe	
+	ld		a,7
+	jr		_change_frame
+
+_2nd_pframe
+	ld		a,8
+
+_change_frame
+	ld		($fe1e),a
+
+_done_animplayer
 	ret
 
 ;---------------------------------------
