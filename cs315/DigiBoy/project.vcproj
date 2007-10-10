@@ -202,6 +202,10 @@
 			Name="Code"
 			>
 			<File
+				RelativePath=".\code\ai.s"
+				>
+			</File>
+			<File
 				RelativePath="code\cgb_sub.s"
 				>
 			</File>
@@ -227,6 +231,10 @@
 			</File>
 			<File
 				RelativePath=".\code\objects.s"
+				>
+			</File>
+			<File
+				RelativePath=".\code\physics.s"
 				>
 			</File>
 			<File

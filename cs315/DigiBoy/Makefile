@@ -14,7 +14,9 @@ CODES =		code\main.s\
 			code\menu.s\
 			code\game.s\
 			code\story.s\
-			code\objects.s
+			code\objects.s\
+			code\physics.s\
+			code\ai.s
 
 
 DATAS = 

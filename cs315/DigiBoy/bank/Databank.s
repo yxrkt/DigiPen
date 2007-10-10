@@ -8,6 +8,8 @@ mmenu	db		0
 mstory	db		1
 mgame	db		2
 maxh	db		$28
+beastlb	db		$70
+beastrb	db		$b0
 
 ; resources
 bank01  group 01

@@ -102,7 +102,7 @@ _done_movev
 
 moveh
 
-	ld		c,4
+	ld		c,10
 	call	animate_player
 
 	xor		a
@@ -227,19 +227,31 @@ animate_player
 	xor		a
 	ld		(atimer),a
 	
-	ld		a,($fe1e)
+	ld		a,(brface)
+	cp		0
+	jr		z,_load_lfreg
+	
+_load_rfreg
+	ld		hl,$fe1e
+	jr		_cont_animp
+	
+_load_lfreg
+	ld		hl,$fe1a
+
+_cont_animp
+	ld		a,(hl)
 	cp		7
-	jr		_2nd_pframe
+	jr		z,_2nd_pframe
 
 _1st_pframe	
 	ld		a,7
 	jr		_change_frame
 
 _2nd_pframe
-	ld		a,7
+	ld		a,8
 
 _change_frame
-	ld		($fe1e),a
+	ld		(hl),a
 
 _done_animplayer
 	ret
@@ -410,9 +422,31 @@ _loop_sl
 	ld		a,(scx)
 	cp		0
 	jr		z,done_scrlft
-	dec		c
+
 	dec		a
 	ld		(scx),a
+	
+	ld		hl,objects
+	inc		hl
+	ld		b,(hl)
+	ld		hl,$fe21		; starting tile's xpos
+	ld		de,$04
+
+__loop_sl					; for each obj tile
+	xor		a
+	cp		b
+	jr		z,__loop_sl_done
+	
+	ld		a,(hl)
+	inc		a
+	ld		(hl),a
+	add		hl,de
+	
+	dec		b
+	jr		__loop_sl
+__loop_sl_done
+	
+	dec		c
 	jr		_loop_sl
 
 done_scrlft	
@@ -434,9 +468,31 @@ _loop_sr
 	ld		a,(scx)
 	cp		95
 	jr		z,done_scrrt
-	dec		c	
+
 	inc		a
 	ld		(scx),a
+
+	ld		hl,objects
+	inc		hl
+	ld		b,(hl)
+	ld		hl,$fe21		; starting tile's xpos
+	ld		de,$04
+
+__loop_sr					; for each obj tile
+	xor		a
+	cp		b
+	jr		z,__loop_sr_done
+	
+	ld		a,(hl)
+	dec		a
+	ld		(hl),a
+	add		hl,de
+	
+	dec		b
+	jr		__loop_sr
+__loop_sr_done
+
+	dec		c
 	jr		_loop_sr
 
 done_scrrt	

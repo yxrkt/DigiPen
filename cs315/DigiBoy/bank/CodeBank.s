@@ -15,8 +15,10 @@ bank00	group	00
 	lib		code\story.s
 	lib		code\game.s
 	lib		code\objects.s
+	lib		code\physics.s
+	lib		code\ai.s
 	
-	extern	mmenu,mstory,mgame,maxh
+	extern	mmenu,mstory,mgame,maxh,beastlb,beastrb
 
 	extern	menu_tile_data,menu_screen_data,menu_pal_data
 	extern	menu_scr_data,menu_attr_data

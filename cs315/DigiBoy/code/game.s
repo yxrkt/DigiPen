@@ -26,6 +26,10 @@ movepl_
 	
 done_gp
 	call	movev						; Jumping and falling
+	
+	call	update_ai
+	call	update_physics
+
 	ret
 
 
@@ -71,11 +75,14 @@ game_init
 	ld		(height),a				; initialize variables
 	ld		(bjump),a
 	ld		(atimer),a
+	ld		(baiface),a
+	ld		(bfire),a
 	
 	ld		a,1
 	ld		(brface),a
 	
 	call	load_obj_data			; load object tileset and palettes
 	call	load_objs				; load objects
+	call	load_phys_objs			; load physics properties for objs
 
 	ret
