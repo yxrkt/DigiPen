@@ -71,6 +71,9 @@ game_init
 	ld		(height),a				; initialize variables
 	ld		(bjump),a
 	
+	ld		a,1
+	ld		(brface),a
+	
 	call	load_obj_data			; load object tileset and palettes
 	call	load_objs				; load objects
 

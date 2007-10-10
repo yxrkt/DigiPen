@@ -54,7 +54,7 @@ load_objs
 	ld		a,2						; index of tile
 	ld		($fe0a),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe0b),a
 	
 	; tile 3
@@ -67,7 +67,7 @@ load_objs
 	ld		a,3						; index of tile
 	ld		($fe0e),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe0f),a
 	
 	; tile 4
@@ -80,7 +80,7 @@ load_objs
 	ld		a,4						; index of tile
 	ld		($fe12),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe13),a
 	
 	; tile 5
@@ -93,7 +93,7 @@ load_objs
 	ld		a,5						; index of tile
 	ld		($fe16),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe17),a
 	
 	; tile 6
@@ -106,7 +106,7 @@ load_objs
 	ld		a,6						; index of tile
 	ld		($fe1a),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe1b),a
 	
 	; tile 7
@@ -119,7 +119,7 @@ load_objs
 	ld		a,7						; index of tile
 	ld		($fe1e),a
 	
-	ld		a,%00000000				; index of palette
+	ld		a,%00000001				; index of palette
 	ld		($fe1f),a
 
 	ret

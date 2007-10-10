@@ -13,4 +13,5 @@ objs_tile_data
 	DB $80,$C0,$00,$80,$00,$80,$00,$80,$00,$80,$00,$80,$00,$80,$00,$F0	;TILE 7
 
 objs_pal_data
-	DW $03E0,$7C00,$0000,$03FF	;PALETTE 0
+	DW $03E0,$03FF,$0000,$001F	;PALETTE 0
+	DW $03E0,$0110,$0000,$7FE0	;PALETTE 1

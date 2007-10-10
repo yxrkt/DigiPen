@@ -52,8 +52,10 @@ _vmov
 	add		a,$08
 	ld		($fe08),a
 	ld		($fe0c),a
+	add		a,$08
 	ld		($fe10),a
 	ld		($fe14),a
+	add		a,$08
 	ld		($fe18),a
 	ld		($fe1c),a
 	
@@ -78,8 +80,10 @@ _vfall
 	add		a,$08
 	ld		($fe08),a
 	ld		($fe0c),a
+	add		a,$08
 	ld		($fe10),a
 	ld		($fe14),a
+	add		a,$08
 	ld		($fe18),a
 	ld		($fe1c),a
 	
@@ -102,6 +106,10 @@ moveh
 	cp		b
 	jr		z,_go_left
 	
+_go_right
+	ld		b,1
+	call	flip_player
+	
 	; check if player is possibly not in middle of screen
 	ld		a,(scx)
 	cp		0
@@ -117,7 +125,7 @@ _scroll_right
 _loop_movr
 	ld		a,c
 	cp		0
-	jr		z,_done_moveh
+	jp		z,_done_moveh
 	
 	ld		a,($fe01)					; stop at right boundary
 	cp		154
@@ -149,6 +157,9 @@ _movr_cont
 	jr		_loop_movr
 	
 _go_left
+	ld		b,0
+	call	flip_player
+	
 	; check if player is possibly not in middle of screen
 	ld		a,(scx)
 	cp		95
@@ -196,6 +207,132 @@ _movl_cont
 	jr		_loop_movl
 	
 _done_moveh
+	ret
+
+;---------------------------------------
+;	Flip player
+;	params: b -- 1 if going right
+;---------------------------------------
+flip_player
+
+	xor		a
+	cp		b
+	jr		z,_flip_left
+
+_flip_right
+	ld		a,(brface)			; check if already facing right
+	cp		1
+	jp		z,_done_pflip
+	
+	ld		a,1					; set to facing right
+	ld		(brface),a
+	
+	ld		a,($fe03)			; tile 0
+	res		5,a
+	ld		($fe03),a
+	ld		a,($fe07)			; tile 1
+	res		5,a
+	ld		($fe07),a
+	ld		a,($fe0b)			; tile 2
+	res		5,a
+	ld		($fe0b),a
+	ld		a,($fe0f)			; tile 3
+	res		5,a
+	ld		($fe0f),a
+	ld		a,($fe13)			; tile 4
+	res		5,a
+	ld		($fe13),a
+	ld		a,($fe17)			; tile 5
+	res		5,a
+	ld		($fe17),a
+	ld		a,($fe1b)			; tile 6
+	res		5,a
+	ld		($fe1b),a
+	ld		a,($fe1f)			; tile 7
+	res		5,a
+	ld		($fe1f),a
+	
+	; swap tiles
+	ld		a,0					; 0 & 1
+	ld		($fe02),a
+	ld		a,1
+	ld		($fe06),a
+	
+	ld		a,2					; 2 & 3
+	ld		($fe0a),a
+	ld		a,3
+	ld		($fe0e),a
+
+
+	ld		a,4					; 4 & 5
+	ld		($fe12),a
+	ld		a,5
+	ld		($fe16),a
+
+	ld		a,6					; 6 & 7
+	ld		($fe1a),a
+	ld		a,7
+	ld		($fe1e),a
+
+	
+	jr		_done_pflip
+
+_flip_left
+	ld		a,(brface)			; check if already facing left
+	cp		0
+	jr		z,_done_pflip
+	
+	xor		a					; set to facing left
+	ld		(brface),a
+	
+	ld		a,($fe03)			; tile 0
+	set		5,a
+	ld		($fe03),a
+	ld		a,($fe07)			; tile 1
+	set		5,a
+	ld		($fe07),a
+	ld		a,($fe0b)			; tile 2
+	set		5,a
+	ld		($fe0b),a
+	ld		a,($fe0f)			; tile 3
+	set		5,a
+	ld		($fe0f),a
+	ld		a,($fe13)			; tile 4
+	set		5,a
+	ld		($fe13),a
+	ld		a,($fe17)			; tile 5
+	set		5,a
+	ld		($fe17),a
+	ld		a,($fe1b)			; tile 6
+	set		5,a
+	ld		($fe1b),a
+	ld		a,($fe1f)			; tile 7
+	set		5,a
+	ld		($fe1f),a
+
+	; swap tiles
+	ld		a,1					; 0 & 1
+	ld		($fe02),a
+	ld		a,0
+	ld		($fe06),a
+	
+	ld		a,3					; 2 & 3
+	ld		($fe0a),a
+	ld		a,2
+	ld		($fe0e),a
+
+	ld		a,5					; 4 & 5
+	ld		($fe12),a
+	ld		a,4
+	ld		($fe16),a
+
+	ld		a,7					; 6 & 7
+	ld		($fe1a),a
+	ld		a,6
+	ld		($fe1e),a
+
+	
+_done_pflip
 	ret
 
 ;---------------------------------------
