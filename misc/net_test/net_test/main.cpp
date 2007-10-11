@@ -5,6 +5,7 @@
 unsigned short PORT = 8003;
 unsigned short MESSAGE_ID = 0xABCD;
 unsigned MAX_MESSAGE_LEN = 260;
+SOCKADDR_IN saBroadcast;
 
   // variables
 SOCKET sUDP;
@@ -22,6 +23,7 @@ void ErrCheck(int err)
   }
 }
 
+  // structs
 struct SMessage
 {
   SMessage() : id(MESSAGE_ID) {}
@@ -29,6 +31,10 @@ struct SMessage
   const unsigned short id;
   BYTE buf[260];
 };
+
+  // forward decls
+void Send();
+void Receive();
 
 int main()
 {
@@ -56,7 +62,6 @@ int main()
   ErrCheck(err);
 
   // enable broadcasts
-  SOCKADDR_IN saBroadcast;
   saBroadcast.sin_family        = AF_INET;
   saBroadcast.sin_port          = htons(PORT);
   saBroadcast.sin_addr.s_addr   = INADDR_BROADCAST;
@@ -65,34 +70,61 @@ int main()
   err = setsockopt(sUDP, SOL_SOCKET, SO_BROADCAST, (char *) &bBroadcast, sizeof(bool));
   ErrCheck(err);
 
-  // send a test message over internet to self
-  unsigned long ia = inet_addr("66.192.186.99");
+  //Send();
+  Receive();
+
+  return 0;
+}
+
+//-----------------------------------------------------------------------------
+// Send a test message
+void Send()
+{
+  int err;
+
+  // send a test message over internet to perry
+  unsigned long ia = inet_addr("76.233.11.79");
+
   SOCKADDR_IN saExternal;
-  saExternal.sin_family       = AF_INET;
-  saExternal.sin_port         = htons(PORT);
-  saExternal.sin_addr         = *(in_addr *) &ia;
+  saExternal.sin_family   = AF_INET;
+  saExternal.sin_port     = htons(PORT);
+  saExternal.sin_addr     = *(in_addr *) &ia;
 
   SMessage msg;
-  strcpy((char *) msg.buf, "SUCCESS");
-  err = sendto(sUDP, (char *) &msg, sizeof(SMessage), 0, (sockaddr *) &saExternal, sizeof(SOCKADDR_IN));
-  ErrCheck(err);
+
+  for (unsigned i = 0; i < 10; ++i)
+  {
+    err = sendto(sUDP, (char *) &msg, sizeof(SMessage), 0, (sockaddr *) &saBroadcast, sizeof(SOCKADDR_IN));
+    ErrCheck(err);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// Loop indefinitely until message is received
+void Receive()
+{
+  int err;
+
+  SOCKADDR_IN saFrom;
+  int nFromLen = sizeof(SOCKADDR_IN);
+  SMessage msgIn;
 
   while (1)
   {
-    SMessage msgIn;
-    sockaddr saFrom;
-    int nFromLen = sizeof(sockaddr);
-    //memset(msgIn.buf, '\0', MAX_MESSAGE_LEN);
-
-    err = recvfrom(sUDP, (char *) &msgIn, sizeof(SMessage), 0, &saFrom, &nFromLen);
+    err = recvfrom(sUDP, (char *) &msgIn, sizeof(SMessage), 0, (sockaddr *) &saFrom, &nFromLen);
     ErrCheck(err);
 
-    if (msgIn.id == MESSAGE_ID)
+    if (err != SOCKET_ERROR)
     {
-      std::cout << (char *) msgIn.buf << std::endl;
-      break;
+      if (msgIn.id == MESSAGE_ID)
+      {
+        std::cout << "Knock knock, Neo." << std::endl;
+        break;
+      }
     }
+
+    Sleep(1);
   }
 
-  return 0;
+  getchar();
 }
