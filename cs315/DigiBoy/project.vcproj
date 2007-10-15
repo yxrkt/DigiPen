@@ -210,6 +210,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\code\endgame.s"
+				>
+			</File>
+			<File
 				RelativePath="code\equ.s"
 				>
 			</File>
@@ -276,6 +280,10 @@
 			<Filter
 				Name="Backgrounds"
 				>
+				<File
+					RelativePath=".\data\endgame.scn"
+					>
+				</File>
 				<File
 					RelativePath=".\data\game.bg"
 					>
