@@ -7,6 +7,7 @@ bank00	group 00
 mmenu	db		0
 mstory	db		1
 mgame	db		2
+mend	db		3
 maxh	db		$28
 beastlb	db		$70
 beastrb	db		$b0
@@ -48,5 +49,11 @@ game_pal_data
 
 game_screen_data
 	lib			data\game.scn
-	
+
+
+endgame_screen_data
+	lib			data\endgame.scn
+
+
+object_data
 	lib			data\objects.gbo

@@ -26,7 +26,7 @@ movepl_
 	
 done_gp
 	call	movev						; Jumping and falling
-	
+
 	call	update_ai
 	call	update_physics
 

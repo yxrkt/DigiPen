@@ -16,7 +16,8 @@ CODES =		code\main.s\
 			code\story.s\
 			code\objects.s\
 			code\physics.s\
-			code\ai.s
+			code\ai.s\
+			code\endgame.s
 
 
 DATAS = 

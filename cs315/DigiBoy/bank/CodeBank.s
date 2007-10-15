@@ -17,8 +17,9 @@ bank00	group	00
 	lib		code\objects.s
 	lib		code\physics.s
 	lib		code\ai.s
+	lib		code\endgame.s
 	
-	extern	mmenu,mstory,mgame,maxh,beastlb,beastrb
+	extern	mmenu,mstory,mgame,mend,maxh,beastlb,beastrb
 
 	extern	menu_tile_data,menu_screen_data,menu_pal_data
 	extern	menu_scr_data,menu_attr_data
@@ -28,6 +29,8 @@ bank00	group	00
 
 	extern	game_tile_data,game_screen_data,game_pal_data
 	extern	game_scr_data,game_attr_data
+	
+	extern	endgame_screen_data,endgame_scr_data,endgame_attr_data
 	
 	extern	objs_tile_data,objs_pal_data
 

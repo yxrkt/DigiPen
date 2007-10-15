@@ -1,46 +1,44 @@
 ;---------------------------------------
-;			Menu Main
+;			End Game Update
 ;---------------------------------------
-menu_proc
-	; Check user input and etc.
-	
+
+endgame_proc
+
 	call	cont
 	ld		a,(cnt1)
 	
 	bit		BitStart,a
-	jr		z,_done_mp
+	jr		z,_done_endgame
 	
 	ld		a,(mstory)
-	ld		(mode),a
-	call	story_init
-	
-	xor		a
-	ld		(scx),a
-	ld		(scy),a
+	call	reset_to
 
-_done_mp
+_done_endgame
 	ret
 
 
 ;---------------------------------------
 ;
-;				Menu Init
+;			Game Init
 ;
 ;---------------------------------------
-menu_init
+
+endgame_init
+
+	call	clear_objs				; clear objects
 
 	xor		a						; Bank 0
 	ld		(vbk),a
 
-	ld		hl,menu_tile_data		; Load Menu tile set
+	ld		hl,story_tile_data		; Load Story tile set
 	ld		de,$9000
-	ld		bc,$170					; Load tiles
+	ld		bc,$130					; Load tiles
 	call	data_mov
 
 	ld		a,1						; Switch to Bank 1
 	ld		(vbk),a
 
-	ld		hl,menu_attr_data		; Load Menu Attributes
+	ld		hl,endgame_attr_data	; Load End-Game Attributes
 	ld		de,$9800
 	ld		bc,$0400
 	call	data_mov
@@ -48,17 +46,16 @@ menu_init
 	xor		a						; Switch to Bank 0
 	ld		(vbk),a
 
-	ld		hl,menu_scr_data		; Load Menu Screen Data
+	ld		hl,endgame_scr_data		; Load End-Game Screen Data
 	ld		de,$9800
 	ld		bc,$0400
 	call	data_mov
 
-	ld		hl,menu_pal_data		; Load Menu Palette
+	ld		hl,story_pal_data		; Load Story Palette
 	call	bg_palette_set
-	
-	ld		a,$33
-	ld		(scx),a
-	ld		a,$50
-	ld		(scy),a
 
+	xor		a						; Reset screen pos
+	ld		(scx),a
+	ld		(scy),a
+	
 	ret

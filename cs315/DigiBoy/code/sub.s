@@ -15,7 +15,74 @@ update_proc
 	
 	cp		mgame
 	call	z,game_proc
+	
+	cp		mend
+	call	z,endgame_proc
 
+	ret
+
+;---------------------------------------
+;	Reset
+;	params: a -- mode to reset to
+;---------------------------------------
+
+reset_to
+
+	ld		b,a
+	ld		(mode),a
+	call	clear_objs
+
+_check_menu_res
+	ld		a,(mmenu)				; if b is menu
+	cp		b
+	jr		nz,_check_story_res
+	
+	; reset story variables
+	xor		a
+	ld		(bscroll),a
+	ld		(bpart2),a
+	
+	call	menu_init
+	jr		_done_resto
+	
+_check_story_res
+	ld		a,(mstory)				; if b is story
+	cp		b
+	jr		nz,_check_game_res
+	
+	; reset story variables
+	xor		a
+	ld		(bscroll),a
+	ld		(bpart2),a
+	
+	call	story_init
+	jr		_done_resto
+
+_check_game_res
+	ld		a,(mgame)				; if b is game
+	cp		b
+	jr		nz,_done_resto
+	
+	call	game_init
+
+_done_resto
+	ret
+
+;---------------------------------------
+;	Clear objects
+;---------------------------------------
+
+clear_objs
+
+	push	bc
+
+	xor		a	
+	ld		bc,$60
+	ld		hl,$fe00
+	call	memset
+	
+	pop		bc
+	
 	ret
 
 ;---------------------------------------
