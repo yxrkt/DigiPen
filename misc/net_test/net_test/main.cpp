@@ -10,10 +10,10 @@
 unsigned short PORT = 80;
 unsigned short MESSAGE_ID = 0xABCD;
 unsigned MAX_MESSAGE_LEN = 260;
-SOCKADDR_IN saBroadcast;
 
   // variables
 SOCKET sUDP;
+SOCKADDR_IN saBroadcast;
 
 void ErrCheck(int err, const char *msg)
 {
@@ -78,8 +78,8 @@ int main()
   err = setsockopt(sUDP, SOL_SOCKET, SO_BROADCAST, (char *) &bBroadcast, sizeof(bool));
   ErrCheck(err, "setsockopt");
 
-  //Send();
-  Receive();
+  Send();
+  //Receive();
 
   err = closesocket(sUDP);
   ErrCheck(err, "closesocket");
