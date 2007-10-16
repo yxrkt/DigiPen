@@ -55,5 +55,9 @@ endgame_screen_data
 	lib			data\endgame.scn
 
 
+lose_screen_data
+	lib			data\lose.scn
+
+
 object_data
 	lib			data\objects.gbo

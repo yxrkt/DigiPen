@@ -297,6 +297,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\data\lose.scn"
+					>
+				</File>
+				<File
 					RelativePath=".\data\menu.bg"
 					>
 				</File>

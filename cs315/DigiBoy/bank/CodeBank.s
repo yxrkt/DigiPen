@@ -32,5 +32,7 @@ bank00	group	00
 	
 	extern	endgame_screen_data,endgame_scr_data,endgame_attr_data
 	
+	extern	lose_screen_data,lose_scr_data,lose_attr_data
+	
 	extern	objs_tile_data,objs_pal_data
 
