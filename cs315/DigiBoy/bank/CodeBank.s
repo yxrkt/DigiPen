@@ -18,8 +18,9 @@ bank00	group	00
 	lib		code\physics.s
 	lib		code\ai.s
 	lib		code\endgame.s
+	lib		code\lose.s
 	
-	extern	mmenu,mstory,mgame,mend,maxh,beastlb,beastrb
+	extern	mmenu,mstory,mgame,mend,mlose,maxh,beastlb,beastrb
 
 	extern	menu_tile_data,menu_screen_data,menu_pal_data
 	extern	menu_scr_data,menu_attr_data

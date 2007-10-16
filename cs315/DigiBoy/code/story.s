@@ -93,6 +93,9 @@ story_init
 	ld		hl,story_pal_data		; Load Story Palette
 	call	bg_palette_set
 	
+	ld		a,5						; Initialize no. of lives
+	ld		(nlives),a
+	
 	ret
 
 ;---------------------------------------

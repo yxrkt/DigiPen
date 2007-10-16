@@ -20,6 +20,10 @@ update_physics
 	jr		_done_upphys
 	
 _phys_not_key
+	call	dec_lives
+	ld		a,(nlives)
+	cp		0
+	jr		z,_done_upphys
 
 	ld		a,(mgame)
 	call	reset_to

@@ -6,7 +6,7 @@ load_obj_data
 
 	ld		hl,objs_tile_data		; Load Object tile set
 	ld		de,$8000
-	ld		bc,$140					; Load object tiles
+	ld		bc,$1a0					; Load object tiles
 	call	data_mov
 
 	ld		hl,objs_pal_data		; Load Object Palette
@@ -22,7 +22,7 @@ load_objs
 	ld		a,$70					; y pos
 	ld		($fe00),a
 	
-	ld		a,8						; x pos
+	ld		a,$08					; x pos
 	ld		($fe01),a
 	
 	xor		a						; index of tile
@@ -191,5 +191,30 @@ load_objs
 	ld		a,%00000011				; index of palette
 	ld		($fe33),a
 	
+	; Fireball Object takes $fe34 - $fe37
+	
+	; Lives Object
+	
+	push	bc
+	
+	ld		a,$18					; Initialize life counter object
+	ld		($fe38),a
+	
+	ld		a,$10					; x pos
+	ld		($fe39),a
+	
+	ld		a,(nlives)				; index of tile
+	ld		b,a
+	ld		a,5
+	sub		b
+	ld		c,a
+	ld		a,25
+	sub		c
+	ld		($fe3a),a	
+	
+	ld		a,%00000101				; index of palette
+	ld		($fe3b),a
 
+	pop		bc
+	
 	ret

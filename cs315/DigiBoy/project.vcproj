@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\code\lose.s"
+				>
+			</File>
+			<File
 				RelativePath="code\main.s"
 				>
 			</File>

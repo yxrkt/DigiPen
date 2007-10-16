@@ -18,7 +18,34 @@ update_proc
 	
 	cp		mend
 	call	z,endgame_proc
+	
+	cp		mlose
+	call	z,lose_proc
 
+	ret
+
+;---------------------------------------
+;	Decrement lives
+;---------------------------------------
+
+dec_lives
+	ld		a,(nlives)
+	cp		0
+	jr		nz,_dl_dec_lives
+
+_dl_goto_lose
+	ld		a,(mlose)
+	ld		(mode),a
+	call	clear_objs
+	call	lose_init
+	jr		_dec_lives_done
+
+_dl_dec_lives
+	ld		a,(nlives)
+	dec		a
+	ld		(nlives),a
+	
+_dec_lives_done
 	ret
 
 ;---------------------------------------
