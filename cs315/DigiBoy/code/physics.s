@@ -40,7 +40,9 @@ update_vpos
 	cp		0
 	jr		nz,_cont_upvpos
 
-	call	btn_hit			; if jump is hit
+	call	cont
+	ld		a,(trg1)
+	bit		BitA,a
 	jr		z,_done_upvpos
 	
 	ld		a,1				; set jump to true

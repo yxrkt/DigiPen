@@ -58,6 +58,9 @@ reset_to
 	ld		b,a
 	ld		(mode),a
 	call	clear_objs
+	ld		a,(lcdc)
+	res		5,a
+	ld		(lcdc),a
 
 _check_menu_res
 	ld		a,(mmenu)				; if b is menu
@@ -121,8 +124,8 @@ movev
 	cp		0
 	jr		nz,_vmov
 	
-	call	btn_hit
-	cp		0
+	ld		a,(trg1)
+	bit		BitA,a
 	jr		z,_vmov
 	
 	ld		a,1
@@ -590,36 +593,4 @@ __loop_sr_done
 	jr		_loop_sr
 
 done_scrrt	
-	ret
-
-;---------------------------------------
-;	Button Down
-;	params: none
-;	note: z is 1 if not hit
-;---------------------------------------
-
-btn_hit
-	; Get input state
-	call	cont
-	ld		a,(cnt1)
-	bit		BitA,a
-	jr		z,reset_hold
-
-	; Check if A is held
-	xor		a
-	ld		hl,bheld
-	cp		(hl)
-	jr		nz,done_bhit
-
-	; Set a to non-zero and bheld to true
-	ld		a,1
-	ld		(bheld),a
-	jr		done_bhit
-	
-reset_hold
-	xor		a
-	ld		(bheld),a
-
-done_bhit
-	cp		0
 	ret

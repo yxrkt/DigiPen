@@ -11,8 +11,9 @@ story_proc
 	jr		nz,_scroll_sp
 	
 	; If button is hit
-	call	btn_hit
-	cp		0
+	call	cont
+	ld		a,(trg1)
+	bit		BitA,a
 	jr		z,_done_sp
 
 	ld		(bscroll),a					; Set scrolling bool to true
@@ -31,8 +32,9 @@ _scroll_sp
 	jr		nz,_done_sp
 
 	; Check if A is hit
-	call	btn_hit
-	cp		0
+	call	cont
+	ld		a,(trg1)
+	bit		BitA,a
 	jr		z,_done_sp
 
 	; Check if on 2nd page of story

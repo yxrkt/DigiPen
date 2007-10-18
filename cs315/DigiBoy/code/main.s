@@ -98,8 +98,6 @@ _loop
 mainloop
 	call	update_proc
 
-	;call	_wait_hb
-
 	call	_wait_vb
 	
 	jr		mainloop
@@ -114,12 +112,3 @@ _wait_vb
 
 	ret
 
-_wait_hb
-	ld		a,(hblank_f)
-	and		a
-	jr		z,_wait_hb
-	
-	xor		a
-	ld		(hblank_f),a
-	
-	ret

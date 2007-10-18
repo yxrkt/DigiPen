@@ -5,7 +5,6 @@
 		
 mode	ds		1		; game mode
 bscroll	ds		1		; scrolling down ?
-bheld	ds		1		; held down a ?
 bpart2	ds		1		; part 2 of story ?
 height	ds		1		; height from jump
 bjump	ds		1		; jumping ?

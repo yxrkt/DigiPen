@@ -29,13 +29,6 @@ objs_tile_data
 	DB $39,$39,$73,$73,$FF,$FF,$FE,$86,$FE,$C2,$FF,$FF,$73,$73,$39,$39	;TILE 18 - Fireball
 	DB $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00	;TILE 19
 	
-	DB $00,$78,$78,$FC,$48,$FC,$48,$FC,$48,$FC,$48,$FC,$78,$FC,$00,$78	;TILE 20 - Numbers
-	DB $00,$78,$30,$78,$10,$78,$10,$38,$10,$38,$10,$7C,$38,$7C,$00,$7C	;TILE 21
-	DB $00,$F8,$78,$FC,$08,$FC,$10,$38,$20,$70,$20,$FC,$78,$FC,$00,$FC	;TILE 22
-	DB $00,$FC,$78,$FC,$08,$FC,$10,$38,$08,$1C,$08,$FC,$78,$FC,$00,$F8	;TILE 23
-	DB $00,$3C,$18,$7C,$28,$7C,$28,$FC,$78,$FC,$08,$FC,$08,$1C,$00,$1C	;TILE 24
-	DB $00,$FC,$78,$FC,$40,$FC,$70,$F8,$08,$7C,$08,$FC,$78,$FC,$00,$F8	;TILE 25
-
 objs_pal_data
 	DW $03E0,$03FF,$0000,$001F	;PALETTE 0 - Player palettes
 	DW $03E0,$0110,$0000,$7FE0	;PALETTE 1
@@ -45,5 +38,3 @@ objs_pal_data
 	DW $03E0,$7C00,$0000,$03FF	;PALETTE 3 - Key palette
 	
 	DW $03E0,$03FF,$0000,$001F	;PALETTE 4 - Fireball palette
-	
-	DW $03E0,$7C00,$0000,$001F	;PALETTE 5 - Numbers palette

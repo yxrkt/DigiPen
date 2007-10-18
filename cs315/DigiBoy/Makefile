@@ -18,7 +18,8 @@ CODES =		code\main.s\
 			code\physics.s\
 			code\ai.s\
 			code\endgame.s\
-			code\lose.s
+			code\lose.s\
+			code\hblank.s
 
 
 DATAS = 

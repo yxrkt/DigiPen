@@ -3,8 +3,8 @@
 ;---------------------------------------
 
 game_proc
-
 	call	cont
+
 	ld		a,(cnt1)
 	
 	bit		BitLeft,a					; Check d-pad left
@@ -46,7 +46,7 @@ game_init
 
 	ld		hl,game_tile_data		; Load Game tile set
 	ld		de,$9000
-	ld		bc,$130					; Load tiles
+	ld		bc,$190					; Load tiles
 	call	data_mov
 
 	ld		a,1						; Switch to Bank 1
@@ -84,5 +84,14 @@ game_init
 	call	load_obj_data			; load object tileset and palettes
 	call	load_objs				; load objects
 	call	load_phys_objs			; load physics properties for objs
+	
+	ld		a,(lcdc)				; Turn windowing on
+	set		5,a
+	ld		(lcdc),a
+	
+	ld		a,$07
+	ld		(wx),a
+	xor		a
+	ld		(wy),a
 
 	ret

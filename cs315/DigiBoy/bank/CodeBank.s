@@ -19,6 +19,7 @@ bank00	group	00
 	lib		code\ai.s
 	lib		code\endgame.s
 	lib		code\lose.s
+	lib		code\hblank.s
 	
 	extern	mmenu,mstory,mgame,mend,mlose,maxh,beastlb,beastrb
 
