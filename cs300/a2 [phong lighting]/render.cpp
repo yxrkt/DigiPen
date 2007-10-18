@@ -25,21 +25,14 @@ struct Edge
 {
   Edge(const Vertex &_v0, 
        const Vertex &_v1) : v0(_v0), 
-                              v1(_v1), 
-                              x(_v0[0]), 
-                              z(_v0[2])
+                            v1(_v1), 
+                            x(_v0.V[0]), 
+                            z(_v0.V[2]),
+                            N(_v0.N[0], _v0.N[1], _v0.N[2])
   {
-    if (_v1[1] - _v0[1])
-    {
-      dx   = (_v1[0] - _v0[0]) / (_v1[1] - _v0[1]);
-      dz   = (_v1[2] - _v0[2]) / (_v1[1] - _v0[1]);
-    }
-
-    else
-    {
-      dx   = _v1[0] - _v0[0];
-      dz   = _v1[2] - _v0[2];
-    }
+    dx   = (_v1.V[0] - _v0.V[0]) / (_v1.V[1] - _v0.V[1]);
+    dz   = (_v1.V[2] - _v0.V[2]) / (_v1.V[1] - _v0.V[1]);
+    dN   = (_v1.N - _v0.N) / (_v1.V[1] - _v0.V[1]);
   }
 
     // Increment x & z values (used for each scanline)
@@ -47,6 +40,7 @@ struct Edge
   {
     x += dx;
     z += dz;
+    N += dN;
   }
 
     // For sorting edges in the AEL
@@ -60,7 +54,7 @@ struct Edge
       return (dx < rhs.dx) ? true : false;
   }
 
-  Vector3D v0, v1;          // start and end vertices
+  Vertex v0, v1;            // start and end vertices
   float dx, dz;             // incremental values for x and z
   float x, z;               // current x & z values
   Vector3D dN;              // incremental value for N
@@ -186,25 +180,25 @@ void DrawScene(Scene& scene, int width, int height)
     {
       EdgeTable.clear();
       APolygon &poly = obj.polygons[j];
-      std::vector<Vector3D> vVertices;
+      std::vector<Vertex> vVertices;
 
-        // Set polygon color
+      //  // Set polygon color
+      Vector3D v3DLight(bybyte_cast<Vector3D>(scene.lights[0].position).normalized());
       float rgba[4];
-      Vector3D v3Light = bybyte_cast<Vector3D>(scene.lights[0].position);
-      v3Light.normalize();
-      SetColor(v3Light, poly[0].N, obj.Kd, rgba);
 
         // Get pixel coords for polygon & push edges
       size_t nVerts = poly.size();
       for (size_t k = 0; k < nVerts; ++k)
       {
           // current vertex
+        Vertex vtx(poly[k]);
         Vector4D v4T = scene.viewing.Transform(poly[k].V);
-        Vector3D v3S = bybyte_cast<Vector3D>(scene.projection.Transform(v4T).Hdiv());
-        v3S[0] = (float) FloatToInt((v3S[0] + 1.f) * width / 2.f);
-        v3S[1] = (float) FloatToInt((v3S[1] + 1.f) * height / 2.f);
+        Vector4D v4S(scene.projection.Transform(v4T).Hdiv());
+        v4S[0] = (float) FloatToInt((v4S[0] + 1.f) * width / 2.f);
+        v4S[1] = (float) FloatToInt((v4S[1] + 1.f) * height / 2.f);
+        vtx.V = v4S;
 
-        vVertices.push_back(v3S);
+        vVertices.push_back(vtx);
       }
 
         // put vertices in correct order
@@ -213,10 +207,10 @@ void DrawScene(Scene& scene, int width, int height)
         unsigned nNext = poly[k].prevIndex;
 
           // skip horizontal edges
-        if ((int) vVertices[k][1] == (int) vVertices[nNext][1])
+        if ((int) vVertices[k].V[1] == (int) vVertices[nNext].V[1])
           continue;
 
-        if (vVertices[k][1] < vVertices[nNext][1])
+        if (vVertices[k].V[1] < vVertices[nNext].V[1])
         {
           Edge e(vVertices[k], vVertices[nNext]);
           EdgeTable.push_back(e);
@@ -231,30 +225,29 @@ void DrawScene(Scene& scene, int width, int height)
 
       ActiveEdgeList.clear();
       EdgeListIt ETIt, AELIt;
-      size_t nEdges = EdgeTable.size();
 
         // Cull / clip edges
       ETIt = EdgeTable.begin();
       while (ETIt != EdgeTable.end())
       {
           // y culling
-        if (ETIt->v1[1] < 0.f || ETIt->v0[1] >= height)
+        if (ETIt->v1.V[1] < 0.f || ETIt->v0.V[1] >= height)
           EdgeTable.erase(ETIt++);
         else
         {
             // y clipping
-          if (ETIt->v0[1] < 0)
+          if (ETIt->v0.V[1] < 0)
           {
-            ETIt->x += (-ETIt->v0[1] * ETIt->dx);
-            ETIt->z += (-ETIt->v0[1] * ETIt->dz);
+            ETIt->x += (-ETIt->v0.V[1] * ETIt->dx);
+            ETIt->z += (-ETIt->v0.V[1] * ETIt->dz);
           }
-          else if (ETIt->v1[1] > height)
+          else if (ETIt->v1.V[1] > height)
           {
             float fYMax = (float) (height - 1);
-            float fYDif = ETIt->v1[1] - fYMax;
-            ETIt->v1[1]  = fYMax;
-            ETIt->v1[0] -= (fYDif * ETIt->dx);
-            ETIt->v1[2] -= (fYDif * ETIt->dz);
+            float fYDif = ETIt->v1.V[1] - fYMax;
+            ETIt->v1.V[1]  = fYMax;
+            ETIt->v1.V[0] -= (fYDif * ETIt->dx);
+            ETIt->v1.V[2] -= (fYDif * ETIt->dz);
           }
           ++ETIt;
         }
@@ -264,7 +257,7 @@ void DrawScene(Scene& scene, int width, int height)
       ETIt = EdgeTable.begin();
       while (ETIt != EdgeTable.end())
       {
-        if ((ETIt->v0[1] <= 0) && (ETIt->v0[1] != ETIt->v1[1]) && (ETIt->v1[1] != 0.f))
+        if ((ETIt->v0.V[1] <= 0) && (ETIt->v0.V[1] != ETIt->v1.V[1]) && (ETIt->v1.V[1] != 0.f))
         {
           ActiveEdgeList.push_back(*ETIt);
           EdgeTable.erase(ETIt++);
@@ -284,6 +277,8 @@ void DrawScene(Scene& scene, int width, int height)
           EdgeListIt AELItPrev = AELIt++;
           float z              = AELItPrev->z;
           float dzdx           = (AELIt->z - AELItPrev->z) / (AELIt->x - AELItPrev->x);
+          Vector3D N           = AELItPrev->N;
+          Vector3D dNdx        = (AELIt->N - AELItPrev->N) / (AELIt->x - AELItPrev->x);
 
           int x0 = FloatToInt(AELItPrev->x), x1 = FloatToInt(AELIt->x);
           SetBounds(x0, x1);
@@ -291,11 +286,13 @@ void DrawScene(Scene& scene, int width, int height)
           {
             if (z < ZBuf(x, y))
             {
+              SetColor(v3DLight, N, obj.Kd, rgba);
               ZBuf(x, y) = z;
               glColor4fv(rgba);
               glVertex2i(x, y);
             }
             z += dzdx;
+            N += dNdx;
           }
         }
 
@@ -304,7 +301,7 @@ void DrawScene(Scene& scene, int width, int height)
         ETIt = EdgeTable.begin();
         while (ETIt != EdgeTable.end())
         {
-          if (IsInRange((float) y, ETIt->v0[1], ETIt->v1[1]))
+          if (IsInRange((float) y, ETIt->v0.V[1], ETIt->v1.V[1]))
           {
             ActiveEdgeList.push_back(*ETIt);
             EdgeTable.erase(ETIt++);
@@ -320,7 +317,7 @@ void DrawScene(Scene& scene, int width, int height)
         {
           AELIt->Inc();
 
-          if (!IsInRange((float) y, AELIt->v0[1], AELIt->v1[1]))
+          if (!IsInRange((float) y, AELIt->v0.V[1], AELIt->v1.V[1]))
             ActiveEdgeList.erase(AELIt++);
           else
             ++AELIt;
