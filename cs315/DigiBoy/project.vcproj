@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\code\hblank.s"
+				>
+			</File>
+			<File
 				RelativePath=".\code\lose.s"
 				>
 			</File>

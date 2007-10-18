@@ -61,4 +61,13 @@ menu_init
 	ld		a,$50
 	ld		(scy),a
 
+	ld		hl,lcdc					; Turn windowing on
+	set		5,(hl)
+	res		6,(hl)
+	
+	ld		a,7
+	ld		(wx),a
+	xor		a
+	ld		(wy),a
+	
 	ret

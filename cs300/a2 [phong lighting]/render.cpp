@@ -16,17 +16,15 @@
 // =============================================================================
 // My Interface
 
-  
+
 float *zBuf;    // depth buffer
 int w, h;       // screen width & height
 
   // Edge data
 struct Edge
 {
-  Edge(const Vector3D &_v0, 
-       const Vector3D &_v1/*, 
-       const Vector3D &_N0,
-       const Vector3D &_N1*/) : v0(_v0), 
+  Edge(const Vertex &_v0, 
+       const Vertex &_v1) : v0(_v0), 
                               v1(_v1), 
                               x(_v0[0]), 
                               z(_v0[2])
