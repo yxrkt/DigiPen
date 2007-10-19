@@ -117,12 +117,15 @@ float operator*(const Vector3D &lhs, const Vector3D &rhs)
 }
 
   // Set the polygon color
-void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
+//void SetColor(Vector3D vLightN, Vector3D vPolyN, Color colDif, float *rgba)
+//{
+//  float fScale = vLightN * vPolyN;
+//  memcpy(rgba, &colDif[0], 4 * sizeof(float));
+//  for (unsigned i = 0; i < 3; ++i)
+//    rgba[i] = rgba[i] * fScale;
+//}
+void SetColor(Point3D P, float *rgba)
 {
-  float fScale = vLightN * vPolyN;
-  memcpy(rgba, &colDif[0], 4 * sizeof(float));
-  for (unsigned i = 0; i < 3; ++i)
-    rgba[i] = rgba[i] * fScale;
 }
 
   // Edge containers
@@ -182,10 +185,6 @@ void DrawScene(Scene& scene, int width, int height)
       APolygon &poly = obj.polygons[j];
       std::vector<Vertex> vVertices;
 
-      //  // Set polygon color
-      Vector3D v3DLight(bybyte_cast<Vector3D>(scene.lights[0].position).normalized());
-      float rgba[4];
-
         // Get pixel coords for polygon & push edges
       size_t nVerts = poly.size();
       for (size_t k = 0; k < nVerts; ++k)
@@ -197,6 +196,7 @@ void DrawScene(Scene& scene, int width, int height)
         v4S[0] = (float) FloatToInt((v4S[0] + 1.f) * width / 2.f);
         v4S[1] = (float) FloatToInt((v4S[1] + 1.f) * height / 2.f);
         vtx.V = v4S;
+        vtx.N.normalize();
 
         vVertices.push_back(vtx);
       }
@@ -286,9 +286,30 @@ void DrawScene(Scene& scene, int width, int height)
           {
             if (z < ZBuf(x, y))
             {
-              SetColor(v3DLight, N, obj.Kd, rgba);
+                // Get world coords
+              Vector4D S = Vector4D((float) x * 2.f / (float) width - 1.0, (float) y * 2.f / (float) height - 1.0, z);
+              Vector4D T = scene.projection.InverseTransform(S);
+              Point3D W  = scene.viewing.InverseTransform(T).Hdiv();
+
+                // view vector
+              Point3D Eye = scene.viewing.InverseTransform(Vector4D(0.0, 0.0, 0.0, 1.0)).Hdiv();
+              Vector3D V(Eye - W);
+
+                // color buffer
+              Color c(scene.ambient * obj.Kd);  // IaKa
+
+              N.normalize();
+
+              LightList::iterator LightIt = scene.lights.begin();
+              for ( ; LightIt != scene.lights.end(); ++LightIt) // sum of lights
+              {
+                Vector3D Li((LightIt->position - W).normalized());  // Light vector
+                Vector3D H((Li + V).normalized());                  // Halfway vector
+                c = c + LightIt->color * (obj.Kd * (N * Li) + obj.Ks * pow((N * H), obj.n));
+              }
+
               ZBuf(x, y) = z;
-              glColor4fv(rgba);
+              glColor4fv(c.rgba);
               glVertex2i(x, y);
             }
             z += dzdx;
