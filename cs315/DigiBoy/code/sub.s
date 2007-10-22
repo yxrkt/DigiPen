@@ -36,16 +36,43 @@ dec_lives
 _dl_goto_lose
 	ld		a,(mlose)
 	ld		(mode),a
-	call	clear_objs
-	call	lose_init
+	call	reset_to
 	jr		_dec_lives_done
 
 _dl_dec_lives
 	ld		a,(nlives)
 	dec		a
 	ld		(nlives),a
+	call	update_lsprite
 	
 _dec_lives_done
+	ret
+
+;---------------------------------------
+;	Change lives sprite
+;---------------------------------------
+
+update_lsprite
+	ld		a,1						; Switch to Bank 1
+	ld		(vbk),a
+
+	ld		a,%00000001				; Use number palette
+	ld		($9822),a
+	
+	xor		a						; Switch to Bank 0
+	ld		(vbk),a
+	
+	ld		a,(nlives)				; Use number tile
+	ld		b,a
+	ld		a,5
+	sub		b
+	
+	ld		b,a
+	ld		a,24
+	sub		b
+	
+	ld		($9822),a
+	
 	ret
 
 ;---------------------------------------
@@ -91,9 +118,25 @@ _check_story_res
 _check_game_res
 	ld		a,(mgame)				; if b is game
 	cp		b
-	jr		nz,_done_resto
+	jr		nz,_check_lose_res
 	
 	call	game_init
+	jr		_done_resto
+
+_check_lose_res
+	ld		a,(mlose)				; if b is lose
+	cp		b
+	jr		nz,_check_win_res
+	
+	call	lose_init
+	jr		_done_resto
+
+_check_win_res
+	ld		a,(mend)				; if b is win
+	cp		b
+	jr		nz,_done_resto
+	
+	call	endgame_init
 
 _done_resto
 	ret

@@ -32,7 +32,7 @@ endgame_init
 
 	ld		hl,story_tile_data		; Load Story tile set
 	ld		de,$9000
-	ld		bc,$170					; Load tiles
+	ld		bc,$240					; Load tiles
 	call	data_mov
 
 	ld		a,1						; Switch to Bank 1

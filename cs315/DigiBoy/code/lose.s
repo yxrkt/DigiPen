@@ -32,7 +32,7 @@ lose_init
 
 	ld		hl,menu_tile_data		; Load Menu tile set
 	ld		de,$9000
-	ld		bc,$130					; Load tiles
+	ld		bc,$180					; Load tiles
 	call	data_mov
 
 	ld		a,1						; Switch to Bank 1

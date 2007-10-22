@@ -3,6 +3,8 @@
 ;---------------------------------------
 
 game_proc
+
+
 	call	cont
 
 	ld		a,(cnt1)
@@ -29,9 +31,20 @@ done_gp
 
 	call	update_ai
 	call	update_physics
+	
+	call	_wait_hblank
 
 	ret
+	
+_wait_hblank
+	ld		a,(hblank_f)
+	and		a
+	jr		z,_wait_hblank
+	
+	ld		a,7
+	ld		(wx),a
 
+	ret
 
 ;---------------------------------------
 ;
@@ -46,7 +59,7 @@ game_init
 
 	ld		hl,game_tile_data		; Load Game tile set
 	ld		de,$9000
-	ld		bc,$190					; Load tiles
+	ld		bc,$1c0					; Load tiles
 	call	data_mov
 
 	ld		a,1						; Switch to Bank 1
@@ -84,14 +97,27 @@ game_init
 	call	load_obj_data			; load object tileset and palettes
 	call	load_objs				; load objects
 	call	load_phys_objs			; load physics properties for objs
+	call	update_lsprite			; update lives sprite
 	
+	
+	;; Windowing
 	ld		a,(lcdc)				; Turn windowing on
 	set		5,a
 	ld		(lcdc),a
+	
+	ld		a,(stat)				; Set LCD Status register for y-coord matching
+	set		2,a
+	set		6,a
+	ld		(stat),a
+	
+	ld		a,$18
+	ld		(lyc),a
 	
 	ld		a,$07
 	ld		(wx),a
 	xor		a
 	ld		(wy),a
 
+
 	ret
+

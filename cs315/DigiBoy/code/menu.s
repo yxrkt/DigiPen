@@ -60,5 +60,5 @@ menu_init
 	ld		(scx),a
 	ld		a,$50
 	ld		(scy),a
-
+	
 	ret

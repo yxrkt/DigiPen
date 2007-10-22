@@ -17,7 +17,7 @@
 ;------------------------- lcdc status interrupt --------------------
 ;
 	org		$48
-	reti
+	jp		h_blank
 ;
 ;--------------------------- timer interrupt ------------------------
 ;
@@ -52,11 +52,11 @@
 
 ;control register clear
 	xor		a
-	ld		(if),a			
-	ld		(ie),a			
-	ld		(scy),a 		
-	ld		(scx),a 		
-	ld		(stat),a		
+	ld		(if),a
+	ld		(ie),a
+	ld		(scy),a
+	ld		(scx),a 
+	ld		(stat),a
 
 ;cgb register clear
 	xor		a
@@ -88,9 +88,13 @@ _loop
 
 	ld		a,%10000011			; Set up and turn on LCD display
 	ld		(lcdc),a
-
+		
 	ei							; Enable interrupts
-
+	
+	ld		a,(ie)				; Enable lcdc interrupts
+	set		1,a
+	ld		(ie),a	
+	
 	ld		a,(mmenu)
 	ld		(mode),a
 

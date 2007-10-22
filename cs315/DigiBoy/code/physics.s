@@ -16,7 +16,7 @@ update_physics
 	
 	ld		a,(mend)
 	ld		(mode),a
-	call	endgame_init
+	call	reset_to
 	jr		_done_upphys
 	
 _phys_not_key
