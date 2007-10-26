@@ -3,13 +3,24 @@
 #include <process.h>
 #include <conio.h>
 
-int nThreads = 1;
+int nThreads;
+HANDLE hConsole;
+HANDLE hScreenMutex;
 
 void GetInputQuit( void *pMyID );
 void GetInputStart( void *pMyID );
 
 int main()
 {
+    // console out resource
+  hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
+
+    // mutex
+  hScreenMutex = CreateMutex( NULL, FALSE, NULL );
+
+    // set thread count
+  nThreads = 0;
+
   _beginthread( GetInputStart, 0, &nThreads );
   nThreads++;
   _beginthread( GetInputQuit, 0, &nThreads );
@@ -25,8 +36,13 @@ void GetInputStart( void *pMyID )
 
   while ( 1 )
   {
-    nKeyInfo = _getch();
-    std::cout << ( char ) tolower( nKeyInfo );
+    if ( kbhit() )
+    {
+      WaitForSingleObject( hConsole, INFINITE );
+      nKeyInfo = _getch();
+      std::cout << ( char ) tolower( nKeyInfo );
+      ReleaseMutex( hConsole );
+    }
   }
 }
 
@@ -35,6 +51,11 @@ void GetInputQuit( void *pMyID )
   int nKeyInfo;
 
   do {
-    nKeyInfo = _getch();
+    if ( kbhit() )
+    {
+      WaitForSingleObject( hConsole, INFINITE );
+      nKeyInfo = _getch();
+      ReleaseMutex( hConsole );
+    }
   } while ( tolower( nKeyInfo ) != 'q' );
 }
