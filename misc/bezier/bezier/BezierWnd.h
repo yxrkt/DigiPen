@@ -18,8 +18,9 @@ class CBezierWnd : public CFrameWnd
     CBezierWnd();
 
     void Update();
-    static void sUpdate( CBezierWnd *pThis );
-
+    static void sUpdate( void *pMyID );
+    static CBezierWnd *pThis;
+    static HANDLE hMutex;
 
   protected:
       // data

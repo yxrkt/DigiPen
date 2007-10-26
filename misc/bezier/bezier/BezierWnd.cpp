@@ -1,5 +1,5 @@
 #include <sstream>
-#include <process>
+#include <process.h>
 
 #include "BezierWnd.h"
 
@@ -41,14 +41,25 @@ CBezierWnd::CBezierWnd()
 
 	SelectObject( m_BitmapDC, m_Bitmap );
   memset( m_Surface, 0xFF, sizeof( int ) * m_DimWnd.width * m_DimWnd.height );
+
+  pThis = this;
+  hMutex = CreateMutex( NULL, FALSE, NULL );
+  int nThreads = 1;
+  _beginthread( sUpdate, 0, &nThreads );
 }
 
-void CBezierWnd::sUpdate( CBezierWnd *pThis )
+HANDLE CBezierWnd::hMutex;
+CBezierWnd *CBezierWnd::pThis;
+void CBezierWnd::sUpdate( void *pMyID )
 {
   while ( pThis )
   {
+    WaitForSingleObject( hMutex, INFINITE );
     pThis->Update();
+    ReleaseMutex( hMutex );
   }
+
+  CloseHandle( hMutex );
 }
 
 // ============================================================================
@@ -88,7 +99,7 @@ void CBezierWnd::Draw()
   for ( PointSetIt i = m_points.begin(); i != m_points.end(); ++i )
     lPoints.push_back( *i );
 
-  float fStep = .001f;
+  float fStep = ( 1.f / ( 100.f * ( float ) lPoints.size() ) );
   for ( float i = 0.f; i <= 1.f; i+= fStep )
   {
     CPoint2D p2D = GetBezierPoint( lPoints, i );
@@ -146,14 +157,12 @@ END_MESSAGE_MAP()
 // Moving mouse
 void CBezierWnd::OnMouseMove( UINT nFlags, CPoint point )
 {
-  //Update();
 }
 
 // Left clicking
 void CBezierWnd::OnLButtonDown( UINT nFlags, CPoint point )
 {
   m_points.insert( CBezierPoint( point ) );
-  //Update();
 }
 
 // Moving window
@@ -177,5 +186,4 @@ void CBezierWnd::OnChar( UINT nChar, UINT nRepCnt, UINT nFlags )
 // UpdateWindow
 void CBezierWnd::OnPaint()
 {
-  //Update();
 }
