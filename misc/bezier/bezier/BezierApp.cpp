@@ -6,6 +6,13 @@
 // ============================================================================
 BOOL CBezierApp::InitInstance()
 {
+    // Make sure common controls dll starts
+  INITCOMMONCONTROLSEX InitCtrls;
+  InitCtrls.dwSize = sizeof( INITCOMMONCONTROLSEX );
+  InitCtrls.dwICC  = ICC_WIN95_CLASSES;
+  InitCommonControlsEx( &InitCtrls );
+
+    // Create main window
   m_pMainWnd = new CBezierWnd;
   m_pMainWnd->ShowWindow( SW_SHOW );
   return TRUE;

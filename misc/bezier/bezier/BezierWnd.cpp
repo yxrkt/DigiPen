@@ -6,7 +6,7 @@
 // ============================================================================
 // Constructor for main window
 // ============================================================================
-CBezierWnd::CBezierWnd() : bRunning( true )
+CBezierWnd::CBezierWnd() : bRunning( true ), grabbed( m_points.end() )
 {
   if ( !Create( NULL, "Bezier Curve Canvas" ) )
     MessageBox( "Creating window failed.", NULL, MB_ICONERROR );
@@ -44,6 +44,8 @@ CBezierWnd::CBezierWnd() : bRunning( true )
 
   pThis = this;
   AfxBeginThread( sUpdate, NULL );
+
+  m_Toolbar;
 }
 
 CBezierWnd::~CBezierWnd()
@@ -116,7 +118,7 @@ CPoint2D CBezierWnd::GetBezierPoint( const PointList &points, float t )
   if ( nPoints > 1 )
   {
     PointList next_points;
-    PointListIt i = points.begin(), iPrev = i++;
+    PointListItC i = points.begin(), iPrev = i++;
 
     do {
       next_points.push_back( *iPrev + t * ( *i - *iPrev ) );
@@ -172,6 +174,8 @@ unsigned CBezierPoint::nCurrIndex = 0;
 BEGIN_MESSAGE_MAP( CBezierWnd, CFrameWnd )
   ON_WM_MOUSEMOVE()
   ON_WM_LBUTTONDOWN()
+  ON_WM_MBUTTONDOWN()
+  ON_WM_MBUTTONUP()
   ON_WM_SIZE()
   ON_WM_CLOSE()
 
@@ -181,12 +185,36 @@ END_MESSAGE_MAP()
 // Moving mouse
 void CBezierWnd::OnMouseMove( UINT nFlags, CPoint point )
 {
+  if ( grabbed != m_points.end() )
+  {
+    grabbed->x = ( float ) point.x;
+    grabbed->y = ( float ) point.y;
+  }
 }
 
 // Left clicking
 void CBezierWnd::OnLButtonDown( UINT nFlags, CPoint point )
 {
   m_points.insert( CBezierPoint( point ) );
+}
+
+// Middle clicking
+void CBezierWnd::OnMButtonDown( UINT nFlags, CPoint point )
+{
+  for ( PointSetIt i = m_points.begin(); i != m_points.end(); ++i )
+  {
+    if ( abs( i->GetXi() - point.x ) < HANDLE_RANGE && abs( i->GetYi() - point.y ) < HANDLE_RANGE )
+    {
+      grabbed = i;
+      break;
+    }
+  }
+}
+
+// Releasing middle click
+void CBezierWnd::OnMButtonUp( UINT nFlags, CPoint point )
+{
+  grabbed = m_points.end();
 }
 
 // Resizing window
