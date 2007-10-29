@@ -43,6 +43,7 @@ class CBezierWnd : public CFrameWnd
     void Draw();
     CPoint2D GetBezierPoint( const PointList &points, float t );
     void SetPixel( int x, int y, Color32 c = COLOR( 0, 0, 0 ) );
+    void DrawHandle(const CPoint2D &point );
 
       // messages
     DECLARE_MESSAGE_MAP();

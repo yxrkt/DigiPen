@@ -88,13 +88,12 @@ void CBezierWnd::Update()
 // ============================================================================
 void CBezierWnd::Draw()
 {
-  if ( m_points.size() < 3)
-  {
-    for ( PointSetIt i = m_points.begin(); i != m_points.end(); ++i )
-      SetPixel( i->GetXi(), i->GetYi() );
 
+  for ( PointSetIt i = m_points.begin(); i != m_points.end(); ++i )
+    DrawHandle( *i );
+
+  if ( m_points.size() < 3)
     return;
-  }
 
   PointList lPoints;
   for ( PointSetIt i = m_points.begin(); i != m_points.end(); ++i )
@@ -129,6 +128,29 @@ CPoint2D CBezierWnd::GetBezierPoint( const PointList &points, float t )
 
   else
     return points.front();
+}
+
+// ============================================================================
+// Draws a circle around a point, indicating a grab region
+// ============================================================================
+void CBezierWnd::DrawHandle( const CPoint2D &point )
+{
+  int x = point.GetXi();
+  int y = point.GetYi();
+
+  SetPixel( x - 1, y - 2 );
+  SetPixel( x , y - 2 );
+  SetPixel( x + 1, y - 2 );
+  SetPixel( x - 1, y + 2 );
+  SetPixel( x , y + 2 );
+  SetPixel( x + 1, y + 2 );
+
+  SetPixel( x - 2, y - 1 );
+  SetPixel( x - 2, y );
+  SetPixel( x - 2, y + 1 );
+  SetPixel( x + 2, y - 1 );
+  SetPixel( x + 2, y );
+  SetPixel( x + 2, y + 1 );
 }
 
 // ============================================================================
