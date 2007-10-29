@@ -6,7 +6,7 @@
 // ============================================================================
 // Constructor for main window
 // ============================================================================
-CBezierWnd::CBezierWnd()
+CBezierWnd::CBezierWnd() : bRunning( true )
 {
   if ( !Create( NULL, "Bezier Curve Canvas" ) )
     MessageBox( "Creating window failed.", NULL, MB_ICONERROR );
@@ -16,7 +16,6 @@ CBezierWnd::CBezierWnd()
   m_DimWnd.width  = rcWnd.right - rcWnd.left;
   m_DimWnd.height = rcWnd.bottom - rcWnd.top;
 
-  //m_Surface = new unsigned[ m_DimWnd.right * m_DimWnd.bottom ];
   BITMAPINFOHEADER bmpinfo = { sizeof( BITMAPINFOHEADER ), 
                                m_DimWnd.width, 
                                m_DimWnd.height, 
@@ -42,24 +41,26 @@ CBezierWnd::CBezierWnd()
 	SelectObject( m_BitmapDC, m_Bitmap );
   memset( m_Surface, 0xFF, sizeof( int ) * m_DimWnd.width * m_DimWnd.height );
 
+
   pThis = this;
-  hMutex = CreateMutex( NULL, FALSE, NULL );
-  int nThreads = 1;
-  _beginthread( sUpdate, 0, &nThreads );
+  AfxBeginThread( sUpdate, NULL );
 }
 
+CBezierWnd::~CBezierWnd()
+{
+  //delete m_Surface;
+}
+
+bool CBezierWnd::bDone = false;
 HANDLE CBezierWnd::hMutex;
 CBezierWnd *CBezierWnd::pThis;
-void CBezierWnd::sUpdate( void *pMyID )
+unsigned CBezierWnd::sUpdate( void *pMyID )
 {
-  while ( pThis )
-  {
-    WaitForSingleObject( hMutex, INFINITE );
+  while ( pThis->bRunning )
     pThis->Update();
-    ReleaseMutex( hMutex );
-  }
 
-  CloseHandle( hMutex );
+  bDone = true;
+  return 0;
 }
 
 // ============================================================================
@@ -150,6 +151,7 @@ BEGIN_MESSAGE_MAP( CBezierWnd, CFrameWnd )
   ON_WM_MOUSEMOVE()
   ON_WM_LBUTTONDOWN()
   ON_WM_SIZE()
+  ON_WM_CLOSE()
 
   ON_WM_CHAR()
 END_MESSAGE_MAP()
@@ -165,7 +167,7 @@ void CBezierWnd::OnLButtonDown( UINT nFlags, CPoint point )
   m_points.insert( CBezierPoint( point ) );
 }
 
-// Moving window
+// Resizing window
 void CBezierWnd::OnSize( UINT nType, int cx, int cy )
 {
   m_DimWnd.width  = cx;
@@ -186,4 +188,13 @@ void CBezierWnd::OnChar( UINT nChar, UINT nRepCnt, UINT nFlags )
 // UpdateWindow
 void CBezierWnd::OnPaint()
 {
+}
+
+// End update thread
+void CBezierWnd::OnClose()
+{
+  bRunning = false;
+  while ( !bDone )
+    ;
+  this->DestroyWindow();
 }

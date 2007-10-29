@@ -16,11 +16,13 @@ class CBezierWnd : public CFrameWnd
 {
   public:
     CBezierWnd();
+    ~CBezierWnd();
 
     void Update();
-    static void sUpdate( void *pMyID );
+    static unsigned sUpdate( void *pMyID );
     static CBezierWnd *pThis;
     static HANDLE hMutex;
+    static bool bDone;
 
   protected:
       // data
@@ -35,6 +37,7 @@ class CBezierWnd : public CFrameWnd
     HBITMAP m_Bitmap;
     unsigned *m_Surface;
     struct { int width; int height; } m_DimWnd;
+    bool bRunning;
 
       // methods
     void Draw();
@@ -49,6 +52,7 @@ class CBezierWnd : public CFrameWnd
     void OnSize( UINT nType, int cx, int cy );
     void OnChar( UINT nChar, UINT nRepCnt, UINT nFlags );
     void OnPaint();
+    void OnClose();
 };
 
 #endif
