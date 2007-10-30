@@ -10,7 +10,8 @@ BOOL CBezierApp::InitInstance()
   INITCOMMONCONTROLSEX InitCtrls;
   InitCtrls.dwSize = sizeof( INITCOMMONCONTROLSEX );
   InitCtrls.dwICC  = ICC_WIN95_CLASSES;
-  InitCommonControlsEx( &InitCtrls );
+  if ( !InitCommonControlsEx( &InitCtrls ) )
+    AfxMessageBox( "Initializing common controls failed." );
 
     // Create main window
   m_pMainWnd = new CBezierWnd;

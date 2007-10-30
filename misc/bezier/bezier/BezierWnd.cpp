@@ -45,7 +45,8 @@ CBezierWnd::CBezierWnd() : bRunning( true ), grabbed( m_points.end() )
   pThis = this;
   AfxBeginThread( sUpdate, NULL );
 
-  m_Toolbar;
+  if ( !m_Toolbar.LoadToolBar( IDR_TOOLBAR1 ) )
+    AfxMessageBox( "Loading toolbar failed." );
 }
 
 CBezierWnd::~CBezierWnd()
