@@ -15,16 +15,24 @@
 
 // =============================================================================
 // My Interface
+// =============================================================================
 
 
 float *g_zBuf;          // depth buffer
 int g_Width, g_Height;  // screen width & height
 Scene *g_pScene;        // the 'scene'
 
+struct Edge;
+
+  // Edge containers
+std::list<Edge> EdgeTable;
+std::list<Edge> ActiveEdgeList;
+typedef std::list<Edge>::iterator EdgeListIt;
+
   // Rounds a float to the nearest int
 int FloatToInt( const float &f )
 {
-  if (f >= 0)
+  if ( f >= 0 )
     return (int) ( f + .5f );
   return (int) ( f - .5f );
 }
@@ -171,10 +179,6 @@ void SetBounds( int &low, int &high, IncX &incX )
   }
 }
 
-  // For casting point to vector
-template <typename T, typename U>
-T bybyte_cast( U u ) { return ( *(T *) &u ); }
-
   // Retrieve value in z buffer
 float &ZBuf( int x, int y )
 {
@@ -186,12 +190,6 @@ float operator*( const Vector3D &lhs, const Vector3D &rhs )
 {
   return ( lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2] );
 }
-
-  // Edge containers
-std::list<Edge> EdgeTable;
-std::list<Edge> ActiveEdgeList;
-
-typedef std::list<Edge>::iterator EdgeListIt;
 
   // Clip an edge
 void ClipY( EdgeListIt EdgeIt )
@@ -218,6 +216,7 @@ void ClipY( EdgeListIt EdgeIt )
   }
 }
 
+// =============================================================================
 // End My Interface
 // =============================================================================
 
@@ -246,9 +245,9 @@ void DrawScene( Scene& scene, int width, int height )
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
   glBegin( GL_POINTS );
 
-  g_pScene = &scene;
-  g_Width = width;
-  g_Height = height;
+  g_pScene  = &scene;
+  g_Width   = width;
+  g_Height  = height;
   unsigned nLength = (unsigned) ( width * height );
 
   g_zBuf = new float[nLength];
@@ -293,9 +292,10 @@ void DrawScene( Scene& scene, int width, int height )
           EdgeTable.erase( ETIt++ );
 
         else
+        {
           ClipY( ETIt );
-
-        ++ETIt;
+          ++ETIt;
+        }
       }
 
         // Set values for scanline 0
@@ -323,21 +323,21 @@ void DrawScene( Scene& scene, int width, int height )
           float dx  = ( AELIt->x - AELItPrev->x );
           IncX incX;
 
-            // Set starting x values
+            // Set starting values for scanline
           incX.z    = AELItPrev->z;
           incX.N    = AELItPrev->N;
           incX.u_w  = AELItPrev->u_w;
           incX.v_w  = AELItPrev->v_w;
           incX.i_w  = AELItPrev->i_w;
 
-            // Set incremental x values
+            // Set incremental values for scanline
           incX.dzdx = ( AELIt->z   - AELItPrev->z   ) / dx;
           incX.dNdx = ( AELIt->N   - AELItPrev->N   ) / dx;
           incX.dudx = ( AELIt->u_w - AELItPrev->u_w ) / dx;
           incX.dvdx = ( AELIt->v_w - AELItPrev->v_w ) / dx;
           incX.dwdx = ( AELIt->i_w - AELItPrev->i_w ) / dx;
 
-            // Clip x edges
+            // Clip edges along left and right borders
           int x0 = FloatToInt( AELItPrev->x ), x1 = FloatToInt( AELIt->x );
           SetBounds( x0, x1, incX );
 
