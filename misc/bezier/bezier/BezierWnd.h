@@ -15,7 +15,8 @@ typedef unsigned Color32;
 
 class CBezierWnd : public CFrameWnd
 {
-  static const int HANDLE_RANGE = 4;
+  static const int HANDLE_RANGE   = 4;
+  static const int TOOLBAR_HEIGHT = 32;
 
   public:
     CBezierWnd();
@@ -34,14 +35,15 @@ class CBezierWnd : public CFrameWnd
 
     typedef std::set< CBezierPoint > PointSet;
     typedef PointSet::iterator PointSetIt;
-    PointSet m_points;
+    PointSet m_Points;
 
     HDC m_BitmapDC;
     HBITMAP m_Bitmap;
     unsigned *m_Surface;
-    struct { int width; int height; } m_DimWnd;
-    bool bRunning;
-    PointSetIt grabbed;
+    struct { int width, height; } m_DimWnd;
+    bool m_bRunning;
+    PointSetIt m_Grabbed;
+    bool m_bDrawPoly;
 
       // windows
     CToolBar m_Toolbar;
@@ -51,18 +53,23 @@ class CBezierWnd : public CFrameWnd
     CPoint2D GetBezierPoint( const PointList &points, float t );
     void SetPixel( int x, int y, Color32 c = COLOR( 0, 0, 0 ) );
     void DrawHandle( const CPoint2D &point );
+    void DrawLine( const CPoint2D &start, const CPoint2D &finish );
 
       // messages
     DECLARE_MESSAGE_MAP();
 
+    int OnCreate( LPCREATESTRUCT );
     void OnMouseMove( UINT nFlags, CPoint point );
     void OnLButtonDown( UINT nFlags, CPoint point );
     void OnMButtonDown( UINT nFlags, CPoint point );
     void OnMButtonUp( UINT nFlags, CPoint point );
     void OnSize( UINT nType, int cx, int cy );
     void OnChar( UINT nChar, UINT nRepCnt, UINT nFlags );
-    void OnPaint();
     void OnClose();
+
+      // On Command
+    void OnHidePolygon();
+    void OnShowPolygon();
 };
 
 #endif
