@@ -38,14 +38,14 @@ struct Edge
     dN  = (v1.N - v0.N) / dy;
 
     Vector4D S(v0.V[0] * 2.f / (float) g_Width - 1.f, v0.V[1] * 2.f / (float) g_Height - 1.f, v0.V[2]);
-    Vector4D T = g_pScene->projection.InverseTransform(S);
+    Vector4D T = g_pScene->projection.Transform(S);
 
     u_w = v0.u / T[3];
     v_w = v0.v / T[3];
     i_w = 1.f / T[3];
 
     S = Vector4D(v1.V[0] * 2.f / (float) g_Width - 1.f, v1.V[1] * 2.f / (float) g_Height - 1.f, v1.V[2]);
-    T = g_pScene->projection.InverseTransform(S);
+    T = g_pScene->projection.Transform(S);
     float i_w1 = 1.f / T[3];
 
     du_w  = (v1.u * i_w1 - u_w) / dy;
