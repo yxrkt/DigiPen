@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include <list>
+#include <map>
 
 #include "framework.h"
 #include "scenelib.h"
@@ -28,6 +29,11 @@ struct Edge;
 std::list<Edge> EdgeTable;
 std::list<Edge> ActiveEdgeList;
 typedef std::list<Edge>::iterator EdgeListIt;
+
+  // Mipmaping stuff
+typedef std::vector< float *> Mipmap;
+typedef std::vector< Mipmap > MipmapVector;
+std::map< Texture *, MipmapVector > MipmapMap;
 
   // Rounds a float to the nearest int
 int FloatToInt( const float &f )
@@ -216,6 +222,64 @@ void ClipY( EdgeListIt EdgeIt )
   }
 }
 
+  // Gets the average of a group of texels
+void GetAverage( float **texels, float *avg, unsigned nTexels = 4 )
+{
+  memset( avg, 0, 4 * sizeof( float ) );
+  for ( unsigned i = 0; i < nTexels; ++i )
+  {
+    for ( unsigned j = 0; j < 3; ++j )
+    {
+      avg[j] += ( texels[i][j] / (float) nTexels );
+    }
+  }
+
+  avg[3] = 1.f;
+}
+
+  // Generates mipmaps for a texture
+void GenerateMipmaps( Texture *pTex )
+{
+  MipmapVector mipmaps;
+
+  int nWidth      = pTex->width;
+  int nHeight     = pTex->height;
+  pTex->processed = pTex->texels;
+
+  while ( nWidth != 1 && nHeight != 1 )
+  {
+    nWidth  /= 2;
+    nHeight /= 2;
+
+    Mipmap mipmap( nWidth * nHeight );
+
+    for ( int x = 0; x < nWidth; ++x )
+    {
+      for ( int y = 0; y < nHeight; ++y )
+      {
+        int X = 2 * x;
+        int Y = 2 * y;
+
+        float avg[4];
+        float *texels[4];
+        float *prevTex = (float *) pTex->processed;
+
+        texels[0] = prevTex + ( Y * nWidth + X );
+        texels[1] = prevTex + ( Y * nWidth + X + 1 );
+        texels[2] = prevTex + ( ( Y + 1 ) * nWidth + X );
+        texels[3] = prevTex + ( ( Y + 1 ) * nWidth + X + 1 );
+
+        GetAverage( texels, avg );
+        mipmap[ y * nWidth + x ] = avg;
+      }
+    }
+
+    mipmaps.push_back( mipmap );
+  }
+
+  MipmapMap[ pTex ] = mipmaps;
+}
+
 // =============================================================================
 // End My Interface
 // =============================================================================
@@ -223,12 +287,16 @@ void ClipY( EdgeListIt EdgeIt )
 ////////////////////////////////////////////////////////////////////////
 // This is called once after the scene is created but before it is
 // ever drawn to allow for any pre-processing steps.
-void PreprocessScene( Scene& scene )
-{}
+void PreprocessScene( Scene &scene )
+{
+  size_t nObjects = scene.objects.size();
+  for ( size_t i = 0; i < nObjects; ++i )
+    GenerateMipmaps( scene.objects[i].texture );
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Procedure DrawScene is called whenever the scene needs to be drawn.
-void DrawScene( Scene& scene, int width, int height )
+void DrawScene( Scene &scene, int width, int height )
 {
 	// Choose OpenGL or student rendering here.  The decision can be
 	// based on useOpenGLRendering, useFastRendering, or both:
@@ -349,7 +417,11 @@ void DrawScene( Scene& scene, int width, int height )
               ZBuf( x, y ) = incX.z;
               float u = (float) obj.texture->width  * incX.u_w / incX.i_w;
               float v = (float) obj.texture->height * incX.v_w / incX.i_w;
+              //u /= 2.f;
+              //v /= 2.f;
               glColor4fv( obj.texture->texel( FloatToInt( u ), FloatToInt( v ), 0 ) );
+              //float *rgba = MipmapMap[obj.texture][0][0] + ( obj.texture->width / 2 ) * FloatToInt( v ) + FloatToInt( u );
+              //glColor4fv( rgba );
               glVertex2i( x, y );
             }
 
