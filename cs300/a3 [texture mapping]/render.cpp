@@ -31,8 +31,11 @@ std::list<Edge> ActiveEdgeList;
 typedef std::list<Edge>::iterator EdgeListIt;
 
   // Mipmaping stuff
-typedef std::vector< float *> Mipmap;
-typedef std::vector< Mipmap > MipmapVector;
+class Mipmap : public Texture
+{
+};
+
+typedef std::vector< Texture > MipmapVector;
 std::map< Texture *, MipmapVector > MipmapMap;
 
   // Rounds a float to the nearest int
@@ -244,14 +247,14 @@ void GenerateMipmaps( Texture *pTex )
 
   int nWidth      = pTex->width;
   int nHeight     = pTex->height;
-  pTex->processed = pTex->texels;
+  Texture *pPrev  = pTex;
 
   while ( nWidth != 1 && nHeight != 1 )
   {
     nWidth  /= 2;
     nHeight /= 2;
 
-    Mipmap mipmap( nWidth * nHeight );
+    Texture mipmap( nWidth, nHeight, 3 );
 
     for ( int x = 0; x < nWidth; ++x )
     {
@@ -260,20 +263,18 @@ void GenerateMipmaps( Texture *pTex )
         int X = 2 * x;
         int Y = 2 * y;
 
-        float avg[4];
         float *texels[4];
-        float *prevTex = (float *) pTex->processed;
 
-        texels[0] = prevTex + ( Y * nWidth + X );
-        texels[1] = prevTex + ( Y * nWidth + X + 1 );
-        texels[2] = prevTex + ( ( Y + 1 ) * nWidth + X );
-        texels[3] = prevTex + ( ( Y + 1 ) * nWidth + X + 1 );
+        texels[0] = pPrev->texel( X, Y, 0 );
+        texels[1] = pPrev->texel( X + 1, Y, 0 );
+        texels[2] = pPrev->texel( X, Y + 1, 0 );
+        texels[3] = pPrev->texel( X + 1, Y + 1, 0 );
 
-        GetAverage( texels, avg );
-        mipmap[ y * nWidth + x ] = avg;
+        GetAverage( texels, mipmap.texel( x, y, 0 ) );
       }
     }
 
+    pPrev = &mipmap;
     mipmaps.push_back( mipmap );
   }
 
