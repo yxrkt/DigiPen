@@ -23,7 +23,7 @@ float *g_zBuf;          // depth buffer
 int g_Width, g_Height;  // screen width & height
 Scene *g_pScene;        // the 'scene'
 
-float g_D = 0.f;
+struct { float u, v; } g_Debug;
 
 struct Edge;
 
@@ -154,6 +154,16 @@ struct IncX
     v_w += ( dvdx * rhs );
     i_w += ( dwdx * rhs );
     N   += ( dNdx * rhs );
+  }
+
+  void Clamp()
+  {
+    if ( u_w < 0.f )
+      u_w = 0.f;
+    if ( v_w < 0.f )
+      v_w = 0.f;
+    if ( i_w < 0.f )
+      i_w = 0.f;
   }
 
   float z, dzdx, u_w, dudx, v_w, dvdx, i_w, dwdx;
@@ -442,12 +452,14 @@ void DrawScene( Scene &scene, int width, int height )
           {
             if ( incX.z < ZBuf( x, y ) )
             {
+              incX.Clamp();
               ZBuf( x, y ) = incX.z;
 
                 // Approximate area
               float den = ( incX.i_w == 0.f ) ? .001f : incX.i_w;
               float Area = ( AELItPrev->dv_w * incX.dudx - AELItPrev->du_w * incX.dvdx ) / den;
-              Area *= 2.f * (float) ( obj.texture->width * obj.texture->height );
+              /*Area *= 2.f * (float) ( obj.texture->width * obj.texture->height );*/
+              Area *= (float) ( width * height );
               float D = ( Area > 0.f ) ? .5f * lg( Area ) : -1.f;
 
                 // magnification: use interpolation
@@ -466,19 +478,27 @@ void DrawScene( Scene &scene, int width, int height )
                 colors[2] = obj.texture->texel( floor(u), ceil(v),  0 );
                 colors[3] = obj.texture->texel( ceil(u),  ceil(v),  0 );
 
-                float weights[4] = { ufC * vfC, vfC * uf, ufC * vf, uf * vf };
-                GetWAverage( wavg, colors, weights );
-                //glColor3fv( GetTexColor( obj.texture, incX.u_w, incX.v_w, incX.i_w ) );
-                glColor3fv( wavg );
+                  // Make sure to not go off texture
+                if ( (int) ceil(u) > obj.texture->width || (int) ceil(v) > obj.texture->height )
+                {
+                  glColor3fv( GetTexColor( obj.texture, incX.u_w, incX.v_w, incX.i_w ) );
+                }
+
+                else
+                {
+                  float weights[4] = { ufC * vfC, vfC * uf, ufC * vf, uf * vf };
+                  g_Debug.u = u;
+                  g_Debug.v = v;
+                  GetWAverage( wavg, colors, weights );
+                  glColor3fv( wavg );
+                }
               }
 
                 // minification: use mipmapping
               else
               {
-                if ( D > 7.f || D < 0 )
+                if ( D > 7.f )
                   bool break_here = true;
-
-                g_D = D;
 
                 int DFloor  = (int) D;
                 int DCeil   = DFloor + 1;
