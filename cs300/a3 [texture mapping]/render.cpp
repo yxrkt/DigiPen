@@ -23,6 +23,8 @@ float *g_zBuf;          // depth buffer
 int g_Width, g_Height;  // screen width & height
 Scene *g_pScene;        // the 'scene'
 
+float g_D = 0.f;
+
 struct Edge;
 
   // Edge containers
@@ -31,10 +33,6 @@ std::list<Edge> ActiveEdgeList;
 typedef std::list<Edge>::iterator EdgeListIt;
 
   // Mipmaping stuff
-class Mipmap : public Texture
-{
-};
-
 typedef std::vector< Texture > MipmapVector;
 std::map< Texture *, MipmapVector > MipmapMap;
 
@@ -57,6 +55,10 @@ struct Edge
 
       // Make sure v0 is the lower vertex
     SwapIf();
+    if ( v0.v < 0 )
+      v0.v = 0;
+    if ( v1.u < 0 )
+      v1.u = 0;
 
       // Set starting values
     x   = v0.V[0];
@@ -225,10 +227,15 @@ void ClipY( EdgeListIt EdgeIt )
   }
 }
 
-  // Gets the average of a group of texels
-void GetAverage( float **texels, float *avg, unsigned nTexels = 4 )
+float lg( const float rhs )
 {
-  memset( avg, 0, 4 * sizeof( float ) );
+  return ( log( rhs ) / log( 2.f ) );
+}
+
+  // Gets the average of a group of texels
+void GetAverage( float texels[4][3], float *avg, unsigned nTexels = 4 )
+{
+  memset( avg, 0, 3 * sizeof( float ) );
   for ( unsigned i = 0; i < nTexels; ++i )
   {
     for ( unsigned j = 0; j < 3; ++j )
@@ -236,8 +243,28 @@ void GetAverage( float **texels, float *avg, unsigned nTexels = 4 )
       avg[j] += ( texels[i][j] / (float) nTexels );
     }
   }
+}
 
-  avg[3] = 1.f;
+  // Gets weighted average of a group of texels
+void GetWAverage( float *wavg, float **colors, float *weights, unsigned nTexels = 4 )
+{
+  memset( wavg, 0, 3 * sizeof( float ) );
+  for ( unsigned i = 0; i < nTexels; ++i )
+  {
+    for ( unsigned j = 0; j < 3; ++j )
+    {
+      wavg[j] += colors[i][j] * weights[i];
+    }
+  }
+}
+
+  // Gets the color at ( u, v ) on a texture
+float *GetTexColor( Texture *tex, float u_w, float v_w, float i_w )
+{
+  int u = (int) floor( (float) tex->width  * u_w / i_w );
+  int v = (int) floor( (float) tex->height * v_w / i_w );
+
+  return tex->texel( u, v, 0 );
 }
 
   // Generates mipmaps for a texture
@@ -263,19 +290,19 @@ void GenerateMipmaps( Texture *pTex )
         int X = 2 * x;
         int Y = 2 * y;
 
-        float *texels[4];
+        float texels[4][3];
 
-        texels[0] = pPrev->texel( X, Y, 0 );
-        texels[1] = pPrev->texel( X + 1, Y, 0 );
-        texels[2] = pPrev->texel( X, Y + 1, 0 );
-        texels[3] = pPrev->texel( X + 1, Y + 1, 0 );
+        memcpy( texels[0], pPrev->texel( X, Y, 0 ),         3 * sizeof( float ) );
+        memcpy( texels[1], pPrev->texel( X + 1, Y, 0 ),     3 * sizeof( float ) );
+        memcpy( texels[2], pPrev->texel( X, Y + 1, 0 ),     3 * sizeof( float ) );
+        memcpy( texels[3], pPrev->texel( X + 1, Y + 1, 0 ), 3 * sizeof( float ) );
 
         GetAverage( texels, mipmap.texel( x, y, 0 ) );
       }
     }
 
-    pPrev = &mipmap;
     mipmaps.push_back( mipmap );
+    pPrev = &mipmaps.front();
   }
 
   MipmapMap[ pTex ] = mipmaps;
@@ -410,19 +437,66 @@ void DrawScene( Scene &scene, int width, int height )
           int x0 = FloatToInt( AELItPrev->x ), x1 = FloatToInt( AELIt->x );
           SetBounds( x0, x1, incX );
 
-            // Draw each scanline
+            // Draw each pixel on scanline
           for ( int x = x0; x < x1; ++x )
           {
             if ( incX.z < ZBuf( x, y ) )
             {
               ZBuf( x, y ) = incX.z;
-              float u = (float) obj.texture->width  * incX.u_w / incX.i_w;
-              float v = (float) obj.texture->height * incX.v_w / incX.i_w;
-              //u /= 2.f;
-              //v /= 2.f;
-              glColor4fv( obj.texture->texel( FloatToInt( u ), FloatToInt( v ), 0 ) );
-              //float *rgba = MipmapMap[obj.texture][0][0] + ( obj.texture->width / 2 ) * FloatToInt( v ) + FloatToInt( u );
-              //glColor4fv( rgba );
+
+                // Approximate area
+              float den = ( incX.i_w == 0.f ) ? .001f : incX.i_w;
+              float Area = ( AELItPrev->dv_w * incX.dudx - AELItPrev->du_w * incX.dvdx ) / den;
+              Area *= 2.f * (float) ( obj.texture->width * obj.texture->height );
+              float D = ( Area > 0.f ) ? .5f * lg( Area ) : -1.f;
+
+                // magnification: use interpolation
+              if ( D < 0 )
+              {
+                float u   = (float) obj.texture->width  * incX.u_w / incX.i_w;
+                float v   = (float) obj.texture->height * incX.v_w / incX.i_w;
+                float uf  = u - floor( u );
+                float vf  = v - floor( v );
+                float ufC = 1.f - uf;
+                float vfC = 1.f - vf;
+
+                float *colors[4], wavg[3];
+                colors[0] = obj.texture->texel( floor(u), floor(v), 0 );
+                colors[1] = obj.texture->texel( ceil(u),  floor(v), 0 );
+                colors[2] = obj.texture->texel( floor(u), ceil(v),  0 );
+                colors[3] = obj.texture->texel( ceil(u),  ceil(v),  0 );
+
+                float weights[4] = { ufC * vfC, vfC * uf, ufC * vf, uf * vf };
+                GetWAverage( wavg, colors, weights );
+                //glColor3fv( GetTexColor( obj.texture, incX.u_w, incX.v_w, incX.i_w ) );
+                glColor3fv( wavg );
+              }
+
+                // minification: use mipmapping
+              else
+              {
+                if ( D > 7.f || D < 0 )
+                  bool break_here = true;
+
+                g_D = D;
+
+                int DFloor  = (int) D;
+                int DCeil   = DFloor + 1;
+
+                  // Get low and high bounds
+                float *rgbL = GetTexColor( &MipmapMap[obj.texture][DFloor], incX.u_w, incX.v_w, incX.i_w );
+                float *rgbH = GetTexColor( &MipmapMap[obj.texture][DCeil],  incX.u_w, incX.v_w, incX.i_w );
+
+                  // Get weighted average
+                float rgb[3];
+                float DFrac  = D - floor( D );
+                float DFracC = 1.f - DFrac;
+                for ( unsigned k = 0; k < 3; ++k )
+                  rgb[k] = rgbL[k] * DFracC + rgbH[k] * DFrac;
+
+                glColor3fv( rgb );
+              }
+
               glVertex2i( x, y );
             }
 
