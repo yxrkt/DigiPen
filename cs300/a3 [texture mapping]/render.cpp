@@ -23,8 +23,6 @@ float *g_zBuf;          // depth buffer
 int g_Width, g_Height;  // screen width & height
 Scene *g_pScene;        // the 'scene'
 
-struct { float u, v; } g_Debug;
-
 struct Edge;
 
   // Edge containers
@@ -55,10 +53,6 @@ struct Edge
 
       // Make sure v0 is the lower vertex
     SwapIf();
-    if ( v0.v < 0 )
-      v0.v = 0;
-    if ( v1.u < 0 )
-      v1.u = 0;
 
       // Set starting values
     x   = v0.V[0];
@@ -135,7 +129,7 @@ struct Edge
 
 }; // End Edge struct
 
-  // Used for incrementing x step
+  // Used for incrementing along the scanline
 struct IncX
 {
   void Inc()
@@ -212,11 +206,11 @@ float operator*( const Vector3D &lhs, const Vector3D &rhs )
   return ( lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2] );
 }
 
-  // Clip an edge
+  // Clip an edge against bottom and top
 void ClipY( EdgeListIt EdgeIt )
 {
     // bottom border
-  if ( EdgeIt->v0.V[1] < 0 )
+  if ( EdgeIt->v0.V[1] < 0.f )
   {
     EdgeIt->x   += ( -EdgeIt->v0.V[1] * EdgeIt->dx   );
     EdgeIt->z   += ( -EdgeIt->v0.V[1] * EdgeIt->dz   );
@@ -237,6 +231,7 @@ void ClipY( EdgeListIt EdgeIt )
   }
 }
 
+ // finds log base 2 of a float
 float lg( const float rhs )
 {
   return ( log( rhs ) / log( 2.f ) );
@@ -487,8 +482,6 @@ void DrawScene( Scene &scene, int width, int height )
                 else
                 {
                   float weights[4] = { ufC * vfC, vfC * uf, ufC * vf, uf * vf };
-                  g_Debug.u = u;
-                  g_Debug.v = v;
                   GetWAverage( wavg, colors, weights );
                   glColor3fv( wavg );
                 }
