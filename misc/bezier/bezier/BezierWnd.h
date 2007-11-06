@@ -15,8 +15,9 @@ typedef unsigned Color32;
 
 class CBezierWnd : public CFrameWnd
 {
+    // constants
   static const int HANDLE_RANGE   = 4;
-  static const int TOOLBAR_HEIGHT = 32;
+  static const int TOOLBAR_HEIGHT = 30;
 
   public:
     CBezierWnd();
@@ -29,14 +30,14 @@ class CBezierWnd : public CFrameWnd
     static bool bDone;
 
   protected:
-      // data
+      // types
     typedef std::list< CPoint2D > PointList;
     typedef PointList::const_iterator PointListItC;
-
     typedef std::set< CBezierPoint > PointSet;
     typedef PointSet::iterator PointSetIt;
-    PointSet m_Points;
 
+      // data
+    PointSet m_Points;
     HDC m_BitmapDC;
     HBITMAP m_Bitmap;
     unsigned *m_Surface;

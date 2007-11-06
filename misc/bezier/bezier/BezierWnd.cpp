@@ -70,7 +70,6 @@ unsigned CBezierWnd::sUpdate( void *pMyID )
 // ============================================================================
 void CBezierWnd::Update()
 {
-  Draw();
   BitBlt( GetDC()->m_hDC, 
           0, 
           TOOLBAR_HEIGHT, 
@@ -83,6 +82,7 @@ void CBezierWnd::Update()
         );
 
   memset( m_Surface, 0xFF, sizeof( int ) * m_DimWnd.width * m_DimWnd.height );
+  Draw();
 }
 
 // ============================================================================
@@ -112,7 +112,7 @@ void CBezierWnd::Draw()
     // Draw control polygon
   if ( m_bDrawPoly )
   {
-    PointSetIt i = m_Points.begin(), iPrev = ++i;
+    PointSetIt i = m_Points.begin(), iPrev = i++;
     do {
       DrawLine( *iPrev, *i );
       iPrev = i++;
@@ -121,7 +121,7 @@ void CBezierWnd::Draw()
 }
 
 // ============================================================================
-// Draw points and curves
+// Get point on the curve at time t
 // ============================================================================
 CPoint2D CBezierWnd::GetBezierPoint( const PointList &points, float t )
 {
@@ -171,6 +171,36 @@ void CBezierWnd::DrawHandle( const CPoint2D &point )
 // ============================================================================
 void CBezierWnd::DrawLine( const CPoint2D &start, const CPoint2D &finish )
 {
+  if ( m_Points.size() < 2 )
+    return;
+
+  float dx  = finish.x - start.x;
+  float dy  = finish.y - start.y;
+	float m   = dy / dx;
+	float m_i = 1.f / m;
+	int xstep = dx > 0 ? 1 : -1;
+	int ystep = dy > 0 ? 1 : -1;
+	if ( m >= -1 && m <= 1 )
+  {
+    float y = start.y + .5f;
+    int iX  = finish.GetXi();
+    for ( int x = start.GetXi(); x != iX; x += xstep )
+    {
+			y += ( dx > 0 ? m : -m );
+			SetPixel( x, (int) y );
+		}
+	}
+
+	else
+  {
+    float x = start.x + .5f;
+    int iY  = finish.GetYi();
+    for ( int y = start.GetYi(); y != iY; y += ystep )
+    {
+			x += ( dy > 0 ? m_i : -m_i );
+			SetPixel( (int) x, y );
+		}
+	}
 }
 
 // ============================================================================
@@ -180,7 +210,7 @@ void CBezierWnd::SetPixel( int x, int y, Color32 c )
 {
   if ( x < 0 || x >= m_DimWnd.width || y < 0 || y >= m_DimWnd.height )
     return;
-  //m_Surface[ ( y * m_DimWnd.width ) + x ] = c; // right handed
+  //m_Surface[ ( y * m_DimWnd.width ) + x ] = c; // right handed     // right handed
   m_Surface[ ( ( m_DimWnd.height - y ) * m_DimWnd.width ) + x ] = c; // left handed
 }
 
