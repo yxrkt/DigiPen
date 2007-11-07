@@ -103,7 +103,7 @@ void CBezierWnd::Draw()
     lPoints.push_back( *i );
 
   CPoint2D p2DStart =  *m_Points.begin();
-  float fStep = 1.f / ( 20.f * ( float ) lPoints.size() );
+  float fStep = 1.f / ( 10.f * ( float ) lPoints.size() );
   for ( float i = 0.f; i <= 1.f; i+= fStep )
   {
 
