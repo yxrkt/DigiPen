@@ -102,12 +102,16 @@ void CBezierWnd::Draw()
   for ( PointSetIt i = m_Points.begin(); i != m_Points.end(); ++i )
     lPoints.push_back( *i );
 
-  float fStep = ( 1.f / ( 100.f * ( float ) lPoints.size() ) );
+  CPoint2D p2DStart =  *m_Points.begin();
+  float fStep = 1.f / ( 20.f * ( float ) lPoints.size() );
   for ( float i = 0.f; i <= 1.f; i+= fStep )
   {
+
     CPoint2D p2D = GetBezierPoint( lPoints, i );
-    SetPixel( p2D.GetXi(), p2D.GetYi() );
+    DrawLine( p2DStart, p2D );
+    p2DStart = p2D;
   }
+  DrawLine( p2DStart, lPoints.back() );
 
     // Draw control polygon
   if ( m_bDrawPoly )
@@ -208,9 +212,9 @@ void CBezierWnd::DrawLine( const CPoint2D &start, const CPoint2D &finish )
 // ============================================================================
 void CBezierWnd::SetPixel( int x, int y, Color32 c )
 {
-  if ( x < 0 || x >= m_DimWnd.width || y < 0 || y >= m_DimWnd.height )
+  if ( x < 0 || x >= m_DimWnd.width || y < 1 || y >= m_DimWnd.height )
     return;
-  //m_Surface[ ( y * m_DimWnd.width ) + x ] = c; // right handed     // right handed
+  //m_Surface[ ( y * m_DimWnd.width ) + x ] = c; // right handed
   m_Surface[ ( ( m_DimWnd.height - y ) * m_DimWnd.width ) + x ] = c; // left handed
 }
 

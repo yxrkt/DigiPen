@@ -17,7 +17,7 @@ class CBezierWnd : public CFrameWnd
 {
     // constants
   static const int HANDLE_RANGE   = 4;
-  static const int TOOLBAR_HEIGHT = 30;
+  static const int TOOLBAR_HEIGHT = 24;
 
   public:
     CBezierWnd();
