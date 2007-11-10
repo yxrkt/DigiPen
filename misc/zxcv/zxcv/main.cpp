@@ -1,13 +1,18 @@
 #include <iostream>
-#include <string>
+
+struct DAVID_LOL
+{
+  short s;
+  int i;
+  long l;
+};
+
 
 int main()
 {
-  std::string str( "LOL DAVID O'DAY LOL DAVID O'DAY LOL DAVID O'DAY LOL DAVID O'DAY LOL DAVID O'DAY" );
-
-  std::cout << "using member size:    " << str.size() << std::endl
-            << "using sizeof:         " << sizeof( str ) << std::endl
-            << "size of empty string: " << sizeof( std::string );
+  DAVID_LOL LOLDAVID;
+  struct { short S; int I; long L; } david_LOL;
+  std::cout << (typeid(LOLDAVID) == typeid(DAVID_LOL) ? true : false) << std::endl;
 
   return 0;
 }
