@@ -1,5 +1,6 @@
 #include <sstream>
 #include <process.h>
+#include <math.h>
 
 #include "BezierWnd.h"
 
@@ -8,7 +9,8 @@
 // ============================================================================
 CBezierWnd::CBezierWnd() : m_bRunning( true ), 
                            m_Grabbed( m_Points.end() ), 
-                           m_bDrawPoly( false )
+                           m_bDrawPoly( false ),
+                           m_bBernstein( true )
 {
   if ( !Create( NULL, "Bezier Curve Canvas" ) )
     MessageBox( "Creating window failed.", NULL, MB_ICONERROR );
@@ -19,26 +21,13 @@ CBezierWnd::CBezierWnd() : m_bRunning( true ),
   m_DimWnd.height = rcWnd.bottom - rcWnd.top - TOOLBAR_HEIGHT;
 
   BITMAPINFOHEADER bmpinfo = { sizeof( BITMAPINFOHEADER ), 
-                               m_DimWnd.width, 
-                               m_DimWnd.height, 
-                               1, 
-                               32, 
-                               BI_RGB,
-                               0L, 
-                               0L, 
-                               0L, 
-                               0, 
-                               0
-                             };
+                               m_DimWnd.width, m_DimWnd.height, 
+                               1, 32, BI_RGB, 0L, 0L, 0L, 0, 0 };
 
   m_BitmapDC    = CreateCompatibleDC( CreateDC( "Display", 0, 0, 0 ) );
-	m_Bitmap      = CreateDIBSection( m_BitmapDC, 
-                                    ( BITMAPINFO *) &bmpinfo, 
-                                    DIB_RGB_COLORS, 
-                                    ( void **) &m_Surface, 
-                                    NULL, 
-                                    NULL
-                                  );
+	m_Bitmap      = CreateDIBSection( m_BitmapDC, ( BITMAPINFO *) &bmpinfo, 
+                                    DIB_RGB_COLORS, ( void **) &m_Surface, 
+                                    NULL, NULL );
 
 	SelectObject( m_BitmapDC, m_Bitmap );
   memset( m_Surface, 0xFF, sizeof( int ) * m_DimWnd.width * m_DimWnd.height );
@@ -90,9 +79,12 @@ void CBezierWnd::Update()
 // ============================================================================
 void CBezierWnd::Draw()
 {
-    // Draw control point handles
+    // Draw control point handles and labels
   for ( PointSetIt i = m_Points.begin(); i != m_Points.end(); ++i )
+  {
     DrawHandle( *i );
+    DrawLabel( *i );
+  }
 
   if ( m_Points.size() < 3)
     return;
@@ -129,6 +121,33 @@ void CBezierWnd::Draw()
 // ============================================================================
 CPoint2D CBezierWnd::GetBezierPoint( const PointList &points, float t )
 {
+  return m_bBernstein ? Bernstein( points, t ) : deCasteljau( points, t );
+}
+
+// ============================================================================
+// Get point using Bernstein polynomials
+// ============================================================================
+CPoint2D CBezierWnd::Bernstein( const PointList &points, float t )
+{
+  CPoint2D final( 0.f, 0.f  );
+  int nDegree = (int) points.size() - 1;
+  PointListItC pointIter = points.begin();
+
+  for ( int i = 0; i <= nDegree; ++i )
+  {
+    float coef = (float) Choose( nDegree, i ) * pow( ( 1.f - t ), nDegree - i ) * pow( t, i );
+    final += ( coef * ( *pointIter ) );
+    ++pointIter;
+  }
+
+  return final;
+}
+
+// ============================================================================
+// Get point using de Casteljau's algorithm
+// ============================================================================
+CPoint2D CBezierWnd::deCasteljau( const PointList &points, float t )
+{
   size_t nPoints = points.size();
   if ( nPoints > 1 )
   {
@@ -148,7 +167,29 @@ CPoint2D CBezierWnd::GetBezierPoint( const PointList &points, float t )
 }
 
 // ============================================================================
-// Draws a circle around a point, indicating the grab region
+// Mathematical choose function
+// ============================================================================
+int CBezierWnd::Choose( int lhs, int rhs ) const
+{
+  if ( rhs == 0 || lhs == rhs )
+    return 1;
+
+  return Factorial( lhs ) / ( Factorial( rhs ) * Factorial( lhs - rhs ) );
+}
+
+// ============================================================================
+// Mathematical choose function
+// ============================================================================
+int CBezierWnd::Factorial( int lhs ) const
+{
+  int final = lhs;
+  for ( int i = 2; i < lhs; ++i )
+    final *= i;
+  return final;
+}
+
+// ============================================================================
+// Draws circles around a control point
 // ============================================================================
 void CBezierWnd::DrawHandle( const CPoint2D &point )
 {
@@ -168,6 +209,13 @@ void CBezierWnd::DrawHandle( const CPoint2D &point )
   SetPixel( x + 2, y - 1 );
   SetPixel( x + 2, y );
   SetPixel( x + 2, y + 1 );
+}
+
+// ============================================================================
+// Draws text labeling a control point
+// ============================================================================
+void CBezierWnd::DrawLabel( const CPoint2D &point )
+{
 }
 
 // ============================================================================
@@ -235,6 +283,8 @@ BEGIN_MESSAGE_MAP( CBezierWnd, CFrameWnd )
 
   ON_COMMAND( ID_HIDE_POLYGON, OnHidePolygon )
   ON_COMMAND( ID_SHOW_POLYGON, OnShowPolygon )
+  ON_COMMAND( ID_DECASTELJAU, OnDeCasteljau )
+  ON_COMMAND( ID_BERNSTEIN, OnBernstein )
 END_MESSAGE_MAP()
 
 // Window is created
@@ -276,6 +326,13 @@ void CBezierWnd::OnLButtonDown( UINT nFlags, CPoint point )
 {
   point.y -= TOOLBAR_HEIGHT;
   m_Points.insert( CBezierPoint( point ) );
+
+  //CEdit label;
+  //label.SetParent( this );
+  //std::stringstream ss;
+  //ss << "p_" << m_Points.size();
+  //label.SetWindowTextA( ss.str().c_str() );
+  //CEdit l2(label);
 }
 
 // Middle clicking
@@ -338,4 +395,16 @@ void CBezierWnd::OnHidePolygon()
 void CBezierWnd::OnShowPolygon()
 {
   m_bDrawPoly = true;
+}
+
+// draw curve using de Casteljau's algorithm
+void CBezierWnd::OnDeCasteljau()
+{
+  m_bBernstein = false;
+}
+
+// draw curve using bernstein polynomials
+void CBezierWnd::OnBernstein()
+{
+  m_bBernstein = true;
 }

@@ -6,6 +6,7 @@
 
 #include <set>
 #include <list>
+#include <vector>
 
 #include "stdafx.h"
 #include "BezierPoint.h"
@@ -32,9 +33,11 @@ class CBezierWnd : public CFrameWnd
   protected:
       // types
     typedef std::list< CPoint2D > PointList;
+    typedef PointList::iterator PointListIt;
     typedef PointList::const_iterator PointListItC;
     typedef std::set< CBezierPoint > PointSet;
     typedef PointSet::iterator PointSetIt;
+    typedef std::vector< CEdit > CEditVec;
 
       // data
     PointSet m_Points;
@@ -45,6 +48,8 @@ class CBezierWnd : public CFrameWnd
     bool m_bRunning;
     PointSetIt m_Grabbed;
     bool m_bDrawPoly;
+    bool m_bBernstein;
+    CEditVec Labels;
 
       // windows
     CToolBar m_Toolbar;
@@ -55,6 +60,11 @@ class CBezierWnd : public CFrameWnd
     void SetPixel( int x, int y, Color32 c = COLOR( 0, 0, 0 ) );
     void DrawHandle( const CPoint2D &point );
     void DrawLine( const CPoint2D &start, const CPoint2D &finish );
+    CPoint2D Bernstein( const PointList &points, float t );
+    CPoint2D deCasteljau( const PointList &points, float t );
+    int Choose( int lhs, int rhs ) const;
+    int Factorial( int lhs ) const;
+    void DrawLabel( const CPoint2D &point );
 
       // messages
     DECLARE_MESSAGE_MAP();
@@ -71,6 +81,8 @@ class CBezierWnd : public CFrameWnd
       // On Command
     void OnHidePolygon();
     void OnShowPolygon();
+    void OnDeCasteljau();
+    void OnBernstein();
 };
 
 #endif

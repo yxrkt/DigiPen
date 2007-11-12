@@ -34,6 +34,13 @@ struct CPoint2D
       return CPoint2D( lhs * rhs.x, lhs * rhs.y );
     }
 
+    CPoint2D operator +=( const CPoint2D &rhs )
+    {
+      x += rhs.x;
+      y += rhs.y;
+      return *this;
+    }
+
     float x;
     float y;
 };
