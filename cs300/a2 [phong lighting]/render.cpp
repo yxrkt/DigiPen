@@ -294,6 +294,7 @@ void DrawScene(Scene& scene, int width, int height)
                 // view vector
               Point3D Eye = scene.viewing.InverseTransform(Vector4D(0.0, 0.0, 0.0, 1.0)).Hdiv();
               Vector3D V(Eye - W);
+              V.normalize();
 
                 // color buffer
               Color c(scene.ambient * obj.Kd);  // IaKa
