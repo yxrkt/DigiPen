@@ -57,6 +57,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Winmm.lib"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>

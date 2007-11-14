@@ -1,18 +1,26 @@
 #include <iostream>
+#include <windows.h>
+#include <process.h>
+#include <conio.h>
 
-struct DAVID_LOL
+void threadProc1( void *pMyID )
 {
-  short s;
-  int i;
-  long l;
-};
+  do {
+  } while ( !( GetAsyncKeyState( 'Q' ) & 0x8000 ) );
 
+  std::cout << "thread1 terminated" << std::endl;
+
+  exit( 0 );
+}
 
 int main()
 {
-  DAVID_LOL LOLDAVID;
-  struct { short S; int I; long L; } david_LOL;
-  std::cout << (typeid(LOLDAVID) == typeid(DAVID_LOL) ? true : false) << std::endl;
+  _beginthread( threadProc1, 0, NULL );
+
+  int key;
+  do {
+    key = _getch();
+  } while ( (char) key != 'x' );
 
   return 0;
-}
+};
