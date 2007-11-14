@@ -352,7 +352,7 @@ Vector3D GetBumpNormal( int i, int j, const Object &obj, const APolygon &poly, c
   float w = obj.bump->width;
   float h = obj.bump->height;
 
-  float fi0j0 = obj.bump->texel( i, j, 0 )[0];         // TODO: CHANGE THESE?
+  float fi0j0 = obj.bump->texel( i, j, 0 )[0];
   float fi1j0 = obj.bump->texel( i + 1, j, 0 )[0];
   float fi1j1 = obj.bump->texel( i + 1, j + 1, 0 )[0];
   float fi0j1 = obj.bump->texel( i , j + 1, 0 )[0];
@@ -362,7 +362,7 @@ Vector3D GetBumpNormal( int i, int j, const Object &obj, const APolygon &poly, c
 
   Vector3D D = ( fv * Pu - fu * Pv ) ^ N.normalized();
 
-  return ( N + D ).normalized();
+  return ( D + N ).normalized();
 }
 
 // =============================================================================
