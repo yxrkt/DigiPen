@@ -509,13 +509,11 @@ void DrawScene( Scene &scene, int width, int height )
               float D = ( Area > 0.f ) ? .5f * lg( Area ) : -1.f;
               float rgb[3];
 
-                // get texture coords
-              float u   = (float) obj.texture->width  * incX.u_w / incX.i_w;
-              float v   = (float) obj.texture->height * incX.v_w / incX.i_w;
-
                 // magnification: use interpolation
               if ( D < 0 )
               {
+                float u   = (float) obj.texture->width  * incX.u_w / incX.i_w;
+                float v   = (float) obj.texture->height * incX.v_w / incX.i_w;
                 float uf  = u - floor( u );
                 float vf  = v - floor( v );
                 float ufC = 1.f - uf;
@@ -579,7 +577,9 @@ void DrawScene( Scene &scene, int width, int height )
               Color c( Kd );  // IaKa
 
                 // Get normal here
-              Vector3D N( GetBumpNormal( (int) u, (int) v, obj, poly, incX.N ) );
+              int bumpU = (int) ( (float) obj.bump->width  * incX.u_w / incX.i_w );
+              int bumpV = (int) ( (float) obj.bump->height * incX.v_w / incX.i_w );
+              Vector3D N( GetBumpNormal( bumpU, bumpV, obj, poly, incX.N ) );
               //Vector3D N( incX.N.normalized() );
 
                 // Get color from sum of lights
