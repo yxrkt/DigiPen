@@ -19,9 +19,10 @@
 // =============================================================================
 
 
-float *g_zBuf;          // depth buffer
-int g_Width, g_Height;  // screen width & height
-Scene *g_pScene;        // the 'scene'
+float *g_zBuf;                    // depth buffer
+int g_Width, g_Height;            // screen width & height
+Scene *g_pScene;                  // the 'scene'
+const float g_BumpConst = 0.05f;  // bump map normal constant
 
 struct Edge;
 
@@ -362,7 +363,7 @@ Vector3D GetBumpNormal( int i, int j, const Object &obj, const APolygon &poly, c
 
   Vector3D D = ( fv * Pu - fu * Pv ) ^ N.normalized();
 
-  return ( D + N ).normalized();
+  return ( ( g_BumpConst * D + N ).normalized() );
 }
 
 // =============================================================================
