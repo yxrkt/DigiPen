@@ -18,6 +18,8 @@
 #define GS_GAME_PROC        6
 #define GS_DEATH            7
 #define GS_DEATH_PROC       8
+#define GS_WIN              9
+#define GS_WIN_PROC         10
 
 /**************/
 /* Prototypes */
@@ -36,6 +38,9 @@ int GSGameProc();
 
 int GSDeath();
 int GSDeathProc();
+
+int GSWin();
+int GSWinProc();
 
 /********/
 /* main */
@@ -105,13 +110,22 @@ void GameProc()
 
             case GS_DEATH_PROC:
             gameState += GSDeathProc();
+            break;
+            
+            case GS_WIN:
+            gameState += GSWin();
+            break;
+
+            case GS_WIN_PROC:
+            gameState += GSWinProc();
+            break;
 
             default:
             break;
         }
 
         // reset game state if needed
-        if (gameState > GS_DEATH_PROC)
+        if (gameState > GS_WIN_PROC)
         {
             gameState = GS_TITLE;
         }

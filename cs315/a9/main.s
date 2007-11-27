@@ -1,7 +1,7 @@
 	.file	"main.c"
 @ GNU C version 3.3.2 (arm-thumb-elf)
 @	compiled by GNU C version 3.3.1 (cygming special).
-@ GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+@ GGC heuristics: --param ggc-min-expand=99 --param ggc-min-heapsize=130827
 @ options passed:  -fpreprocessed -mthumb-interwork -mlong-calls
 @ -auxbase-strip -O2 -Wall -fverbose-asm
 @ options enabled:  -fdefer-pop -fomit-frame-pointer
@@ -61,27 +61,27 @@ GameProc:
 	@ frame_needed = 1, uses_anonymous_args = 0
 	mov	ip, sp
 	stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, ip, lr, pc}
-	ldr	r5, .L28
-	ldr	r6, .L28+4
-	ldr	r9, .L28+8
-	ldr	sl, .L28+12
-	ldr	r8, .L28+16
-	ldr	r7, .L28+20
+	ldr	r5, .L30
+	ldr	r6, .L30+4
+	ldr	r7, .L30+8
+	ldr	r8, .L30+12
+	ldr	sl, .L30+16
+	ldr	r9, .L30+20
 	sub	fp, ip, #4
 	mov	r4, #0	@  gameState
-.L25:
+.L27:
 	mov	lr, pc
 	bx	r5
 	tst	r0, #255
-	beq	.L25
+	beq	.L27
 	mov	r0, #0
 	mov	lr, pc
 	bx	r6
-	cmp	r4, #8	@  gameState
+	cmp	r4, #10	@  gameState
 	ldrls	pc, [pc, r4, asl #2]	@  gameState
 	b	.L11
 	.p2align 2
-.L22:
+.L24:
 	.word	.L12
 	.word	.L13
 	.word	.L14
@@ -91,57 +91,67 @@ GameProc:
 	.word	.L18
 	.word	.L19
 	.word	.L20
+	.word	.L21
+	.word	.L22
 .L12:
 	add	r4, r4, #1	@  gameState,  gameState
 .L11:
-	cmp	r4, #8	@  gameState
+	cmp	r4, #10	@  gameState
 	movgt	r4, #1	@  gameState
-	b	.L25
+	b	.L27
 .L13:
-	ldr	r3, .L28+24
-.L27:
+	ldr	r3, .L30+24
+.L28:
 	mov	lr, pc
 	bx	r3
-.L26:
+.L29:
 	add	r4, r4, r0	@  gameState,  gameState
 	b	.L11
 .L14:
-	ldr	r3, .L28+28
-	b	.L27
+	ldr	r3, .L30+28
+	b	.L28
 .L15:
-	ldr	r3, .L28+32
-	b	.L27
+	ldr	r3, .L30+32
+	b	.L28
 .L16:
 	mov	lr, pc
-	bx	r9
-	b	.L26
+	bx	r7
+	b	.L29
 .L17:
-	ldr	r3, .L28+36
-	b	.L27
+	mov	lr, pc
+	bx	r8
+	b	.L29
 .L18:
 	mov	lr, pc
 	bx	sl
-	b	.L26
+	b	.L29
 .L19:
-	mov	lr, pc
-	bx	r8
-	b	.L26
+	ldr	r3, .L30+36
+	b	.L28
 .L20:
 	mov	lr, pc
-	bx	r7
-	b	.L26
-.L29:
+	bx	r9
+	b	.L29
+.L21:
+	ldr	r3, .L30+40
+	b	.L28
+.L22:
+	ldr	r3, .L30+44
+	b	.L28
+.L31:
 	.align	2
-.L28:
+.L30:
 	.word	GetVerticalBlankState
 	.word	SetVerticalBlankState
 	.word	GSStoryProc
+	.word	GSGame
 	.word	GSGameProc
-	.word	GSDeath
 	.word	GSDeathProc
 	.word	GSTitle
 	.word	GSTitleProc
 	.word	GSStory
-	.word	GSGame
+	.word	GSDeath
+	.word	GSWin
+	.word	GSWinProc
 	.size	GameProc, .-GameProc
 	.ident	"GCC: (GNU) 3.3.2"
