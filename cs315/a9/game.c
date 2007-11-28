@@ -13,6 +13,7 @@
 #include "story1.pal"
 #include "story1.raw"
 #include "world.pal"
+#include "world2.pal"
 #include "world.raw"
 #include "world.map"
 #include "hippy.pal"
@@ -60,6 +61,7 @@ void VScroll(int shift);
 bool CheckCollision(const struct Sprite *lhs, const struct Sprite *rhs);
 int CollisionResult();
 void RunAI();
+void SwapBGPalette();
 
 //************//
 // Title Init //
@@ -259,6 +261,9 @@ int GSGameProc()
     Move();
     
     RunAI();
+    
+    if (GetVerticalBlankCount()  % 15 == 0)
+        SwapBGPalette();
 
     return CollisionResult();
 }
@@ -499,7 +504,7 @@ int CollisionResult()
 void RunAI()
 {
     // fireball
-    if ( (g_count % 100) && !g_firing )
+    if ( (g_count % 1000) && !g_firing )
     {
         g_fireBall.x = g_shroom.x - g_fireBall.w;
         g_fireBall.y = g_shroom.y;
@@ -518,6 +523,22 @@ void RunAI()
     
     // update positions
     ham_SetObjXY(g_fireBall.sprite, g_fireBall.x, g_fireBall.y);
+}
+
+void SwapBGPalette()
+{
+    static bool swap = TRUE;
+
+    if (swap)
+    {
+        ham_LoadBGPal((void *)world2_palette, 256);
+    }
+    else
+    {
+        ham_LoadBGPal((void *)world_palette, 256);
+    }
+
+    swap = (swap) ? FALSE : TRUE;
 }
 
 
