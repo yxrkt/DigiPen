@@ -1,7 +1,7 @@
 	.file	"game.c"
 @ GNU C version 3.3.2 (arm-thumb-elf)
 @	compiled by GNU C version 3.3.1 (cygming special).
-@ GGC heuristics: --param ggc-min-expand=99 --param ggc-min-heapsize=130827
+@ GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 @ options passed:  -fpreprocessed -mthumb-interwork -mlong-calls
 @ -auxbase-strip -O2 -Wall -fverbose-asm
 @ options enabled:  -fdefer-pop -fomit-frame-pointer
@@ -189049,6 +189049,527 @@ key_bitmap:
 	.byte	2
 	.byte	2
 	.byte	2
+	.global	fire_palette
+	.align	1
+	.type	fire_palette, %object
+	.size	fire_palette, 512
+fire_palette:
+	.short	0
+	.short	8732
+	.short	31
+	.short	1023
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.short	0
+	.global	fire_bitmap
+	.type	fire_bitmap, %object
+	.size	fire_bitmap, 256
+fire_bitmap:
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	3
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	3
+	.byte	3
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	3
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	3
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	3
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	3
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	1
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	1
+	.byte	1
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	2
+	.byte	2
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
 	.global	WALK_SPEED
 	.align	2
 	.type	WALK_SPEED, %object
@@ -189125,6 +189646,13 @@ g_lives:
 	.size	g_initObjs, 1
 g_initObjs:
 	.byte	1
+	.global	g_firing
+	.bss
+	.global	g_firing
+	.type	g_firing, %object
+	.size	g_firing, 1
+g_firing:
+	.space	1
 	.text
 	.align	2
 	.global	GSTitle
@@ -189323,15 +189851,15 @@ GSGame:
 	stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, ip, lr, pc}
 	sub	fp, ip, #4
 	sub	sp, sp, #36
-	ldr	r9, .L28
+	ldr	r9, .L30
 	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	cmp	r1, #0
-	bne	.L23
+	bne	.L24
 .L18:
-	ldr	r3, .L28+4
-	ldr	r5, .L28+8
+	ldr	r3, .L30+4
+	ldr	r5, .L30+8
 	mov	r6, #0	@  bg_world
-	ldr	r2, .L28+12
+	ldr	r2, .L30+12
 	str	r6, [r3, #0]	@  bg_world,  g_cam_x
 	mov	r3, #64
 	mov	r7, #32
@@ -189345,9 +189873,9 @@ GSGame:
 	strb	r6, [r5, #1]	@  bg_world,  g_hippy.baseFrame
 	strb	r6, [r5, #2]	@  bg_world,  g_hippy.frameDif
 	str	r7, [r5, #12]	@  g_hippy.w
-	bne	.L24
+	bne	.L25
 .L19:
-	ldr	r5, .L28+16
+	ldr	r5, .L30+16
 	mov	sl, #75
 	mov	r3, #230
 	cmp	r1, #0
@@ -189358,9 +189886,9 @@ GSGame:
 	strb	r6, [r5, #2]	@  bg_world,  g_shroom.frameDif
 	str	sl, [r5, #8]	@  g_shroom.y
 	str	r7, [r5, #12]	@  g_shroom.w
-	bne	.L25
+	bne	.L26
 .L20:
-	ldr	r5, .L28+20
+	ldr	r5, .L30+20
 	mov	r3, #260
 	mov	r8, #16
 	add	r3, r3, #2
@@ -189371,37 +189899,73 @@ GSGame:
 	strb	r6, [r5, #2]	@  bg_world,  g_key.frameDif
 	str	r8, [r5, #12]	@  g_key.w
 	str	r8, [r5, #16]	@  g_key.h
-	bne	.L26
+	bne	.L27
 .L21:
-	ldr	sl, .L28+24
-	ldr	r7, .L28+28
+	ldr	sl, .L30+24
+	ldr	r7, .L30+28
 	ldrb	r3, [sl, #0]	@ zero_extendqisi2	@  g_lives
 	cmp	r1, #0
 	strb	r3, [r7, #1]	@  g_lifeCount.baseFrame
-	str	r8, [r7, #16]	@  g_lifeCount.h
 	strb	r6, [r7, #0]	@  bg_world,  g_lifeCount.dir
 	strb	r6, [r7, #2]	@  bg_world,  g_lifeCount.frameDif
 	str	r6, [r7, #4]	@  bg_world,  g_lifeCount.x
 	str	r6, [r7, #8]	@  bg_world,  g_lifeCount.y
 	str	r8, [r7, #12]	@  g_lifeCount.w
-	bne	.L27
+	str	r8, [r7, #16]	@  g_lifeCount.h
+	bne	.L28
 .L22:
+	ldr	r5, .L30+32
+	mov	r3, #241
+	cmp	r1, #0
+	str	r3, [r5, #4]	@  g_fireBall.x
+	str	r8, [r5, #16]	@  g_fireBall.h
+	strb	r6, [r5, #0]	@  bg_world,  g_fireBall.dir
+	strb	r6, [r5, #1]	@  bg_world,  g_fireBall.baseFrame
+	strb	r6, [r5, #2]	@  bg_world,  g_fireBall.frameDif
+	str	r6, [r5, #8]	@  bg_world,  g_fireBall.y
+	str	r8, [r5, #12]	@  g_fireBall.w
+	bne	.L29
+.L23:
+	ldr	r3, .L30+36
 	mov	r0, #1
 	strb	r6, [r9, #0]	@  bg_world,  g_initObjs
+	strb	r6, [r3, #0]	@  bg_world,  g_firing
 	ldmea	fp, {r4, r5, r6, r7, r8, r9, sl, fp, sp, lr}
 	bx	lr
-.L27:
+.L29:
+	ldrh	lr, [r5, #4]	@  g_fireBall.x
+	ldrh	r4, [r5, #8]	@  g_fireBall.y
+	mov	ip, #1	@  bg_world
+	mov	r2, ip	@  bg_world
+	str	ip, [sp, #0]	@  bg_world
+	ldr	r0, .L30+40
+	mov	r1, r6	@  bg_world
+	mov	r3, r6	@  bg_world
+	str	lr, [sp, #28]
+	str	r4, [sp, #32]
+	str	r6, [sp, #4]	@  bg_world
+	str	r6, [sp, #8]	@  bg_world
+	str	r6, [sp, #12]	@  bg_world
+	str	r6, [sp, #16]	@  bg_world
+	str	r6, [sp, #20]	@  bg_world
+	str	r6, [sp, #24]	@  bg_world
+	ldr	ip, .L30+44
+	mov	lr, pc
+	bx	ip
+	strb	r0, [r5, #3]	@  bg_world,  g_fireBall.sprite
+	b	.L23
+.L28:
 	ldrh	lr, [r7, #4]	@  g_lifeCount.x
 	ldrh	r4, [r7, #8]	@  g_lifeCount.y
-	ldr	r5, .L28+32	@  bg_world
+	ldr	r5, .L30+48	@  bg_world
 	mov	ip, #1	@  bg_world
 	mov	r2, ip	@  bg_world
 	mov	r1, r6	@  bg_world
 	mov	r3, r6	@  bg_world
+	str	lr, [sp, #28]
 	str	ip, [sp, #0]	@  bg_world
 	mov	r0, r5	@  bg_world
-	ldr	ip, .L28+36
-	str	lr, [sp, #28]
+	ldr	ip, .L30+44
 	str	r4, [sp, #32]
 	str	r6, [sp, #4]	@  bg_world
 	str	r6, [sp, #8]	@  bg_world
@@ -189418,18 +189982,19 @@ GSGame:
 	strb	r0, [r7, #3]	@  bg_world,  g_lifeCount.sprite
 	mla	r1, r2, ip, r5	@  bg_world,  bg_world
 	ldrb	r0, [r7, #3]	@ zero_extendqisi2	@  bg_world,  g_lifeCount.sprite
-	ldr	r3, .L28+40
+	ldr	r3, .L30+52
 	mov	lr, pc
 	bx	r3
+	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	b	.L22
-.L26:
+.L27:
 	ldrh	lr, [r5, #4]	@  g_key.x
 	ldrh	r4, [r5, #8]	@  g_key.y
 	mov	ip, #1	@  bg_world
 	mov	r2, ip	@  bg_world
 	mov	r1, r6	@  bg_world
 	str	ip, [sp, #0]	@  bg_world
-	ldr	r0, .L28+44
+	ldr	r0, .L30+56
 	mov	r3, r6	@  bg_world
 	str	lr, [sp, #28]
 	str	r4, [sp, #32]
@@ -189439,19 +190004,19 @@ GSGame:
 	str	r6, [sp, #16]	@  bg_world
 	str	r6, [sp, #20]	@  bg_world
 	str	r6, [sp, #24]	@  bg_world
-	ldr	ip, .L28+36
+	ldr	ip, .L30+44
 	mov	lr, pc
 	bx	ip
 	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	strb	r0, [r5, #3]	@  bg_world,  g_key.sprite
 	b	.L21
-.L25:
+.L26:
 	ldrh	lr, [r5, #4]	@  g_shroom.x
 	ldrh	r4, [r5, #8]	@  g_shroom.y
 	mov	ip, #1
 	mov	r1, r6	@  bg_world
 	str	ip, [sp, #0]
-	ldr	r0, .L28+48
+	ldr	r0, .L30+60
 	mov	r2, #2
 	mov	r3, r6	@  bg_world
 	str	lr, [sp, #28]
@@ -189462,16 +190027,16 @@ GSGame:
 	str	r6, [sp, #16]	@  bg_world
 	str	r6, [sp, #20]	@  bg_world
 	str	r6, [sp, #24]	@  bg_world
-	ldr	ip, .L28+36
+	ldr	ip, .L30+44
 	mov	lr, pc
 	bx	ip
 	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	strb	r0, [r5, #3]	@  bg_world,  g_shroom.sprite
 	b	.L20
-.L24:
-	ldr	r0, .L28+52
+.L25:
+	ldr	r0, .L30+64
 	mov	r1, #256
-	ldr	r3, .L28+56
+	ldr	r3, .L30+68
 	mov	lr, pc
 	bx	r3
 	ldrh	r4, [r5, #4]	@  g_hippy.x
@@ -189479,7 +190044,7 @@ GSGame:
 	mov	ip, #1
 	mov	r1, #2
 	str	ip, [sp, #0]
-	ldr	r0, .L28+60
+	ldr	r0, .L30+72
 	mov	r2, #3
 	mov	r3, r6	@  bg_world
 	str	r4, [sp, #28]
@@ -189490,34 +190055,34 @@ GSGame:
 	str	r6, [sp, #16]	@  bg_world
 	str	r6, [sp, #20]	@  bg_world
 	str	r6, [sp, #24]	@  bg_world
-	ldr	ip, .L28+36
+	ldr	ip, .L30+44
 	mov	lr, pc
 	bx	ip
 	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	strb	r0, [r5, #3]	@  bg_world,  g_hippy.sprite
 	b	.L19
-.L23:
+.L24:
 	mov	r0, #1
-	ldr	r3, .L28+64
+	ldr	r3, .L30+76
 	mov	lr, pc
 	bx	r3
-	ldr	r0, .L28+68
+	ldr	r0, .L30+80
 	mov	r1, #256
-	ldr	r3, .L28+72
+	ldr	r3, .L30+84
 	mov	lr, pc
 	bx	r3
 	mov	r2, #1
 	mov	r3, r2
-	ldr	ip, .L28+76
+	ldr	ip, .L30+88
 	mov	r1, #6912
-	ldr	r0, .L28+80
+	ldr	r0, .L30+92
 	mov	lr, pc
 	bx	ip
-	ldr	r6, .L28+84
+	ldr	r6, .L30+96
 	mov	r2, r0	@  bg_world
 	mov	r1, #0
 	str	r2, [r6, #4]	@  bg_world,  <variable>.ti
-	ldr	r3, .L28+88
+	ldr	r3, .L30+100
 	mov	r0, #3
 	mov	lr, pc
 	bx	r3
@@ -189530,8 +190095,8 @@ GSGame:
 	mov	r3, r4	@  bg_world
 	str	ip, [sp, #4]	@  bg_world
 	str	ip, [sp, #8]	@  bg_world
-	ldr	r0, .L28+92
-	ldr	ip, .L28+96
+	ldr	r0, .L30+104
+	ldr	ip, .L30+108
 	str	r4, [sp, #0]	@  bg_world
 	str	r4, [sp, #12]	@  bg_world
 	mov	lr, pc
@@ -189539,21 +190104,21 @@ GSGame:
 	mov	r1, r4	@  bg_world
 	mov	r2, r4	@  bg_world
 	mov	r3, r4	@  bg_world
-	ldr	ip, .L28+100
+	ldr	ip, .L30+112
 	mov	lr, pc
 	bx	ip
 	mov	r1, #1
 	mov	r0, r4	@  bg_world
 	mov	r2, r4
 	mov	r3, r4
-	ldr	ip, .L28+104
+	ldr	ip, .L30+116
 	mov	lr, pc
 	bx	ip
 	ldrb	r1, [r9, #0]	@ zero_extendqisi2	@  g_initObjs
 	b	.L18
-.L29:
+.L31:
 	.align	2
-.L28:
+.L30:
 	.word	g_initObjs
 	.word	g_cam_x
 	.word	g_hippy
@@ -189562,8 +190127,11 @@ GSGame:
 	.word	g_key
 	.word	g_lives
 	.word	g_lifeCount
-	.word	lives_bitmap
+	.word	g_fireBall
+	.word	g_firing
+	.word	fire_bitmap
 	.word	ham_CreateObj
+	.word	lives_bitmap
 	.word	ham_UpdateObjGfx
 	.word	key_bitmap
 	.word	shroom_bitmap
@@ -189591,19 +190159,23 @@ GSGameProc:
 	@ frame_needed = 1, uses_anonymous_args = 0
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
-	ldr	r3, .L31
+	ldr	r3, .L33
 	sub	fp, ip, #4
 	mov	lr, pc
 	bx	r3
-	ldr	r0, .L31+4
+	ldr	r2, .L33+4
+	mov	lr, pc
+	bx	r2
+	ldr	r0, .L33+8
 	mov	lr, pc
 	bx	r0
 	ldmea	fp, {fp, sp, lr}
 	bx	lr
-.L32:
+.L34:
 	.align	2
-.L31:
+.L33:
 	.word	Move
+	.word	RunAI
 	.word	CollisionResult
 	.size	GSGameProc, .-GSGameProc
 	.align	2
@@ -189617,30 +190189,30 @@ GSDeath:
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, #4
 	sub	fp, ip, #4
-	ldr	r3, .L34
+	ldr	r3, .L36
 	mov	lr, pc
 	bx	r3
 	mov	r1, #256
-	ldr	r0, .L34+4
-	ldr	r3, .L34+8
+	ldr	r0, .L36+4
+	ldr	r3, .L36+8
 	mov	lr, pc
 	bx	r3
-	ldr	r0, .L34+12
-	ldr	r3, .L34+16
+	ldr	r0, .L36+12
+	ldr	r3, .L36+16
 	mov	lr, pc
 	bx	r3
-	ldr	r2, .L34+20
+	ldr	r2, .L36+20
 	mov	lr, pc
 	bx	r2
-	ldr	r3, .L34+24
+	ldr	r3, .L36+24
 	mov	lr, pc
 	bx	r3
 	mov	r0, #1
 	ldmea	fp, {fp, sp, lr}
 	bx	lr
-.L35:
+.L37:
 	.align	2
-.L34:
+.L36:
 	.word	ham_SetBgMode
 	.word	death_palette
 	.word	ham_LoadBGPal
@@ -189665,12 +190237,12 @@ GSDeathProc:
 	stmfd	sp!, {r4, r5, fp, ip, lr, pc}
 	sub	fp, ip, #4
 	sub	sp, sp, #12
-	ldr	r5, .L39
+	ldr	r5, .L41
 	ldr	r4, [r5, #0]	@  trans
 	cmp	r4, #0
 	sub	r0, fp, #32
-	beq	.L37
-	ldr	r0, .L39+4
+	beq	.L39
+	ldr	r0, .L41+4
 	mov	lr, pc
 	bx	r0
 	ands	r0, r0, #255	@  done
@@ -189679,11 +190251,11 @@ GSDeathProc:
 	moveq	r3, #1
 	mov	r0, r0, asl #1
 	str	r3, [r5, #0]	@  trans
-.L36:
+.L38:
 	ldmea	fp, {r4, r5, fp, sp, lr}
 	bx	lr
-.L37:
-	ldr	r2, .L39+8
+.L39:
+	ldr	r2, .L41+8
 	mov	lr, pc
 	bx	r2
 	ldrb	r3, [fp, #-23]	@ zero_extendqisi2	@  controller.start
@@ -189691,10 +190263,10 @@ GSDeathProc:
 	movne	r3, #1
 	str	r3, [r5, #0]	@  trans
 	mov	r0, r4
-	b	.L36
-.L40:
+	b	.L38
+.L42:
 	.align	2
-.L39:
+.L41:
 	.word	trans.2
 	.word	FadeBG
 	.word	GetControllerState
@@ -189710,30 +190282,30 @@ GSWin:
 	stmfd	sp!, {fp, ip, lr, pc}
 	mov	r0, #4
 	sub	fp, ip, #4
-	ldr	r3, .L42
+	ldr	r3, .L44
 	mov	lr, pc
 	bx	r3
 	mov	r1, #256
-	ldr	r0, .L42+4
-	ldr	r3, .L42+8
+	ldr	r0, .L44+4
+	ldr	r3, .L44+8
 	mov	lr, pc
 	bx	r3
-	ldr	r0, .L42+12
-	ldr	r3, .L42+16
+	ldr	r0, .L44+12
+	ldr	r3, .L44+16
 	mov	lr, pc
 	bx	r3
-	ldr	r2, .L42+20
+	ldr	r2, .L44+20
 	mov	lr, pc
 	bx	r2
-	ldr	r3, .L42+24
+	ldr	r3, .L44+24
 	mov	lr, pc
 	bx	r3
 	mov	r0, #1
 	ldmea	fp, {fp, sp, lr}
 	bx	lr
-.L43:
+.L45:
 	.align	2
-.L42:
+.L44:
 	.word	ham_SetBgMode
 	.word	win_palette
 	.word	ham_LoadBGPal
@@ -189758,23 +190330,23 @@ GSWinProc:
 	stmfd	sp!, {r4, r5, fp, ip, lr, pc}
 	sub	fp, ip, #4
 	sub	sp, sp, #12
-	ldr	r5, .L47
+	ldr	r5, .L49
 	ldr	r4, [r5, #0]	@  done,  trans
 	cmp	r4, #0	@  done
 	sub	r0, fp, #32
-	beq	.L45
-	ldr	r0, .L47+4
+	beq	.L47
+	ldr	r0, .L49+4
 	mov	lr, pc
 	bx	r0
 	ands	r0, r0, #255	@  done,  done
 	movne	r3, #0
 	moveq	r3, #1
 	str	r3, [r5, #0]	@  trans
-.L44:
+.L46:
 	ldmea	fp, {r4, r5, fp, sp, lr}
 	bx	lr
-.L45:
-	ldr	r2, .L47+8
+.L47:
+	ldr	r2, .L49+8
 	mov	lr, pc
 	bx	r2
 	ldrb	r3, [fp, #-23]	@ zero_extendqisi2	@  controller.start
@@ -189782,10 +190354,10 @@ GSWinProc:
 	movne	r3, #1
 	str	r3, [r5, #0]	@  trans
 	mov	r0, r4	@  done,  done
-	b	.L44
-.L48:
+	b	.L46
+.L50:
 	.align	2
-.L47:
+.L49:
 	.word	trans.3
 	.word	FadeBG
 	.word	GetControllerState
@@ -189802,136 +190374,136 @@ Move:
 	sub	fp, ip, #4
 	sub	sp, sp, #12
 	sub	r0, fp, #40
-	ldr	r3, .L78
+	ldr	r3, .L80
 	mov	lr, pc
 	bx	r3
 	ldrb	r2, [fp, #-38]	@ zero_extendqisi2	@  cont.left
 	cmp	r2, #0
 	mov	r6, #0	@  moving
-	ldreq	r7, .L78+4
-	ldreq	r5, .L78+8
-	beq	.L50
-	ldr	r7, .L78+4
+	ldreq	r7, .L80+4
+	ldreq	r5, .L80+8
+	beq	.L52
+	ldr	r7, .L80+4
 	ldr	r3, [r7, #0]	@  g_cam_x
 	cmp	r3, r6
-	ble	.L71
-	ldr	r5, .L78+8
+	ble	.L73
+	ldr	r5, .L80+8
 	ldr	r3, [r5, #12]	@  g_hippy.w
 	ldr	r2, [r5, #4]	@  g_hippy.x
 	add	r3, r3, r3, lsr #31
 	add	r2, r2, r3, asr #1
 	cmp	r2, #120
-	beq	.L73
-.L51:
+	beq	.L75
+.L53:
 	ldr	r3, [r5, #4]	@  g_hippy.x
 	cmp	r3, #0
 	subgt	r3, r3, #1
 	strgt	r3, [r5, #4]	@  g_hippy.x
-.L52:
+.L54:
 	mov	r3, #4
 	strb	r3, [r5, #1]	@  g_hippy.baseFrame
 	ldrb	r0, [r5, #3]	@ zero_extendqisi2	@  g_hippy.sprite
 	mov	r1, #0
-	ldr	r3, .L78+12
+	ldr	r3, .L80+12
 	mov	lr, pc
 	bx	r3
 	mov	r6, #1	@  moving
-.L50:
+.L52:
 	ldrb	r3, [fp, #-37]	@ zero_extendqisi2	@  cont.right
 	cmp	r3, #0
-	beq	.L54
+	beq	.L56
 	ldr	r2, [r7, #0]	@  g_cam_x
 	mov	r3, #268
 	add	r3, r3, #2
 	cmp	r2, r3
-	bgt	.L55
+	bgt	.L57
 	ldr	r3, [r5, #12]	@  g_hippy.w
 	ldr	r2, [r5, #4]	@  g_hippy.x
 	add	r3, r3, r3, lsr #31
 	add	r2, r2, r3, asr #1
 	cmp	r2, #120
-	beq	.L74
-.L55:
+	beq	.L76
+.L57:
 	ldr	r3, [r5, #12]	@  g_hippy.w
 	ldr	r2, [r5, #4]	@  g_hippy.x
 	rsb	r3, r3, #240
 	cmp	r2, r3
 	addlt	r3, r2, #1
 	strlt	r3, [r5, #4]	@  g_hippy.x
-.L56:
+.L58:
 	cmp	r6, #0	@  moving
-	beq	.L75
-.L54:
+	beq	.L77
+.L56:
 	ldrb	r3, [fp, #-40]	@ zero_extendqisi2	@  cont.up
 	cmp	r3, #0
-	ldreq	r4, .L78+16
-	beq	.L59
-	ldr	r4, .L78+16
+	ldreq	r4, .L80+16
+	beq	.L61
+	ldr	r4, .L80+16
 	ldr	r3, [r4, #0]	@  g_cam_y
 	cmp	r3, #0
-	ble	.L60
+	ble	.L62
 	ldr	r3, [r5, #16]	@  g_hippy.h
 	ldr	r2, [r5, #8]	@  g_hippy.y
 	add	r3, r3, r3, lsr #31
 	add	r2, r2, r3, asr #1
 	cmp	r2, #80
-	beq	.L76
-.L60:
+	beq	.L78
+.L62:
 	ldr	r3, [r5, #8]	@  g_hippy.y
 	cmp	r3, #0
 	subgt	r3, r3, #1
 	strgt	r3, [r5, #8]	@  g_hippy.y
-.L61:
+.L63:
 	cmp	r6, #0	@  moving
 	moveq	r3, #2
 	streqb	r3, [r5, #1]	@  g_hippy.baseFrame
 	moveq	r6, #1	@  moving
-.L59:
+.L61:
 	ldrb	r3, [fp, #-39]	@ zero_extendqisi2	@  cont.down
 	cmp	r3, #0
-	beq	.L64
+	beq	.L66
 	ldr	r2, [r4, #0]	@  g_cam_y
 	mov	r3, #348
 	add	r3, r3, #2
 	cmp	r2, r3
-	bgt	.L65
+	bgt	.L67
 	ldr	r3, [r5, #16]	@  g_hippy.h
 	ldr	r2, [r5, #8]	@  g_hippy.y
 	add	r3, r3, r3, lsr #31
 	add	r2, r2, r3, asr #1
 	cmp	r2, #80
-	beq	.L77
-.L65:
+	beq	.L79
+.L67:
 	ldr	r3, [r5, #16]	@  g_hippy.h
 	ldr	r2, [r5, #8]	@  g_hippy.y
 	rsb	r3, r3, #160
 	cmp	r2, r3
 	addlt	r3, r2, #1
 	strlt	r3, [r5, #8]	@  g_hippy.y
-.L66:
+.L68:
 	cmp	r6, #0	@  moving
 	streqb	r6, [r5, #1]	@  moving,  g_hippy.baseFrame
 	moveq	r6, #1	@  moving
-.L64:
+.L66:
 	ldrh	r2, [r4, #0]	@  g_cam_y
-	ldr	r3, .L78+20
+	ldr	r3, .L80+20
 	ldrh	r1, [r7, #0]	@  g_cam_x
 	mov	r0, #0
 	mov	lr, pc
 	bx	r3
-	ldr	r4, .L78+24
+	ldr	r4, .L80+24
 	ldrb	r0, [r5, #3]	@ zero_extendqisi2	@  g_hippy.sprite
 	ldrh	r1, [r5, #4]	@  g_hippy.x
 	ldrh	r2, [r5, #8]	@  g_hippy.y
 	mov	lr, pc
 	bx	r4
-	ldr	r3, .L78+28
+	ldr	r3, .L80+28
 	ldrh	r2, [r3, #8]	@  g_shroom.y
 	ldrb	r0, [r3, #3]	@ zero_extendqisi2	@  g_shroom.sprite
 	ldrh	r1, [r3, #4]	@  g_shroom.x
 	mov	lr, pc
 	bx	r4
-	ldr	r3, .L78+32
+	ldr	r3, .L80+32
 	ldrh	r2, [r3, #8]	@  g_key.y
 	ldrb	r0, [r3, #3]	@ zero_extendqisi2	@  g_key.sprite
 	ldrh	r1, [r3, #4]	@  g_key.x
@@ -189942,20 +190514,20 @@ Move:
 	mul	ip, r3, r1
 	ldrb	r2, [r5, #1]	@ zero_extendqisi2	@  g_hippy.baseFrame
 	ldrb	r3, [r5, #2]	@ zero_extendqisi2	@  g_hippy.frameDif
-	ldr	r0, .L78+36
+	ldr	r0, .L80+36
 	add	r2, r2, r3
 	mla	r1, r2, ip, r0
-	ldr	r3, .L78+40
+	ldr	r3, .L80+40
 	ldrb	r0, [r5, #3]	@ zero_extendqisi2	@  g_hippy.sprite
 	mov	lr, pc
 	bx	r3
-	ldr	r2, .L78+44
+	ldr	r2, .L80+44
 	ldr	r3, [r2, #0]	@  g_count
 	cmp	r6, #0	@  moving
 	add	r0, r3, #1
 	str	r0, [r2, #0]	@  g_count
-	beq	.L49
-	ldr	r2, .L78+48
+	beq	.L51
+	ldr	r2, .L80+48
 	mov	r1, r0, lsr #1
 	umull	ip, r3, r2, r1
 	mov	r3, r3, lsr #2
@@ -189965,49 +190537,49 @@ Move:
 	addeq	r3, r3, #1
 	andeq	r3, r3, #1
 	streqb	r3, [r5, #2]	@  g_hippy.frameDif
-.L49:
+.L51:
 	ldmea	fp, {r4, r5, r6, r7, fp, sp, lr}
 	bx	lr
-.L77:
+.L79:
 	mov	r0, #1
-	ldr	r3, .L78+52
+	ldr	r3, .L80+52
 	mov	lr, pc
 	bx	r3
-	b	.L66
-.L76:
+	b	.L68
+.L78:
 	mvn	r0, #0
-	ldr	r3, .L78+52
+	ldr	r3, .L80+52
 	mov	lr, pc
 	bx	r3
-	b	.L61
-.L75:
+	b	.L63
+.L77:
 	mov	r3, #4
 	strb	r3, [r5, #1]	@  g_hippy.baseFrame
 	ldrb	r0, [r5, #3]	@ zero_extendqisi2	@  g_hippy.sprite
 	mov	r1, #1
-	ldr	r3, .L78+12
+	ldr	r3, .L80+12
 	mov	lr, pc
 	bx	r3
 	mov	r6, #1	@  moving
-	b	.L54
-.L74:
-	mov	r0, #1
-	ldr	r3, .L78+56
-	mov	lr, pc
-	bx	r3
 	b	.L56
-.L73:
-	mvn	r0, #0
-	ldr	r3, .L78+56
+.L76:
+	mov	r0, #1
+	ldr	r3, .L80+56
 	mov	lr, pc
 	bx	r3
-	b	.L52
-.L71:
-	ldr	r5, .L78+8
-	b	.L51
-.L79:
+	b	.L58
+.L75:
+	mvn	r0, #0
+	ldr	r3, .L80+56
+	mov	lr, pc
+	bx	r3
+	b	.L54
+.L73:
+	ldr	r5, .L80+8
+	b	.L53
+.L81:
 	.align	2
-.L78:
+.L80:
 	.word	GetControllerState
 	.word	g_cam_x
 	.word	g_hippy
@@ -190031,26 +190603,35 @@ HScroll:
 	@ Function supports interworking.
 	@ args = 0, pretend = 0, frame = 0
 	@ frame_needed = 0, uses_anonymous_args = 0
-	stmfd	sp!, {r4, lr}
-	ldr	ip, .L81
-	ldr	lr, .L81+4
-	ldr	r4, .L81+8
-	ldr	r3, [ip, #0]	@  g_cam_x
-	ldr	r2, [lr, #4]	@  g_shroom.x
-	ldr	r1, [r4, #4]	@  g_key.x
-	add	r3, r3, r0	@  shift
+	stmfd	sp!, {r4, r5, r6, lr}
+	ldr	r3, .L84
+	ldr	r4, .L84+4
+	ldrb	ip, [r3, #0]	@ zero_extendqisi2	@  g_firing
+	ldr	r3, [r4, #4]	@  g_shroom.x
+	ldr	r6, .L84+8
+	ldr	lr, .L84+12
+	ldr	r5, .L84+16
+	rsb	r3, r0, r3	@  shift
+	cmp	ip, #0
+	ldr	r2, [lr, #0]	@  g_cam_x
+	ldr	r1, [r5, #4]	@  g_key.x
+	str	r3, [r4, #4]	@  g_shroom.x
+	ldrne	r3, [r6, #4]	@  g_fireBall.x
+	add	r2, r2, r0	@  shift
 	rsb	r1, r0, r1	@  shift
-	rsb	r2, r0, r2	@  shift
-	str	r3, [ip, #0]	@  g_cam_x
-	str	r2, [lr, #4]	@  g_shroom.x
-	str	r1, [r4, #4]	@  g_key.x
-	ldmfd	sp!, {r4, lr}
+	rsbne	r3, r0, r3	@  shift
+	str	r2, [lr, #0]	@  g_cam_x
+	str	r1, [r5, #4]	@  g_key.x
+	strne	r3, [r6, #4]	@  g_fireBall.x
+	ldmfd	sp!, {r4, r5, r6, lr}
 	bx	lr
-.L82:
+.L85:
 	.align	2
-.L81:
-	.word	g_cam_x
+.L84:
+	.word	g_firing
 	.word	g_shroom
+	.word	g_fireBall
+	.word	g_cam_x
 	.word	g_key
 	.size	HScroll, .-HScroll
 	.align	2
@@ -190060,26 +190641,35 @@ VScroll:
 	@ Function supports interworking.
 	@ args = 0, pretend = 0, frame = 0
 	@ frame_needed = 0, uses_anonymous_args = 0
-	stmfd	sp!, {r4, lr}
-	ldr	ip, .L84
-	ldr	lr, .L84+4
-	ldr	r4, .L84+8
-	ldr	r3, [ip, #0]	@  g_cam_y
-	ldr	r2, [lr, #8]	@  g_shroom.y
-	ldr	r1, [r4, #8]	@  g_key.y
-	add	r3, r3, r0	@  shift
+	stmfd	sp!, {r4, r5, r6, lr}
+	ldr	r3, .L88
+	ldr	r4, .L88+4
+	ldrb	ip, [r3, #0]	@ zero_extendqisi2	@  g_firing
+	ldr	r3, [r4, #8]	@  g_shroom.y
+	ldr	r6, .L88+8
+	ldr	lr, .L88+12
+	ldr	r5, .L88+16
+	rsb	r3, r0, r3	@  shift
+	cmp	ip, #0
+	ldr	r2, [lr, #0]	@  g_cam_y
+	ldr	r1, [r5, #8]	@  g_key.y
+	str	r3, [r4, #8]	@  g_shroom.y
+	ldrne	r3, [r6, #8]	@  g_fireBall.y
+	add	r2, r2, r0	@  shift
 	rsb	r1, r0, r1	@  shift
-	rsb	r2, r0, r2	@  shift
-	str	r3, [ip, #0]	@  g_cam_y
-	str	r2, [lr, #8]	@  g_shroom.y
-	str	r1, [r4, #8]	@  g_key.y
-	ldmfd	sp!, {r4, lr}
+	rsbne	r3, r0, r3	@  shift
+	str	r2, [lr, #0]	@  g_cam_y
+	str	r1, [r5, #8]	@  g_key.y
+	strne	r3, [r6, #8]	@  g_fireBall.y
+	ldmfd	sp!, {r4, r5, r6, lr}
 	bx	lr
-.L85:
+.L89:
 	.align	2
-.L84:
-	.word	g_cam_y
+.L88:
+	.word	g_firing
 	.word	g_shroom
+	.word	g_fireBall
+	.word	g_cam_y
 	.word	g_key
 	.size	VScroll, .-VScroll
 	.align	2
@@ -190096,25 +190686,25 @@ CheckCollision:
 	add	r3, ip, r3
 	cmp	r3, r2
 	mov	lr, #0	@  lhs
-	blt	.L86
+	blt	.L90
 	ldr	r3, [r1, #12]	@  <variable>.w
 	add	r3, r2, r3
 	cmp	ip, r3
 	mov	lr, #0	@  lhs
-	bgt	.L86
+	bgt	.L90
 	ldr	r3, [r0, #16]	@  <variable>.h
 	ldr	r0, [r0, #8]	@  <variable>.y
 	ldr	r2, [r1, #8]	@  <variable>.y
 	add	r3, r0, r3
 	cmp	r3, r2
 	mov	lr, #0	@  lhs
-	blt	.L86
+	blt	.L90
 	ldr	r3, [r1, #16]	@  <variable>.h
 	add	r3, r2, r3
 	cmp	r0, r3
 	movgt	lr, #0	@  lhs
 	movle	lr, #1	@  lhs
-.L86:
+.L90:
 	mov	r0, lr	@  lhs
 	ldr	lr, [sp], #4
 	bx	lr
@@ -190128,46 +190718,53 @@ CollisionResult:
 	@ frame_needed = 1, uses_anonymous_args = 0
 	mov	ip, sp
 	stmfd	sp!, {r4, r5, r6, r7, fp, ip, lr, pc}
-	ldr	r4, .L97
-	ldr	r5, .L97+4
+	ldr	r4, .L102
+	ldr	r5, .L102+4
 	sub	fp, ip, #4
 	mov	r1, r5
 	mov	r0, r4
 	bl	CheckCollision
-	ldr	r6, .L97+8
 	mov	r3, r0
 	tst	r3, #255
-	ldr	r2, .L97+12
-	mov	r1, r6
+	ldr	r1, .L102+8
 	mov	r0, r4
-	beq	.L92
+	bne	.L97
+	bl	CheckCollision
+	ldr	r6, .L102+12
+	mov	r3, r0
+	tst	r3, #255
+	mov	r0, r4
+	mov	r1, r6
+	beq	.L96
+.L97:
+	ldr	r2, .L102+16
 	ldr	r3, [r2, #0]	@  g_lives
 	sub	lr, r3, #1
 	cmp	lr, #0
-	ldr	ip, .L97+16
+	ldr	ip, .L102+20
 	mov	r0, #1
 	str	lr, [r2, #0]	@  g_lives
-	bge	.L96
-.L91:
+	bge	.L101
+.L95:
 	ldmea	fp, {r4, r5, r6, r7, fp, sp, lr}
 	bx	lr
-.L96:
+.L101:
 	ldr	r1, [ip, #16]	@  g_lifeCount.h
 	ldr	r2, [ip, #12]	@  g_lifeCount.w
 	ldrb	r0, [ip, #3]	@ zero_extendqisi2	@  g_lifeCount.sprite
 	mul	ip, r1, r2
-	ldr	r3, .L97+20
+	ldr	r3, .L102+24
 	mla	r1, lr, ip, r3
-	ldr	r3, .L97+24
+	ldr	r3, .L102+28
 	mov	lr, pc
 	bx	r3
 	mvn	r0, #0
-	b	.L91
-.L92:
+	b	.L95
+.L96:
 	bl	CheckCollision
 	ands	r0, r0, #255
-	ldr	r7, .L97+28
-	beq	.L91
+	ldr	r7, .L102+32
+	beq	.L95
 	ldrb	r0, [r4, #3]	@ zero_extendqisi2	@  g_hippy.sprite
 	mov	lr, pc
 	bx	r7
@@ -190178,12 +190775,13 @@ CollisionResult:
 	mov	lr, pc
 	bx	r7
 	mov	r0, #3
-	b	.L91
-.L98:
+	b	.L95
+.L103:
 	.align	2
-.L97:
+.L102:
 	.word	g_hippy
 	.word	g_shroom
+	.word	g_fireBall
 	.word	g_key
 	.word	g_lives
 	.word	g_lifeCount
@@ -190191,8 +190789,74 @@ CollisionResult:
 	.word	ham_UpdateObjGfx
 	.word	ham_DeleteObj
 	.size	CollisionResult, .-CollisionResult
+	.align	2
+	.global	RunAI
+	.type	RunAI, %function
+RunAI:
+	@ Function supports interworking.
+	@ args = 0, pretend = 0, frame = 0
+	@ frame_needed = 1, uses_anonymous_args = 0
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	ldr	r3, .L110
+	ldr	r2, .L110+4
+	ldr	r1, [r3, #0]	@  g_count
+	umull	r0, r3, r2, r1
+	mov	r3, r3, lsr #5
+	add	r3, r3, r3, asl #2
+	add	r3, r3, r3, asl #2
+	cmp	r1, r3, asl #2
+	sub	fp, ip, #4
+	ldr	lr, .L110+8
+	ldr	ip, .L110+12
+	ldreq	lr, .L110+8
+	beq	.L105
+	ldrb	r3, [lr, #0]	@ zero_extendqisi2	@  g_firing
+	ldr	r0, .L110+16
+	cmp	r3, #0
+	ldreq	r2, [r0, #4]	@  g_shroom.x
+	ldreq	r1, [ip, #12]	@  g_fireBall.w
+	ldreq	r0, [r0, #8]	@  g_shroom.y
+	rsbeq	r2, r1, r2
+	moveq	r3, #1
+	streqb	r3, [lr, #0]	@  g_firing
+	streq	r2, [ip, #4]	@  g_fireBall.x
+	streq	r0, [ip, #8]	@  g_fireBall.y
+	ldrne	ip, .L110+12
+.L105:
+	ldrb	r3, [lr, #0]	@ zero_extendqisi2	@  g_firing
+	cmp	r3, #0
+	beq	.L106
+	ldr	r3, [ip, #4]	@  g_fireBall.x
+	sub	r3, r3, #1
+	cmp	r3, #0
+	str	r3, [ip, #4]	@  g_fireBall.x
+	movlt	r2, #241
+	movlt	r3, #0
+	strltb	r3, [lr, #0]	@  g_firing
+	strlt	r2, [ip, #4]	@  g_fireBall.x
+.L106:
+	ldrh	r2, [ip, #8]	@  g_fireBall.y
+	ldrb	r0, [ip, #3]	@ zero_extendqisi2	@  g_fireBall.sprite
+	ldrh	r1, [ip, #4]	@  g_fireBall.x
+	ldr	r3, .L110+20
+	mov	lr, pc
+	bx	r3
+	ldmea	fp, {fp, sp, lr}
+	bx	lr
+.L111:
+	.align	2
+.L110:
+	.word	g_count
+	.word	1374389535
+	.word	g_firing
+	.word	g_fireBall
+	.word	g_shroom
+	.word	ham_SetObjXY
+	.size	RunAI, .-RunAI
 	.comm	g_hippy, 20, 32
 	.comm	g_shroom, 20, 32
 	.comm	g_key, 20, 32
 	.comm	g_lifeCount, 20, 32
+	.comm	g_fireBall, 20, 32
 	.ident	"GCC: (GNU) 3.3.2"

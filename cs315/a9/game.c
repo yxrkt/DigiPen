@@ -27,6 +27,8 @@
 #include "lives.raw"
 #include "key.pal"
 #include "key.raw"
+#include "fire.pal"
+#include "fire.raw"
 
 // constants
 const int WALK_SPEED    = 1;
@@ -38,15 +40,18 @@ const int MAP_WIDTH     = 512;
 const int MAP_HEIGHT    = 512;
 
 // vars
-int g_cam_x = 0, g_cam_y = 0;
+int g_cam_x      = 0;
+int g_cam_y      = 0;
 unsigned g_count = 0;
-int g_lives = 5;
-bool g_initObjs = TRUE;
+int g_lives      = 5;
+bool g_initObjs  = TRUE;
+bool g_firing    = FALSE;
 
 struct Sprite g_hippy;
 struct Sprite g_shroom;
 struct Sprite g_key;
 struct Sprite g_lifeCount;
+struct Sprite g_fireBall;
 
 // forward decls
 void Move();
@@ -54,6 +59,7 @@ void HScroll(int shift);
 void VScroll(int shift);
 bool CheckCollision(const struct Sprite *lhs, const struct Sprite *rhs);
 int CollisionResult();
+void RunAI();
 
 //************//
 // Title Init //
@@ -226,6 +232,20 @@ int GSGame()
         g_lifeCount.sprite = ham_CreateObj((void *)&lives_bitmap[0], OBJ_SIZE_16X16, OBJ_MODE_NORMAL, 1, 0, 0, 0, 0, 0, 0, g_lifeCount.x, g_lifeCount.y);
         ham_UpdateObjGfx(g_lifeCount.sprite, (void *)&lives_bitmap[g_lifeCount.w * g_lifeCount.h * g_lives]);
     }
+    
+    // setup fireball
+    g_fireBall.dir       = FACE_DOWN;
+    g_fireBall.baseFrame = 0;
+    g_fireBall.frameDif  = 0;
+    g_fireBall.x         = 241;
+    g_fireBall.y         = 0;
+    g_fireBall.w         = 16;
+    g_fireBall.h         = 16;
+    if ( g_initObjs )
+    {
+        g_fireBall.sprite = ham_CreateObj((void *)&fire_bitmap[0], OBJ_SIZE_16X16, OBJ_MODE_NORMAL, 1, 0, 0, 0, 0, 0, 0, g_fireBall.x, g_fireBall.y);
+    }
+    g_firing = FALSE;
 
     g_initObjs = FALSE;
     return 1;
@@ -237,6 +257,8 @@ int GSGame()
 int GSGameProc()
 {
     Move();
+    
+    RunAI();
 
     return CollisionResult();
 }
@@ -413,6 +435,9 @@ void HScroll(int shift)
     g_cam_x += shift;
     g_shroom.x -= shift;
     g_key.x -= shift;
+    
+    if (g_firing)
+        g_fireBall.x -= shift;
 }
 
 void VScroll(int shift)
@@ -420,6 +445,9 @@ void VScroll(int shift)
     g_cam_y += shift;
     g_shroom.y -= shift;
     g_key.y -= shift;
+    
+    if (g_firing)
+        g_fireBall.y -= shift;
 }
 
 bool CheckCollision(const struct Sprite *lhs, const struct Sprite *rhs)
@@ -439,7 +467,7 @@ bool CheckCollision(const struct Sprite *lhs, const struct Sprite *rhs)
 int CollisionResult()
 {
     // collision with bad shroom
-    if ( CheckCollision(&g_hippy, &g_shroom) )
+    if ( CheckCollision(&g_hippy, &g_shroom) || CheckCollision(&g_hippy, &g_fireBall) )
     {
         g_lives--;
         if (g_lives < 0)
@@ -466,6 +494,30 @@ int CollisionResult()
     }
 
     return 0;
+}
+
+void RunAI()
+{
+    // fireball
+    if ( (g_count % 100) && !g_firing )
+    {
+        g_fireBall.x = g_shroom.x - g_fireBall.w;
+        g_fireBall.y = g_shroom.y;
+        g_firing = TRUE;
+    }
+    
+    if ( g_firing )
+    {
+        g_fireBall.x -= WALK_SPEED;
+        if ( g_fireBall.x < 0 )
+        {
+            g_fireBall.x = 241;
+            g_firing = FALSE;
+        }
+    }
+    
+    // update positions
+    ham_SetObjXY(g_fireBall.sprite, g_fireBall.x, g_fireBall.y);
 }
 
 

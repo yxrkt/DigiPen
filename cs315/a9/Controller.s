@@ -1,7 +1,7 @@
 	.file	"Controller.c"
 @ GNU C version 3.3.2 (arm-thumb-elf)
 @	compiled by GNU C version 3.3.1 (cygming special).
-@ GGC heuristics: --param ggc-min-expand=99 --param ggc-min-heapsize=130827
+@ GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 @ options passed:  -fpreprocessed -mthumb-interwork -mlong-calls
 @ -auxbase-strip -O2 -Wall -fverbose-asm
 @ options enabled:  -fdefer-pop -fomit-frame-pointer
