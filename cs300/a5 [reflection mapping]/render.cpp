@@ -233,7 +233,7 @@ void ClipY( EdgeListIt EdgeIt )
 }
 
  // finds log base 2 of a float
-float lg( const float rhs )
+inline float lg( const float rhs )
 {
   return ( log( rhs ) / log( 2.f ) );
 }
@@ -460,11 +460,11 @@ void DrawScene( Scene &scene, int width, int height )
               ZBuf( x, y ) = incX.z;
 
               Vector4D NT( scene.viewing.Transform( incX.N.normalized() ) );
-              float u = (float) ( obj.refl->width - 1 )  * NT[0] / 2.f + .5f;
-              float v = (float) ( obj.refl->height - 1 ) * NT[1] / 2.f + .5f;
+              float u = (float) ( obj.refl->width - 1 )  * ( NT[0] / 2.f + .5f );
+              float v = (float) ( obj.refl->height - 1 ) * ( NT[1] / 2.f + .5f );
 
-              Color col;
-              memcpy( col.rgba, obj.refl->texel( (int) u, (int) v, 0 ), 4 * sizeof( float ) );
+              Color col( 0.f, 0.f, 0.f, 1.f );
+              memcpy( col.rgba, obj.refl->texel( (int) u, (int) v, 0 ), 3 * sizeof( float ) );
 
                 // Get world coords
               Vector4D S = Vector4D( (float) x * 2.f / (float) width - 1.0, 
@@ -477,8 +477,7 @@ void DrawScene( Scene &scene, int width, int height )
               Vector3D V( Eye - W );
               V.normalize();
 
-              Vector3D N;
-              memcpy( &N, &NT, sizeof( Vector3D ) );
+              Vector3D N( incX.N.normalized() );
 
                 // Get color from sum of lights
               LightList::iterator LightIt = scene.lights.begin();
@@ -486,7 +485,7 @@ void DrawScene( Scene &scene, int width, int height )
               {
                 Vector3D Li( ( LightIt->position - W ).normalized() );  // Light vector
                 Vector3D H( ( Li + V ).normalized() );                  // Halfway vector
-                col = col + /*LightIt->color * */( /*Kd * ( N * Li ) + */obj.Ks * pow( ( N * H ), obj.n ) );
+                col = col + LightIt->color * ( obj.Ks * pow( ( N * H ), obj.n ) );
               }
 
               glColor4fv( col.rgba );
