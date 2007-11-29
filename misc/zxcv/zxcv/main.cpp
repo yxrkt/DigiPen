@@ -1,26 +1,58 @@
 #include <iostream>
-#include <windows.h>
-#include <process.h>
-#include <conio.h>
 
-void threadProc1( void *pMyID )
+class B {};
+class D : public B {};
+
+class Base
 {
-  do {
-  } while ( !( GetAsyncKeyState( 'Q' ) & 0x8000 ) );
+  public:
+    Base()
+    {
+      pFoo[0] = &Base::foo1;
+      pFoo[1] = &Base::foo2;
+    }
 
-  std::cout << "thread1 terminated" << std::endl;
+    void CallMyFoos()
+    {
+      B b;
+      ( this->*pFoo[0] )( &b );
+      ( this->*pFoo[1] )( &b );
+    }
 
-  exit( 0 );
+  private:
+    void foo1( B *b )
+    {
+      std::cout << "foo1 was called" << std::endl;
+    }
+
+    void foo2( B *b )
+    {
+      std::cout << "foo2 was called" << std::endl;
+    }
+
+    void foo3( D *d )
+    {
+    }
+
+    void ( Base::*pFoo[2] )( B * );
+};
+
+void Bar()
+{
+  std::cout << "Bar was called." << std::endl;
 }
 
 int main()
 {
-  _beginthread( threadProc1, 0, NULL );
+  void (*pFunc)( void ) = NULL;
+  pFunc = Bar;
 
-  int key;
-  do {
-    key = _getch();
-  } while ( (char) key != 'x' );
+  Bar();
 
+  Base b;
+
+  b.CallMyFoos();
+
+  std::cout << std::endl;
   return 0;
-};
+}

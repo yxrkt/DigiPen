@@ -1,0 +1,1 @@
+a = 3 while a > 0 do print(a) b = 5 + a print(b) a = a-1 end
