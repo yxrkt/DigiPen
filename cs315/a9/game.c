@@ -39,6 +39,7 @@ const int SCREEN_WIDTH  = 240;
 const int SCREEN_HEIGHT = 160;
 const int MAP_WIDTH     = 512;
 const int MAP_HEIGHT    = 512;
+const int ROTATION_SET  = 0;
 
 // vars
 int g_cam_x      = 0;
@@ -234,6 +235,8 @@ int GSGame()
         g_lifeCount.sprite = ham_CreateObj((void *)&lives_bitmap[0], OBJ_SIZE_16X16, OBJ_MODE_NORMAL, 1, 0, 0, 0, 0, 0, 0, g_lifeCount.x, g_lifeCount.y);
         ham_UpdateObjGfx(g_lifeCount.sprite, (void *)&lives_bitmap[g_lifeCount.w * g_lifeCount.h * g_lives]);
     }
+    ham_SetFxMode(FX_LAYER_SELECT(0, 0, 0, 0, 1, 0), FX_LAYER_SELECT(1, 0, 0, 0, 0, 0), FX_MODE_ALPHABLEND);
+    ham_SetFxAlphaLevel(15, 8);
     
     // setup fireball
     g_fireBall.dir       = FACE_DOWN;
@@ -248,6 +251,8 @@ int GSGame()
         g_fireBall.sprite = ham_CreateObj((void *)&fire_bitmap[0], OBJ_SIZE_16X16, OBJ_MODE_NORMAL, 1, 0, 0, 0, 0, 0, 0, g_fireBall.x, g_fireBall.y);
     }
     g_firing = FALSE;
+    ham_SetObjRotSetSelect(g_fireBall.sprite, ROTATION_SET);
+    ham_SetObjRotEnable(g_fireBall.sprite, 1);
 
     g_initObjs = FALSE;
     return 1;
@@ -495,6 +500,7 @@ int CollisionResult()
         ham_DeleteObj(g_hippy.sprite);
         ham_DeleteObj(g_shroom.sprite);
         ham_DeleteObj(g_key.sprite);
+        ham_DeleteObj(g_fireBall.sprite);
         return 3;
     }
 
@@ -522,7 +528,19 @@ void RunAI()
     }
     
     // update positions
+    static bool dec = FALSE;
+    static unsigned angle = 0, scale = 0x100;
+    
+    if (scale <= 0x100)
+        dec = FALSE;
+    else if (scale >= 0x200)
+        dec = TRUE;
+        
+    angle = ((angle + 4) % 360);
+    scale += dec ? -0x08 : 0x08;
+
     ham_SetObjXY(g_fireBall.sprite, g_fireBall.x, g_fireBall.y);
+    ham_RotObjDefineSet(ROTATION_SET, angle, scale, scale);
 }
 
 void SwapBGPalette()
