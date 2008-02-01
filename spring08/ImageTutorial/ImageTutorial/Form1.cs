@@ -38,11 +38,12 @@ namespace ImageApp
                 System.IntPtr destPtr = destData.Scan0;
                 System.IntPtr srcPtr = srcData.Scan0;
                 int nBytes = destRes * destRes * 3;
+                int srcWidth = src.Width, srcHeight = src.Height;
                 byte[] destColors = new byte[nBytes];
-                byte[] srcColors = new byte[src.Width * src.Height * 3];
+                byte[] srcColors = new byte[srcWidth * srcHeight * 3];
 
                 Marshal.Copy(destPtr, destColors, 0, nBytes);
-                Marshal.Copy(srcPtr, srcColors, 0, nBytes);
+                Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
                 //
 
                 int xWalk = destRes * 3;
@@ -51,26 +52,15 @@ namespace ImageApp
                 {
                     for (int x = 0; x < xWalk; x += 3)
                     {
-                        int iB = x + xWalk * y,     iB2 = factor * (x + 3 * src.Width * y);
-                        int iG = x + xWalk * y + 1, iG2 = factor * (x + 3 * src.Width * y) + 1;
-                        int iR = x + xWalk * y + 2, iR2 = factor * (x + 3 * src.Width * y) + 2;
+                        int iB = x + xWalk * y,     iB2 = factor * (x + 3 * srcWidth * y);
+                        int iG = x + xWalk * y + 1, iG2 = factor * (x + 3 * srcWidth * y) + 1;
+                        int iR = x + xWalk * y + 2, iR2 = factor * (x + 3 * srcWidth * y) + 2;
 
                         destColors[iR] = srcColors[iR2];
                         destColors[iG] = srcColors[iG2];
                         destColors[iB] = srcColors[iB2];
                     }
-                    //dest.SetPixel(x, y, src.GetPixel(x * factor, y * factor));
                 }
-                //for (int y = 0; y < destRes; ++y)
-                //{
-                //    for (int x = 0; x < destRes * 3; x += 3)
-                //    {
-                //        destColors[x + (destRes * 3) * y] = 0;
-                //        destColors[x + (destRes * 3) * y + 1] = 0;
-                //        destColors[x + (destRes * 3) * y + 2] = 100;
-                //    }
-                //}
-
                 //
                 Marshal.Copy(destColors, 0, destPtr, nBytes);
                 dest.UnlockBits(destData);
@@ -82,6 +72,24 @@ namespace ImageApp
             else
             {
                 factor = destRes / src.Height;
+
+                //
+                BitmapData destData = dest.LockBits(new Rectangle(0, 0, dest.Width, dest.Height),
+                                                    ImageLockMode.ReadWrite,
+                                                    PixelFormat.Format24bppRgb);
+                BitmapData srcData = src.LockBits(new Rectangle(0, 0, src.Width, src.Height),
+                                                  ImageLockMode.ReadOnly,
+                                                  PixelFormat.Format24bppRgb);
+                System.IntPtr destPtr = destData.Scan0;
+                System.IntPtr srcPtr = srcData.Scan0;
+                int nBytes = destRes * destRes * 3;
+                int srcWidth = src.Width, srcHeight = src.Height;
+                byte[] destColors = new byte[nBytes];
+                byte[] srcColors = new byte[srcWidth * srcHeight * 3];
+
+                Marshal.Copy(destPtr, destColors, 0, nBytes);
+                Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
+                //
 
                 for (int y = 0; y < destRes; y+=factor)
                 {
