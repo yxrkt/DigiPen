@@ -42,7 +42,6 @@ namespace ImageApp
                 byte[] destColors = new byte[nBytes];
                 byte[] srcColors = new byte[srcWidth * srcHeight * 3];
 
-                Marshal.Copy(destPtr, destColors, 0, nBytes);
                 Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
                 //
 
@@ -87,21 +86,43 @@ namespace ImageApp
                 byte[] destColors = new byte[nBytes];
                 byte[] srcColors = new byte[srcWidth * srcHeight * 3];
 
-                Marshal.Copy(destPtr, destColors, 0, nBytes);
                 Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
                 //
 
-                for (int y = 0; y < destRes; y+=factor)
+                for (int y = 0; y < srcHeight; ++y)
                 {
-                    for (int x = 0; x < destRes; x+=factor)
+                    for (int x = 0; x < srcWidth * 3; x+=3)
                     {
+                        int iBSrc = x + y * srcWidth * 3;
+                        int iGSrc = iBSrc + 1;
+                        int iRSrc = iBSrc + 2;
+
+                        //int iB = (factor * x) + (factor * y) * destRes * 3;
+                        //int iG = iB + 1;
+                        //int iR = iB + 2;
+
+                        //destColors[iR] = srcColors[iRSrc];
+                        //destColors[iG] = srcColors[iGSrc];
+                        //destColors[iB] = srcColors[iBSrc];
                         for (int i = 0; i < factor; ++i)
                         {
-                            for (int j = 0; j < factor; ++j)
-                                dest.SetPixel(x + j, y + i, src.GetPixel(x, y));
+                            for (int j = 0; j < factor * 3; j+=3)
+                            {
+                                int iB = (factor * x + j) + (factor * y + i) * destRes * 3;
+                                int iG = iB + 1;
+                                int iR = iB + 2;
+
+                                destColors[iR] = srcColors[iRSrc];
+                                destColors[iG] = srcColors[iGSrc];
+                                destColors[iB] = srcColors[iBSrc];
+                            }
                         }
                     }
                 }
+
+                Marshal.Copy(destColors, 0, destPtr, nBytes);
+                dest.UnlockBits(destData);
+                src.UnlockBits(srcData);
             }
 
             if (dest == destBmp && src == sourceBmp)
@@ -193,6 +214,7 @@ namespace ImageApp
             if (sourceRadio.Checked)
             {
                 shrink_zoom(ref cachedBmp, ref sourceBmp, res);
+                shrink_zoom(ref sourceBmp, ref destBmp, destBmp.Width);
             }
 
             else if (destRadio.Checked)

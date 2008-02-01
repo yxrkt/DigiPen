@@ -125,9 +125,9 @@ namespace ImageApp
             // 
             // res256
             // 
-            this.res256.Location = new System.Drawing.Point(622, 74);
+            this.res256.Location = new System.Drawing.Point(559, 110);
             this.res256.Name = "res256";
-            this.res256.Size = new System.Drawing.Size(64, 30);
+            this.res256.Size = new System.Drawing.Size(62, 30);
             this.res256.TabIndex = 9;
             this.res256.Text = "256 x 256";
             this.res256.UseVisualStyleBackColor = true;
@@ -135,7 +135,7 @@ namespace ImageApp
             // 
             // res128
             // 
-            this.res128.Location = new System.Drawing.Point(559, 110);
+            this.res128.Location = new System.Drawing.Point(559, 146);
             this.res128.Name = "res128";
             this.res128.Size = new System.Drawing.Size(62, 30);
             this.res128.TabIndex = 10;
@@ -145,9 +145,9 @@ namespace ImageApp
             // 
             // res64
             // 
-            this.res64.Location = new System.Drawing.Point(622, 110);
+            this.res64.Location = new System.Drawing.Point(622, 74);
             this.res64.Name = "res64";
-            this.res64.Size = new System.Drawing.Size(64, 30);
+            this.res64.Size = new System.Drawing.Size(62, 30);
             this.res64.TabIndex = 11;
             this.res64.Text = "64 x 64";
             this.res64.UseVisualStyleBackColor = true;
@@ -155,7 +155,7 @@ namespace ImageApp
             // 
             // res32
             // 
-            this.res32.Location = new System.Drawing.Point(559, 146);
+            this.res32.Location = new System.Drawing.Point(622, 110);
             this.res32.Name = "res32";
             this.res32.Size = new System.Drawing.Size(62, 30);
             this.res32.TabIndex = 12;
