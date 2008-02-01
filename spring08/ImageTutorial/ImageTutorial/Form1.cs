@@ -12,12 +12,10 @@ using System.IO;
 
 namespace ImageApp
 {
-    enum NEIGHBOR { NONE = -1, B = -2, C = -3, D = -4 };
-    
     public partial class Form1 : Form
     {
         Bitmap cachedBmp, sourceBmp, destBmp;
-        int threshold = 0;
+        int threshold = 195;
         int[] idTable;
         int nObjects = 0;
 
@@ -131,7 +129,8 @@ namespace ImageApp
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            trackBar1.Value = threshold;
+            thresholdText.Text = "Threshold: " + threshold.ToString();
         }
 
         private void loadBmpBtn_Click(object sender, EventArgs e)
@@ -156,12 +155,12 @@ namespace ImageApp
             }
 
             cachedBmp = new Bitmap(ofd.FileName);
-            sourceBmp = cachedBmp;
-            destBmp   = sourceBmp;
+            sourceBmp = new Bitmap(ofd.FileName);
+            destBmp   = new Bitmap(ofd.FileName);
             pictureBox1.Image = destBmp;
-            //string resInfo = new string("source: " + sourceBmp.Width + "x" + sourceBmp.Height
-            //                            + " destination: " + destBmp.Width + "x" + destBmp.Height);
-            imageLabel.Text = ofd.FileName;// +resInfo;
+            imageLabel.Text = ofd.FileName;
+            
+            updateStatusBar();
         }
 
         private void buttonClicked(int res)
@@ -225,12 +224,40 @@ namespace ImageApp
             string destResString = "Destination image at ";
             destResString += ( destBmp.Height + "x" + destBmp.Width );
             toolStripStatusLabel2.Text = destResString;
+
+            if (nObjects != 0)
+            {
+                string objsString = "Objects total: ";
+                objsString += nObjects.ToString();
+                toolStripStatusLabel3.Text = objsString;
+            }
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
             threshold = trackBar1.Value;
-            thresholdText.Text = "Threshold (" + trackBar1.Value.ToString() + ")";
+            thresholdText.Text = "Threshold : " + trackBar1.Value.ToString();
+        }
+
+        private void updateLabels(int labelKeep, int labelReplace, int xLast, int yLast)
+        {
+            int dim = destBmp.Width;
+            int xLim = dim * 3;
+
+            for (int y = 0; y <= yLast; ++y)
+            {
+                if (y == yLast) xLim = xLast + 3;
+
+                for (int x = 0; x < xLim; x += 3)
+                {
+                    int index = x / 3 + y * dim;
+
+                    if (idTable[index] == labelReplace)
+                        idTable[index] = labelKeep;
+                }
+            }
+
+            nObjects--;
         }
 
         private void applyBtn_Click(object sender, EventArgs e)
@@ -313,161 +340,93 @@ namespace ImageApp
                 Marshal.Copy(polarPtr, polarColors, 0, nBytes);
 
                 //
-                int curId = 0;
+                toolStripProgressBar1.Visible = true;
 
-                //for (int y = 0; y < height; ++y)
-                //{
-                //    for (int x = 0; x < xLim; x += 3)
-                //    {
-                //        int i = x + y * xLim;
-
-                //        // check 1: left
-                //        if (x != 0)
-                //        {
-                //            if (polarColors[i] == polarColors[(x - 3) + y * xLim])
-                //            {
-                //                idTable[x / 3 + y * width] = idTable[x / 3 - 1 + y * width];
-                //                continue;
-                //            }
-                //        }
-
-                //        // check 2: top left
-                //        if (x != 0 && y != 0)
-                //        {
-                //            if (polarColors[i] == polarColors[(x - 3) + (y - 1) * xLim])
-                //            {
-                //                idTable[x / 3 + y * width] = idTable[x / 3 - 1 + (y - 1) * width];
-                //                continue;
-                //            }
-                //        }
-
-                //        // check 3: top
-                //        if (y != 0)
-                //        {
-                //            if (polarColors[i] == polarColors[x + (y - 1) * xLim])
-                //            {
-                //                idTable[x / 3 + y * width] = idTable[x / 3 + (y - 1) * width];
-                //                continue;
-                //            }
-                //        }
-
-                //        //// check 4: right
-                //        //if (x < xLim)
-                //        //{
-                //        //    if (polarColors[i] == polarColors[(x + 3) + y * xLim])
-                //        //    {
-                //        //        idTable[x / 3 + y * width] = curId;
-                //        //        continue;
-                //        //    }
-                //        //}
-
-                //        //// check 5: bottom right
-                //        //if (x < xLim && y < height)
-                //        //{
-                //        //    if (polarColors[i] == polarColors[(x + 3) + (y + 1) * xLim])
-                //        //    {
-                //        //        idTable[x / 3 + y * width] = curId;
-                //        //        continue;
-                //        //    }
-                //        //}
-
-                //        //// check 6: bottom
-                //        //if (y < height)
-                //        //{
-                //        //    if (polarColors[i] == polarColors[x + (y + 1) * xLim])
-                //        //    {
-                //        //        idTable[x / 3 + y * width] = curId;
-                //        //        continue;
-                //        //    }
-                //        //}
-
-                //        idTable[x / 3 + y * width] = ++curId;
-                //    }
-                //}
-
-                //// begin test alg
-                int count = 0;
+                nObjects = 0;
 
                 for (int y = 0; y < height; ++y)
                 {
+                    toolStripProgressBar1.Value = (int) ((float) 100 * (float) y / (float) height);
+
                     for (int x = 0; x < xLim; x += 3)
                     {
-                        if (x == 0 && y == 0) continue;
-
                         int colorIndexA = x + y * xLim;
-                        int colorIndexB = x - 1 + y * xLim;
+                        int colorIndexB = (x - 3) + y * xLim;
                         int colorIndexC = x + (y - 1) * xLim;
-                        int colorIndexD = x - 1 + (y - 1) * xLim;
+                        int colorIndexD = (x - 3) + (y - 1) * xLim;
 
-                        int tableIndexA = x / 3 + y * width;
-                        int tableIndexB = x / 3 - 1 + y * width;
-                        int tableIndexD = x / 3 - 1 + (y - 1) * width;
-                        int tableIndexC = x / 3 + (y - 1) * width;
-                        
-                        // case 1: check top left (D)
+                        int labelIndexA = x / 3 + y * width;
+                        int labelIndexB = (x / 3 - 1) + y * width;
+                        int labelIndexC = x / 3 + (y - 1) * width;
+                        int labelIndexD = (x / 3 - 1) + (y - 1) * width;
+
+                        int labeled = -1, oldLabel = -1;
+                        bool runUpdate = false;
+
+                        // check 1: top left (D)
                         if (x != 0 && y != 0)
                         {
-                            if (objsColors[colorIndexA] == objsColors[colorIndexD])
+                            if (polarColors[colorIndexA] == polarColors[colorIndexD])
                             {
-                                idTable[tableIndexA] = (int) NEIGHBOR.D;
-                                continue;
+                                idTable[labelIndexA] = idTable[labelIndexD];
+                                labeled = idTable[labelIndexA];
                             }
                         }
-                        
-                        // case 2: check left (B)
-                        if (x != 0)
+
+                        // check 2: top (C)
+                        if (y != 0)
                         {
-                            if (objsColors[colorIndexA] == objsColors[colorIndexB])
+                            if (polarColors[colorIndexA] == polarColors[colorIndexC])
                             {
-                                // case 3a: check top (C)
-                                if (y != 0)
+                                idTable[labelIndexA] = idTable[labelIndexC];
+                                if (labeled != -1)
                                 {
-                                    if (objsColors[colorIndexA] == objsColors[colorIndexC])
+                                    if (labeled != idTable[labelIndexA])
                                     {
-                                        if (idTable[tableIndexB] == (int) NEIGHBOR.C)
-                                        {
-                                            idTable[tableIndexA] = (int) NEIGHBOR.B;
-                                            continue;
-                                        }
-
-                                        else
-                                        {
-                                            // call UPDATE here
-                                            // ...
-
-                                            idTable[tableIndexA] = (int) NEIGHBOR.B;
-                                            continue;
-                                        }
+                                        runUpdate = true;
+                                        oldLabel = Math.Max(labeled, idTable[labelIndexA]);
+                                        labeled = Math.Min(labeled, idTable[labelIndexA]);
                                     }
                                 }
 
                                 else
                                 {
-                                    idTable[tableIndexA] = (int) NEIGHBOR.B;
-                                    continue;
+                                    labeled = idTable[labelIndexA];
                                 }
                             }
                         }
 
-                        else
+                        // check 3: left (B)
+                        if (x != 0)
                         {
-                            if (y != 0)
+                            if (polarColors[colorIndexA] == polarColors[colorIndexB])
                             {
-                                if (objsColors[colorIndexA] == objsColors[colorIndexC])
+                                idTable[labelIndexA] = idTable[labelIndexB];
+                                if (labeled != -1)
                                 {
-                                    idTable[tableIndexA] = (int) NEIGHBOR.C;
-                                    continue;
+                                    if (labeled != idTable[labelIndexA])
+                                    {
+                                        runUpdate = true;
+                                        oldLabel = Math.Max(labeled, idTable[labelIndexA]);
+                                        labeled = Math.Min(labeled, idTable[labelIndexA]);
+                                    }
+                                }
+
+                                else
+                                {
+                                    labeled = idTable[labelIndexA];
                                 }
                             }
-
-                            else
-                            {
-                                idTable[tableIndexA] = count;
-                            }
                         }
+
+                        // if no friends, give new label
+                        if (labeled == -1)
+                            idTable[labelIndexA] = nObjects++;
+
+                        if (runUpdate)
+                            updateLabels(labeled, oldLabel, x, y);
                     }
                 }
-                //// end test alg
 
                 for (int y = 0; y < height; ++y)
                 {
@@ -476,9 +435,9 @@ namespace ImageApp
                         int colorIndex = x + y * xLim;
                         int idIndex = x / 3 + y * width;
 
-                        objsColors[colorIndex + 2] = (byte)((977 * idTable[idIndex]) % 256);
-                        objsColors[colorIndex + 1] = (byte)((644 * idTable[idIndex]) % 256);
-                        objsColors[colorIndex] = (byte)((311 * idTable[idIndex]) % 256);
+                        objsColors[colorIndex + 2] = (byte)((977 * idTable[idIndex]) + 173 % 256);
+                        objsColors[colorIndex + 1] = (byte)((644 * idTable[idIndex]) + 45 % 256);
+                        objsColors[colorIndex] = (byte)((311 * idTable[idIndex]) + 247 % 256);
                     }
                 }
 
@@ -487,8 +446,10 @@ namespace ImageApp
                 polar.UnlockBits(polarData);
                 objs.UnlockBits(objsData);
 
-                nObjects = curId + 1;
                 pictureBox1.Image = objs;
+                updateStatusBar();
+
+                toolStripProgressBar1.Visible = false;
             }
         }
     }
