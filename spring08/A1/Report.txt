@@ -1,0 +1,22 @@
+Alex Serio
+CS 370
+Assignment 1
+
+
+
+    The assignment went fairly smooth. Among the greatest 
+burdens was learning C#. While a lot of things in C# are 
+extremely convenient (namely designing the interface), 
+there were times where a simple memcpy would have saved a
+lot of trouble. I ended up editing the RGB values 
+independently. Using .Width or .Height was also slowing 
+down the Part 1 implementation drastically. I didn't know 
+C# had functions without the traditional parenthesis 
+operator. Storing the returned values as variables 
+solved.
+
+    The only problem with the actual implementation I had 
+was the update function. Writing the function was simple 
+enough, but it took a while before I came to realize it 
+was necessary.
+

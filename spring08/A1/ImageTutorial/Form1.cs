@@ -29,7 +29,7 @@ namespace ImageApp
                 factor = src.Height / destRes;
                 dest = new Bitmap(destRes, destRes);
 
-                //
+                // prepare for reading / writing
                 BitmapData destData = dest.LockBits(new Rectangle(0, 0, dest.Width, dest.Height),
                                                     ImageLockMode.ReadWrite,
                                                     PixelFormat.Format24bppRgb);
@@ -44,8 +44,8 @@ namespace ImageApp
                 byte[] srcColors = new byte[srcWidth * srcHeight * 3];
 
                 Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
-                //
 
+                // write each pixel
                 int xWalk = destRes * 3;
 
                 for (int y = 0; y < destRes; ++y)
@@ -61,11 +61,11 @@ namespace ImageApp
                         destColors[iB] = srcColors[iB2];
                     }
                 }
-                //
+
+                // copy buffer to image
                 Marshal.Copy(destColors, 0, destPtr, nBytes);
                 dest.UnlockBits(destData);
                 src.UnlockBits(srcData);
-                //
             }
 
             // dest size > source size
@@ -73,7 +73,7 @@ namespace ImageApp
             {
                 factor = destRes / src.Height;
 
-                //
+                // prepare to read / write
                 BitmapData destData = dest.LockBits(new Rectangle(0, 0, dest.Width, dest.Height),
                                                     ImageLockMode.ReadWrite,
                                                     PixelFormat.Format24bppRgb);
@@ -88,8 +88,8 @@ namespace ImageApp
                 byte[] srcColors = new byte[srcWidth * srcHeight * 3];
 
                 Marshal.Copy(srcPtr, srcColors, 0, srcWidth * srcHeight * 3);
-                //
 
+                // write each pixel
                 for (int y = 0; y < srcHeight; ++y)
                 {
                     for (int x = 0; x < srcWidth * 3; x+=3)
@@ -114,6 +114,7 @@ namespace ImageApp
                     }
                 }
 
+                // copy buffer to image
                 Marshal.Copy(destColors, 0, destPtr, nBytes);
                 dest.UnlockBits(destData);
                 src.UnlockBits(srcData);
@@ -159,6 +160,7 @@ namespace ImageApp
             destBmp   = new Bitmap(ofd.FileName);
             pictureBox1.Image = destBmp;
             imageLabel.Text = ofd.FileName;
+            nObjects = 0;
             
             updateStatusBar();
         }
@@ -230,6 +232,11 @@ namespace ImageApp
                 string objsString = "Objects total: ";
                 objsString += nObjects.ToString();
                 toolStripStatusLabel3.Text = objsString;
+            }
+
+            else
+            {
+                toolStripStatusLabel3.Text = "";
             }
         }
 
