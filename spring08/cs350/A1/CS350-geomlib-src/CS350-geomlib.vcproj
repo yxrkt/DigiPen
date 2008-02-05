@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="CS350-geomlib"
 	ProjectGUID="{B197EB0B-5838-415D-A327-8737A8C01C68}"
+	RootNamespace="CS350-geomlib"
 	>
 	<Platforms>
 		<Platform
@@ -159,7 +160,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib glut32.lib"
 				OutputFile="..\CS350-geomlib.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"

@@ -36,6 +36,78 @@ float operator *( const Vector2D &lhs, const Vector2D &rhs )
   return ( lhs[0] * rhs[0] + lhs[1] * rhs[1] );
 }
 
+// line vs line (or line segment)
+bool vsLine2D(const Line2D& line1, const Line2D& line2, Point2D *rpoint = NULL, bool check = true)
+{
+  // check for parallel
+  float mag1 = abs( line1.vector * line2.vector );
+  float mag2 = abs( line1.vector.length() * line2.vector.length() );
+  if ( abs( mag1 - mag2 ) < epsilon )
+    return false;
+
+  // get dist for each point
+  Vector2D n( Vector2D( -line1.vector[1], line1.vector[0] ).normalized() );
+
+  float first  = ( line2.point - line1.point ) * n;
+  float second = ( ( line2.point + line2.vector ) - line1.point ) * n;
+
+  // find t
+  float t;
+
+  if ( ( first > 0.f && second > 0.f ) || ( first < 0.f && second < 0.f ) )
+  {
+    if ( check ) return false;
+
+    t = abs( first ) < abs( second )
+        ? -abs( first / ( first - second ) )
+        : abs( ( first + second ) / ( first - second ) );
+  }
+
+  else
+  {
+    t = abs( first ) / ( abs( first ) + abs( second ) );
+  }
+
+  if ( rpoint ) *rpoint = line2.point + t * line2.vector;
+
+  return true;
+}
+
+// line (or segment) in 3D vs plane
+bool vsLine3D(const Line3D& line, const Plane3D& plane, Point3D *rpoint = NULL, bool check = true)
+{
+  // check if line is parallel with plane
+  if ( abs( line.vector * plane.normal() ) < epsilon )
+    return false;
+
+  Point3D p = line.point, q = line.point + line.vector;
+
+  // get dist (and side) from plane for each point
+  float distP = plane.Evaluate( p );
+  float distQ = plane.Evaluate( q );
+
+  // find t
+  float t;
+
+  if ( ( distP < 0.f && distQ < 0.f ) || ( distP > 0.f && distQ > 0.f ) )
+  {
+    if ( check ) return false;
+
+    t = abs( distP ) < abs( distQ )
+        ? -abs( distP / ( distP - distQ ) )
+        : abs( ( distP + distQ ) / ( distP - distQ ) );
+  }
+
+  else
+  {
+    t = abs( distP ) / ( abs( distP ) + abs( distQ ) );
+  }
+
+  if ( rpoint ) *rpoint = p + t * line.vector;
+
+  return true;
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Distance methods
 ////////////////////////////////////////////////////////////////////////
@@ -163,91 +235,135 @@ bool Triangle3D::contains(const Point3D& point) const
 // Determines if 2D segments have a unique intersection.
 // If true and rpoint is not NULL, returns intersection point.
 // May not have been discussed in class.
-bool Intersects(const Segment2D& seg1, const Segment2D& seg2,
-				Point2D *rpoint)
+bool Intersects(const Segment2D& seg1, const Segment2D& seg2, Point2D *rpoint)
 {
   Vector2D u = seg1.point2 - seg1.point1;
   Vector2D v = seg2.point2 - seg2.point1;
 
-  if ( !Intersects( Line2D( seg1.point1, u ), Line2D( seg2.point1, v ) ) )
+  if ( !vsLine2D( Line2D( seg1.point1, u ), Line2D( seg2.point1, v ) ) )
     return false;
 
-  if ( !Intersects( Line2D( seg2.point1, v ), Line2D( seg1.point1, u ), rpoint ) )
+  if ( !vsLine2D( Line2D( seg2.point1, v ), Line2D( seg1.point1, u ), rpoint ) )
     return false;
-  
+
   return true;
 }
 
 // Determines if 2D lines have a unique intersection.
 // If true and rpoint is not NULL, returns intersection point.
 // May not have been discussed in class.
-bool Intersects(const Line2D& line1, const Line2D& line2,
-				Point2D *rpoint)
+bool Intersects(const Line2D& line1, const Line2D& line2, Point2D *rpoint)
 {
-  // check for parallel
-  float mag1 = abs( line1.vector * line2.vector );
-  float mag2 = abs( line1.vector.length() * line2.vector.length() );
-  if ( abs( mag1 - mag2 ) < epsilon )
-    return false;
-
-  Vector2D n( Vector2D( -line1.vector[1], line1.vector[0] ).normalized() );
-
-  float first  = ( line2.point - line1.point ) * n;
-  float second = ( ( line2.point + line2.vector ) - line1.point ) * n;
-
-  if ( ( first > 0.f && second > 0.f ) || ( first < 0.f && second < 0.f ) )
-    return false;
-
-  first = abs( first );
-  second = abs( second );
-
-  float t = ( first <= second )
-            ? first / ( first + second )
-            : 1.f - second / ( first + second );
-
-  if ( rpoint ) *rpoint = line2.point + t * line2.vector;
-
-  return true;
+  return vsLine2D( line1, line2, rpoint, false );
 }
 
 // Determines if 3D line and plane have a unique intersection.  
 // If true and rpoint is not NULL, returns intersection point.
 bool Intersects(const Line3D& line, const Plane3D& plane, Point3D *rpoint)
 {
-  // check if line is parallel with plane
-  if ( abs( line.vector * plane.normal() ) < epsilon )
-    return false;
-
-	throw Unimplemented();
+	return vsLine3D( line, plane, rpoint, false );
 }
 
 // Determines if 3D segment and plane have a unique intersection.  
 // If true and rpoint is not NULL, returns intersection point.
 bool Intersects(const Segment3D& seg, const Plane3D& plane, Point3D *rpoint)
 {
-	throw Unimplemented();
+  return vsLine3D( Line3D( seg.point1, seg.point2 - seg.point1 ), plane, rpoint );
 }
 
 // Determines if 3D segment and triangle have a unique intersection.  
 // If true and rpoint is not NULL, returns intersection point.
 bool Intersects(const Segment3D& seg, const Triangle3D& tri, Point3D *rpoint)
 {
-	throw Unimplemented();
+  Vector3D n = ( tri[1] - tri[0] ) ^ ( tri[2] - tri[1] );
+
+  float a = n[0], b = n[1], c = n[2];
+  float d = -( a * tri[0][0] + b * tri[0][1] + c * tri[0][2] );
+
+  if ( !Intersects( seg, Plane3D( a, b, c, d ), rpoint ) )
+    return false;
+
+  return tri.contains( *rpoint );
 }
 
 // Determines if 3D ray and sphere have 0, 1, or 2 intersections.  
 // If any exist and rpoint is not NULL, returns intersection point(s).
 int Intersects(const Ray3D& ray, const Sphere3D& sphere,
-			   std::pair<Point3D, Point3D> *rpoints)
+			         std::pair<Point3D, Point3D> *rpoints)
 {
-	throw Unimplemented();
+  // find pts of intersection of line
+  float dist = Distance( sphere.center, Line3D( ray.origin, ray.direction ) );
+  Vector3D u = sphere.center - ray.origin;
+  float uLen = u.length();
+  
+  // trivial rejection 1
+  if ( dist > sphere.radius + epsilon ) return 0;
+
+  // trivial rejection 2
+  if ( ray.direction * u < 0.f && uLen > sphere.radius ) return 0;
+
+  // line has one intersection
+  if ( dist >= sphere.radius - epsilon )
+  {
+    float t = sqrt( dist * dist - sphere.radius * sphere.radius ) / ray.direction.length();
+
+    if ( t <= 1.f )
+    {
+      if ( rpoints ) rpoints->first = ray.origin + t * ray.direction;
+      return 1;
+    }
+
+    return 0;
+  }
+
+  // line has two intersections (assuming ray origin not in sphere)
+  float dist2   = dist * dist;
+  float rayLen  = ray.direction.length();
+  float m       = sqrt( uLen * uLen - dist2 );
+  float h       = sqrt( sphere.radius * sphere.radius - dist2 );
+  float t1      = ( m - h ) / rayLen;
+  float t2      = ( m + h ) / rayLen;
+
+  if ( t1 <= 1.f )
+  {
+    if ( rpoints ) rpoints->first = ray.origin + t1 * ray.direction;
+
+    if ( t2 <= 1.f )
+    {
+      if ( rpoints ) rpoints->second = ray.origin + t2 * ray.direction;
+      return 2;
+    }
+
+    return 1;
+  }
+
+  return 0;
 }
 
 // Determines if 3D ray and triangle have a unique intersection.  
 // If true and rpoint is not NULL, returns intersection point.
 bool Intersects(const Ray3D& ray, const Triangle3D& tri, Point3D *rpoint)
 {
-	throw Unimplemented();
+  Vector3D n( Vector3D( ( tri[1] - tri[0] ) ^ ( tri[2] - tri[1] ) ).normalized() );
+
+  // check if coplanar
+  if ( abs( n * ray.direction ) < epsilon ) return false;
+
+	// get pt of intersection w/ triangle's plane
+  float d = -( n[0] * tri[0][0] + n[1] * tri[0][1] + n[2] * tri[0][2] );
+  Plane3D triPlane( n[0], n[1], n[2], d );
+  Point3D isect;
+
+  if ( Intersects( Segment3D( ray.origin, ray.origin + ray.direction ), triPlane, &isect ) )
+  {
+    if ( tri.contains( isect ) )
+    {
+      if ( rpoint ) *rpoint = isect;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // Determines if 3D ray and AABB have a 0, 1, or 2 intersections.  
