@@ -11,8 +11,24 @@
 #include "framework.h"
 #include "geomlib.h"
 #include <vector>
+#include <queue>
 
 const double epsilon = 1e-3;
+
+struct TimedPoint
+{
+  bool operator ==( const TimedPoint &rhs ) { return t == rhs.t; }
+
+  float t;
+  Point3D p;
+};
+
+bool TimedPointLess( const TimedPoint &lhs, const TimedPoint &rhs )
+{
+  return ( lhs.t < rhs.t );
+}
+
+typedef std::queue<TimedPoint> PointQueue;
 
 // dot product for Vector3D
 float operator *( const Vector3D &lhs, const Vector3D &rhs )
@@ -106,6 +122,39 @@ bool vsLine3D(const Line3D& line, const Plane3D& plane, Point3D *rpoint = NULL, 
   if ( rpoint ) *rpoint = p + t * line.vector;
 
   return true;
+}
+
+// Add intersections to queue
+void AddIsects( const Ray3D &ray, const Box3D &box, PointQueue &isects )
+{
+  const unsigned nPairs = 3;
+  Point3D rayEnd( ray.origin + ray.direction );
+
+  for ( unsigned i = 0; i < nPairs; ++i )
+  {
+    unsigned j = ( i + 1 ) % nPairs, k = ( i + 2 ) % nPairs;
+
+    if ( rayEnd[i] != ray.origin[i] )
+    {
+      for ( unsigned m = 0; m < 2; ++m)
+      {
+        float t = (!m) ? ( box.origin[i] - ray.origin[i] ) / ( ray.direction[i] )
+                       : ( box.extent[i] - ray.origin[i] ) / ( ray.direction[i] );
+
+        if ( t >= -epsilon && t <= 1.f + epsilon )
+        {
+          Point3D isect = ray.origin + t * ray.direction;
+          if ( ( isect[j] >= box.origin[j] && isect[j] <= box.extent[j] ) &&
+               ( isect[k] >= box.origin[k] && isect[k] <= box.extent[k] ) )
+          {
+            TimedPoint point = { t, isect };
+            if ( isects.c.end() == std::find( isects.c.begin(), isects.c.end(), point ) )
+              isects.push( point );
+          }
+        }
+      }
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -288,8 +337,7 @@ bool Intersects(const Segment3D& seg, const Triangle3D& tri, Point3D *rpoint)
 
 // Determines if 3D ray and sphere have 0, 1, or 2 intersections.  
 // If any exist and rpoint is not NULL, returns intersection point(s).
-int Intersects(const Ray3D& ray, const Sphere3D& sphere,
-			         std::pair<Point3D, Point3D> *rpoints)
+int Intersects(const Ray3D& ray, const Sphere3D& sphere, std::pair<Point3D, Point3D> *rpoints)
 {
   // find pts of intersection of line
   float dist = Distance( sphere.center, Line3D( ray.origin, ray.direction ) );
@@ -368,19 +416,65 @@ bool Intersects(const Ray3D& ray, const Triangle3D& tri, Point3D *rpoint)
 
 // Determines if 3D ray and AABB have a 0, 1, or 2 intersections.  
 // If any exist and rpoint is not NULL, returns intersection point(s).
-int Intersects(const Ray3D& ray, const Box3D& box,
-			   std::pair<Point3D, Point3D> *rpoints)
+int Intersects(const Ray3D& ray, const Box3D& box, std::pair<Point3D, Point3D> *rpoints)
 {
-	throw Unimplemented();
+  PointQueue isects;
+  AddIsects( ray, box, isects );
+
+  std::sort( isects.c.begin(), isects.c.end(), TimedPointLess );
+
+  size_t nIsects = isects.size();
+
+  if ( rpoints )
+  {
+    for ( size_t i = 0; i < nIsects; ++i )
+    {
+      if ( i == 0 ) rpoints->first = isects.c[i].p;
+      else          rpoints->second = isects.c[i].p;
+    }      
+  }
+
+  return nIsects;
 }
 
 // Determines if 3D triangles intersect.  
 // If parallel, returns false. (This may be considered misleading.)
 // If true and rpoint is not NULL, returns two edge/triangle intersections.
-int Intersects(const Triangle3D& tri1, const Triangle3D& tri2,
-		   std::pair<Point3D, Point3D> *rpoints)
+int Intersects(const Triangle3D& tri1, const Triangle3D& tri2, std::pair<Point3D, Point3D> *rpoints)
 {
-	throw Unimplemented();
+  // check if coplanar
+  if ( abs( ( ( tri1[1] - tri1[0] ) ^ ( tri1[2] - tri1[1] ) ) * ( tri2[1] - tri2[0] ) ) > epsilon )
+    return 0;
+
+  std::vector<Point3D> points;
+
+  // test first tri's edges against second tri
+  for ( unsigned i = 0; i < 3; ++i )
+  {
+    unsigned j = ( i == 2 ) ? 0 : i + 1;
+    Point3D isect;
+
+    if ( Intersects( Segment3D( tri1[i], tri1[j] ), tri2, &isect ) )
+      points.push_back( isect );
+  }
+
+  // test second tri's edges against first tri
+  for ( unsigned i = 0; i < 3; ++i )
+  {
+    unsigned j = ( i == 2 ) ? 0 : i + 1;
+    Point3D isect;
+
+    if ( Intersects( Segment3D( tri2[i], tri2[j] ), tri1, &isect ) )
+      points.push_back( isect );
+  }
+
+  if ( rpoints )
+  {
+    rpoints->first  = points[0];
+    rpoints->second = points[1];
+  }
+
+  return points.size();
 }
 
 ////////////////////////////////////////////////////////////////////////
