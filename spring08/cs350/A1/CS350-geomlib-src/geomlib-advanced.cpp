@@ -247,7 +247,6 @@ bool Triangle3D::contains(const Point3D& point) const
   Vector3D n( ( points[1] - points[0] ) ^ ( points[2] - points[1] ) );
 
     // check if in plane
-  int fuck = abs( n * ( point - points[0] ) );
   if ( abs( n * ( point - points[0] ) ) > epsilon )
     return false;
 
