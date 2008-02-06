@@ -15,6 +15,8 @@
 
 const double epsilon = 1e-3;
 
+const float M_PI = 3.14159265f;
+
 struct TimedPoint
 {
   bool operator ==( const TimedPoint &rhs ) { return t == rhs.t; }
@@ -96,11 +98,12 @@ bool vsLine3D(const Line3D& line, const Plane3D& plane, Point3D *rpoint = NULL, 
   if ( abs( line.vector * plane.normal() ) < epsilon )
     return false;
 
-  Point3D p = line.point, q = line.point + line.vector;
+  Point3D p  = line.point, q = line.point + line.vector;
+  float normalLen = plane.normal().length();
 
   // get dist (and side) from plane for each point
-  float distP = plane.Evaluate( p );
-  float distQ = plane.Evaluate( q );
+  float distP = plane.Evaluate( p ) / normalLen;
+  float distQ = plane.Evaluate( q ) / normalLen;
 
   // find t
   float t;
@@ -244,7 +247,8 @@ bool Triangle3D::contains(const Point3D& point) const
   Vector3D n( ( points[1] - points[0] ) ^ ( points[2] - points[1] ) );
 
     // check if in plane
-  if ( n * ( point - points[0] ) != 0.f )
+  int fuck = abs( n * ( point - points[0] ) );
+  if ( abs( n * ( point - points[0] ) ) > epsilon )
     return false;
 
   for ( unsigned i = 0; i < 3; ++i )
@@ -468,7 +472,7 @@ int Intersects(const Triangle3D& tri1, const Triangle3D& tri2, std::pair<Point3D
       points.push_back( isect );
   }
 
-  if ( rpoints )
+  if ( rpoints && !points.empty() )
   {
     rpoints->first  = points[0];
     rpoints->second = points[1];
@@ -484,59 +488,70 @@ int Intersects(const Triangle3D& tri1, const Triangle3D& tri2, std::pair<Point3D
 // Compute angle between two geometric entities (in radians;  use acos)
 float AngleBetween(const Line3D& line1, const Line3D& line2)
 {
-	throw Unimplemented();
+  return acos( line1.vector * line2.vector ) / ( line1.vector.length() * line2.vector.length() );
 }
 
 // Compute angle between two geometric entities (in radians;  use acos)
 float AngleBetween(const Line3D& line, const Plane3D& plane)
 {
-	throw Unimplemented();
+  Vector3D u = line.vector ^ plane.normal();
+  Vector3D v = plane.normal() ^ u;
+
+  float angle = acos( v * line.vector );
+
+  return ( ( angle < 0.f ) ? ( angle + 2.f * M_PI ) : angle );
 }
 
 // Compute angle between two geometric entities (in radians;  use acos)
 float AngleBetween(const Plane3D& plane1, const Plane3D& plane2)
 {
-	throw Unimplemented();
+  return acos( ( plane1.normal() * plane2.normal() ) / 
+               ( plane1.normal().length() * plane2.normal().length() ) );
 }
 
 // Determine if two lines are coplanar
 bool Coplanar(const Line3D& line1, const Line3D& line2)
 {
-	throw Unimplemented();
+  Vector3D n1 = ( line1.vector ^ ( line2.point - line1.point ) );
+  Vector3D n2 = ( line1.vector ^ ( ( line2.point + line2.vector ) - line1.point ) );
+
+  return ( abs( n1 * n2 - n1.length() * n2.length() ) <= epsilon );
 }
 
 // Determine if two geometric entities are parallel.
 bool Parallel(const Line3D& line1, const Line3D& line2)
 {
-	throw Unimplemented();
+  return ( abs( line1.vector * line2.vector - line1.vector.length() * line1.vector.length() ) <= epsilon );
 }
 
 // Determine if two geometric entities are parallel.
 bool Parallel(const Line3D& line, const Plane3D& plane)
 {
-	throw Unimplemented();
+  return ( abs( line.vector * plane.normal() ) <= epsilon );
 }
 
 // Determine if two geometric entities are parallel.
 bool Parallel(const Plane3D& plane1, const Plane3D& plane2)
 {
-	throw Unimplemented();
+  return ( abs( plane1.normal() * plane2.normal() - 
+                plane1.normal().length() * plane2.normal().length() ) <= epsilon );
 }
 
 // Determine if two geometric entities are perpendicular.
 bool Perpendicular(const Line3D& line1, const Line3D& line2)
 {
-	throw Unimplemented();
+  return ( abs( line1.vector * line2.vector ) <= epsilon );
 }
 
 // Determine if two geometric entities are perpendicular.
 bool Perpendicular(const Line3D& line, const Plane3D& plane)
 {
-	throw Unimplemented();
+  return ( abs( line.vector * plane.normal() - 
+                line.vector.length() * plane.normal().length() ) <= epsilon );
 }
 
 // Determine if two geometric entities are perpendicular.
 bool Perpendicular(const Plane3D& plane1, const Plane3D& plane2)
 {
-	throw Unimplemented();
+  return ( plane1.normal() * plane2.normal() <= epsilon );
 }
