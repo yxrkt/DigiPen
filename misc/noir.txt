@@ -1,0 +1,34 @@
+======================================
+ Smalls List:
+======================================
+
+• setup precompiled headers
+• join menu functional
+->retarded color loss bug
+- lobby menu functional
+- error joining bad game
+- refresh hosts 
+
+
+======================================
+ Bigs List
+======================================
+
+->in-game editor & console
+- awesome level
+- awesome sounds
+- cool fx for dying (circling camera, ghost mode)
+- mini level for menus
+
+
+======================================
+ Wants
+======================================
+Marshall
+- N/A
+
+Sean
+- N/A
+
+David
+- free cam
