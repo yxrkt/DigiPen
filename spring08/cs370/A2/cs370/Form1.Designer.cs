@@ -42,12 +42,12 @@ namespace cs370
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.checkBW = new System.Windows.Forms.CheckBox();
             this.radioSquare5 = new System.Windows.Forms.RadioButton();
             this.radioCircle7 = new System.Windows.Forms.RadioButton();
             this.radioSquare = new System.Windows.Forms.RadioButton();
             this.radioCircle = new System.Windows.Forms.RadioButton();
             this.radioCross = new System.Windows.Forms.RadioButton();
-            this.checkBW = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -193,6 +193,17 @@ namespace cs370
             this.panel1.Size = new System.Drawing.Size(91, 512);
             this.panel1.TabIndex = 11;
             // 
+            // checkBW
+            // 
+            this.checkBW.AutoSize = true;
+            this.checkBW.Location = new System.Drawing.Point(6, 183);
+            this.checkBW.Name = "checkBW";
+            this.checkBW.Size = new System.Drawing.Size(55, 17);
+            this.checkBW.TabIndex = 15;
+            this.checkBW.Text = "Binary";
+            this.checkBW.UseVisualStyleBackColor = true;
+            this.checkBW.CheckedChanged += new System.EventHandler(this.checkBW_CheckedChanged);
+            // 
             // radioSquare5
             // 
             this.radioSquare5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -256,17 +267,6 @@ namespace cs370
             this.radioCross.Text = "Cross (3x3)";
             this.radioCross.UseVisualStyleBackColor = true;
             this.radioCross.CheckedChanged += new System.EventHandler(this.radioCross_CheckedChanged);
-            // 
-            // checkBW
-            // 
-            this.checkBW.AutoSize = true;
-            this.checkBW.Location = new System.Drawing.Point(6, 183);
-            this.checkBW.Name = "checkBW";
-            this.checkBW.Size = new System.Drawing.Size(55, 17);
-            this.checkBW.TabIndex = 15;
-            this.checkBW.Text = "Binary";
-            this.checkBW.UseVisualStyleBackColor = true;
-            this.checkBW.CheckedChanged += new System.EventHandler(this.checkBW_CheckedChanged);
             // 
             // Form1
             // 

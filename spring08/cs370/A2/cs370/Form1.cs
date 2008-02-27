@@ -523,23 +523,25 @@ namespace cs370
         private void growRegion(Point clicked)
         {
             int width = dispBmp.Width, height = dispBmp.Height;
+            int width3 = width * 3;
             Bitmap destBmp = new Bitmap(width, height);
 
-            BitmapData srcColors = dispBmp.LockBits(new Rectangle(0, 0, width, height),
-                                                    ImageLockMode.ReadOnly,
-                                                    PixelFormat.Format24bppRgb);
+            BitmapData dispData = dispBmp.LockBits(new Rectangle(0, 0, width, height),
+                                                   ImageLockMode.ReadOnly,
+                                                   PixelFormat.Format24bppRgb);
 
-            BitmapData destColors = destBmp.LockBits(new Rectangle(0, 0, width, height),
-                                                     ImageLockMode.WriteOnly,
-                                                     PixelFormat.Format24bppRgb);
+            BitmapData destData = destBmp.LockBits(new Rectangle(0, 0, width, height),
+                                                   ImageLockMode.WriteOnly,
+                                                   PixelFormat.Format24bppRgb);
 
-            IntPtr srcPtr = srcColors.Scan0;
-            IntPtr destPtr = destColors.Scan0;
+            IntPtr srcPtr = dispData.Scan0;
+            IntPtr destPtr = destData.Scan0;
             int nBytes = height * width * 3;
             byte[] srcRgbs = new byte[nBytes];
             byte[] destRgbs = new byte[nBytes];
 
             Marshal.Copy(srcPtr, srcRgbs, 0, nBytes);
+            if (!dispBinary) Marshal.Copy(srcPtr, destRgbs, 0, nBytes);
 
             // find standard deviation
 
@@ -569,44 +571,72 @@ namespace cs370
             List<Point> opened = new List<Point>();
             List<Point> closed = new List<Point>();
 
+            //if (closed.Exists(delegate(Point p) {return p.Equals(clicked);})) return;
+
             opened.Insert(0, clicked);
+            float start = srcGrays[opened[0].X + opened[0].Y * width];
 
             while (opened.Count != 0)
             {
                 int x = opened[0].X, y = opened[0].Y;
+                int xnext = x + 1, ynext = y + 1, xprev = x - 1, yprev = y - 1;
 
-                // top left
-                if (x != 0|| y != 0)
-                    ; // do this
+                // adds neighbors if not on closed list and within dev range
+                if (x != 0 && y != 0 && !found(closed, opened, xprev, yprev) && 
+                    Math.Abs(srcGrays[xprev + yprev * width] - start) < dev)
+                    opened.Add(new Point(xprev, yprev)); // top left
+                if (y != 0 && !found(closed, opened, x, yprev) && 
+                    Math.Abs(srcGrays[x + yprev * width] - start) < dev)
+                    opened.Add(new Point(x, yprev));     // top
+                if (xnext != width && y != 0 && !found(closed, opened, xnext, yprev) && 
+                    Math.Abs(srcGrays[xnext + yprev * width] - start) < dev)
+                    opened.Add(new Point(xnext, yprev)); // top right
+                if (x != 0 && !found(closed, opened, xprev, y) && 
+                    Math.Abs(srcGrays[xprev + y * width] - start) < dev)
+                    opened.Add(new Point(xprev, y));     // left
+                if (xnext != width && !found(closed, opened, xnext, y) && 
+                    Math.Abs(srcGrays[xnext + y * width] - start) < dev)
+                    opened.Add(new Point(xnext, y));     // right
+                if (x != 0 && ynext != height && !found(closed, opened, xprev, ynext) && 
+                    Math.Abs(srcGrays[xprev + ynext * width] - start) < dev)
+                    opened.Add(new Point(xprev, ynext)); // botom left
+                if (ynext != height && !found(closed, opened, x, ynext) && 
+                    Math.Abs(srcGrays[x + ynext * width] - start) < dev)
+                    opened.Add(new Point(x, ynext));     // bottom
+                if (xnext != width && ynext != height && !found(closed, opened, xnext, ynext) && 
+                    Math.Abs(srcGrays[xnext + ynext * width] - start) < dev)
+                    opened.Add(new Point(xnext, ynext)); // bottom right
 
-                // top
-                if (y != 0)
-                    ; // do this
+                // close current point
+                opened.RemoveAt(0);
+                closed.Add(new Point(x, y));
+                int index = x * 3 + y * width3;
 
-                // top right
-                if (x + 1 != width)
-                    ; // do this
-
-                // left
-                if (x != 0)
-                    ; // do this
-
-                // right
-                if (x + 1 != width)
-                    ; // do this
-
-                // bototm left
-
-                // bottom
-
-                // bottom right
+                // set color to pure green
+                destRgbs[index]     = dispBinary ? (byte)255 : (byte)0;
+                destRgbs[index + 1] = (byte)255;
+                destRgbs[index + 2] = dispBinary ? (byte)255 : (byte)0;
             }
+
+            Marshal.Copy(destRgbs, 0, destPtr, nBytes);
+            dispBmp.UnlockBits(dispData);
+            destBmp.UnlockBits(destData);
+
+            dispBmp = destBmp;
+            pictureBox1.Image = dispBmp;
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
             MouseEventArgs click = (MouseEventArgs)e;
             growRegion(new Point(click.X, click.Y));
+        }
+
+        private bool found(List<Point> closed, List<Point> open, int x, int y)
+        {
+            if (open.Exists(delegate(Point p) { return p.Equals(new Point(x, y)); })) return true;
+            if (closed.Exists(delegate(Point p) { return p.Equals(new Point(x, y)); })) return true;
+            return false;
         }
     }
 }
