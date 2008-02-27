@@ -455,14 +455,14 @@ namespace cs370
         {
             int width = dispBmp.Width, height = dispBmp.Height;
 
-            Bitmap maskBmp = new Bitmap(dispBmp);
+            Bitmap maskBmp = new Bitmap(width, height);
 
             BitmapData srcData = dispBmp.LockBits(new Rectangle(0, 0, width, height),
                                                   ImageLockMode.ReadOnly,
                                                   PixelFormat.Format24bppRgb);
 
             BitmapData dispData = maskBmp.LockBits(new Rectangle(0, 0, width, height),
-                                                   ImageLockMode.ReadWrite,
+                                                   ImageLockMode.WriteOnly,
                                                    PixelFormat.Format24bppRgb);
 
             System.IntPtr srcPtr = srcData.Scan0;
@@ -473,7 +473,7 @@ namespace cs370
             byte[] dispColors = new byte[nBytes];
 
             Marshal.Copy(srcPtr, srcColors, 0, nBytes);
-            Marshal.Copy(dispPtr, dispColors, 0, nBytes);
+            Marshal.Copy(srcPtr, dispColors, 0, nBytes);
 
             for (int y = 0; y < height; ++y)
             {
