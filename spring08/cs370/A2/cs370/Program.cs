@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace ImageApp
+namespace cs370
 {
     static class Program
     {
