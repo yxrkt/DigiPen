@@ -53,6 +53,7 @@ namespace cs370
         int[] idTable;
         int nObjects = 0;
         MORPH_MASK maskID = MORPH_MASK.CROSS;
+        bool dispBinary = false;
 
         public Form1()
         {
@@ -334,6 +335,11 @@ namespace cs370
             }
         }
 
+        private void checkBW_CheckedChanged(object sender, EventArgs e)
+        {
+            dispBinary = !dispBinary;
+        }
+
         private void radioCross_CheckedChanged(object sender, EventArgs e)
         {
             maskID = MORPH_MASK.CROSS;
@@ -512,6 +518,95 @@ namespace cs370
 
             dispBmp = maskBmp;
             pictureBox1.Image = dispBmp;
+        }
+
+        private void growRegion(Point clicked)
+        {
+            int width = dispBmp.Width, height = dispBmp.Height;
+            Bitmap destBmp = new Bitmap(width, height);
+
+            BitmapData srcColors = dispBmp.LockBits(new Rectangle(0, 0, width, height),
+                                                    ImageLockMode.ReadOnly,
+                                                    PixelFormat.Format24bppRgb);
+
+            BitmapData destColors = destBmp.LockBits(new Rectangle(0, 0, width, height),
+                                                     ImageLockMode.WriteOnly,
+                                                     PixelFormat.Format24bppRgb);
+
+            IntPtr srcPtr = srcColors.Scan0;
+            IntPtr destPtr = destColors.Scan0;
+            int nBytes = height * width * 3;
+            byte[] srcRgbs = new byte[nBytes];
+            byte[] destRgbs = new byte[nBytes];
+
+            Marshal.Copy(srcPtr, srcRgbs, 0, nBytes);
+
+            // find standard deviation
+
+            int nGrays = nBytes / 3;
+            float[] srcGrays = new float[nGrays];
+
+            // find mean, or 'expected value'
+            float total = 0.0F;
+            for (int i = 0, j = 0; i < nBytes; i += 3, ++j)
+            {
+                srcGrays[j] = (float)((int)srcRgbs[i] + (int)srcRgbs[i + 1] + (int)srcRgbs[i + 2]) / 3.0F;
+                total += srcGrays[j];
+            }
+            float mean = total / (float)(nBytes / 3);
+
+            // find variance
+            total = 0.0F;
+            for (int i = 0; i < nGrays; ++i)
+            {
+                float dif = srcGrays[i] - mean;
+                total += (dif * dif);
+            }
+            float variance = total / (float)nGrays;
+
+            float dev = (float)Math.Sqrt(variance);
+
+            List<Point> opened = new List<Point>();
+            List<Point> closed = new List<Point>();
+
+            opened.Insert(0, clicked);
+
+            while (opened.Count != 0)
+            {
+                int x = opened[0].X, y = opened[0].Y;
+
+                // top left
+                if (x != 0|| y != 0)
+                    ; // do this
+
+                // top
+                if (y != 0)
+                    ; // do this
+
+                // top right
+                if (x + 1 != width)
+                    ; // do this
+
+                // left
+                if (x != 0)
+                    ; // do this
+
+                // right
+                if (x + 1 != width)
+                    ; // do this
+
+                // bototm left
+
+                // bottom
+
+                // bottom right
+            }
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            MouseEventArgs click = (MouseEventArgs)e;
+            growRegion(new Point(click.X, click.Y));
         }
     }
 }

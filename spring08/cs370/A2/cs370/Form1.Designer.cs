@@ -35,7 +35,6 @@ namespace cs370
             this.label1 = new System.Windows.Forms.Label();
             this.btnGetObjs = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
-            this.btnPart2 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.btnOpenImg = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -43,11 +42,12 @@ namespace cs370
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.radioSquare5 = new System.Windows.Forms.RadioButton();
+            this.radioCircle7 = new System.Windows.Forms.RadioButton();
             this.radioSquare = new System.Windows.Forms.RadioButton();
             this.radioCircle = new System.Windows.Forms.RadioButton();
             this.radioCross = new System.Windows.Forms.RadioButton();
-            this.radioCircle7 = new System.Windows.Forms.RadioButton();
-            this.radioSquare5 = new System.Windows.Forms.RadioButton();
+            this.checkBW = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -62,6 +62,7 @@ namespace cs370
             this.pictureBox1.Size = new System.Drawing.Size(512, 512);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
             // labelImagePath
             // 
@@ -125,16 +126,6 @@ namespace cs370
             this.label2.TabIndex = 6;
             this.label2.Text = "Part 2";
             // 
-            // btnPart2
-            // 
-            this.btnPart2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnPart2.Location = new System.Drawing.Point(538, 210);
-            this.btnPart2.Name = "btnPart2";
-            this.btnPart2.Size = new System.Drawing.Size(75, 23);
-            this.btnPart2.TabIndex = 7;
-            this.btnPart2.Text = "Do Shizzah";
-            this.btnPart2.UseVisualStyleBackColor = true;
-            // 
             // label3
             // 
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -189,6 +180,7 @@ namespace cs370
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel1.Controls.Add(this.checkBW);
             this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.radioSquare5);
             this.panel1.Controls.Add(this.radioCircle7);
@@ -200,6 +192,32 @@ namespace cs370
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(91, 512);
             this.panel1.TabIndex = 11;
+            // 
+            // radioSquare5
+            // 
+            this.radioSquare5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.radioSquare5.AutoSize = true;
+            this.radioSquare5.Location = new System.Drawing.Point(6, 302);
+            this.radioSquare5.Name = "radioSquare5";
+            this.radioSquare5.Size = new System.Drawing.Size(85, 17);
+            this.radioSquare5.TabIndex = 14;
+            this.radioSquare5.TabStop = true;
+            this.radioSquare5.Text = "Square (5x5)";
+            this.radioSquare5.UseVisualStyleBackColor = true;
+            this.radioSquare5.CheckedChanged += new System.EventHandler(this.radioSquare5_CheckedChanged);
+            // 
+            // radioCircle7
+            // 
+            this.radioCircle7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.radioCircle7.AutoSize = true;
+            this.radioCircle7.Location = new System.Drawing.Point(6, 348);
+            this.radioCircle7.Name = "radioCircle7";
+            this.radioCircle7.Size = new System.Drawing.Size(77, 17);
+            this.radioCircle7.TabIndex = 13;
+            this.radioCircle7.TabStop = true;
+            this.radioCircle7.Text = "Circle (7x7)";
+            this.radioCircle7.UseVisualStyleBackColor = true;
+            this.radioCircle7.CheckedChanged += new System.EventHandler(this.radioCircle7_CheckedChanged);
             // 
             // radioSquare
             // 
@@ -239,38 +257,22 @@ namespace cs370
             this.radioCross.UseVisualStyleBackColor = true;
             this.radioCross.CheckedChanged += new System.EventHandler(this.radioCross_CheckedChanged);
             // 
-            // radioCircle7
+            // checkBW
             // 
-            this.radioCircle7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.radioCircle7.AutoSize = true;
-            this.radioCircle7.Location = new System.Drawing.Point(6, 348);
-            this.radioCircle7.Name = "radioCircle7";
-            this.radioCircle7.Size = new System.Drawing.Size(77, 17);
-            this.radioCircle7.TabIndex = 13;
-            this.radioCircle7.TabStop = true;
-            this.radioCircle7.Text = "Circle (7x7)";
-            this.radioCircle7.UseVisualStyleBackColor = true;
-            this.radioCircle7.CheckedChanged += new System.EventHandler(this.radioCircle7_CheckedChanged);
-            // 
-            // radioSquare5
-            // 
-            this.radioSquare5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.radioSquare5.AutoSize = true;
-            this.radioSquare5.Location = new System.Drawing.Point(6, 302);
-            this.radioSquare5.Name = "radioSquare5";
-            this.radioSquare5.Size = new System.Drawing.Size(85, 17);
-            this.radioSquare5.TabIndex = 14;
-            this.radioSquare5.TabStop = true;
-            this.radioSquare5.Text = "Square (5x5)";
-            this.radioSquare5.UseVisualStyleBackColor = true;
-            this.radioSquare5.CheckedChanged += new System.EventHandler(this.radioSquare5_CheckedChanged);
+            this.checkBW.AutoSize = true;
+            this.checkBW.Location = new System.Drawing.Point(6, 183);
+            this.checkBW.Name = "checkBW";
+            this.checkBW.Size = new System.Drawing.Size(55, 17);
+            this.checkBW.TabIndex = 15;
+            this.checkBW.Text = "Binary";
+            this.checkBW.UseVisualStyleBackColor = true;
+            this.checkBW.CheckedChanged += new System.EventHandler(this.checkBW_CheckedChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(626, 570);
-            this.Controls.Add(this.btnPart2);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.btnGetObjs);
             this.Controls.Add(this.label1);
@@ -301,7 +303,6 @@ namespace cs370
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnGetObjs;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button btnPart2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnOpenImg;
         private System.Windows.Forms.StatusStrip statusStrip1;
@@ -314,6 +315,7 @@ namespace cs370
         private System.Windows.Forms.RadioButton radioCross;
         private System.Windows.Forms.RadioButton radioCircle7;
         private System.Windows.Forms.RadioButton radioSquare5;
+        private System.Windows.Forms.CheckBox checkBW;
     }
 }
 
