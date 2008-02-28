@@ -346,7 +346,7 @@ namespace ImageApp
 
                 for (int y = 0; y < height; ++y)
                 {
-                    toolStripProgressBar1.Value = (int) ((float) 100 * (float) y / (float) height);
+                    toolStripProgressBar1.Value = (int)(100.0F * (float)y / (float)height);
 
                     for (int x = 0; x < xLim; x += 3)
                     {
