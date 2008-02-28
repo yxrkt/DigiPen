@@ -21,3 +21,7 @@
 Region Growing - click on image
                - region is selected with 8-way
                  connectivity
+               - 'binary' unchecked fills the
+                 region with green
+               - 'binary' checked turns image
+                 black and makes region white
