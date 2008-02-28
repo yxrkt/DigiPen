@@ -14,6 +14,8 @@ namespace cs370
     public partial class Form1 : Form
     {
         enum MORPH_MASK { CROSS, SQUARE, SQUARE5, CIRCLE5, CIRCLE7 }
+        enum LABEL_PRED { THRESHOLD, DEVIANCE }
+
         class Mask
         {
             public Mask(int w, int h, int x, int y)
@@ -49,9 +51,8 @@ namespace cs370
         };
 
         Bitmap cachedBmp, dispBmp;
-        float threshold = 0;
-        int[] idTable;
         int nObjects = 0;
+        int[] idTable;
         MORPH_MASK maskID = MORPH_MASK.CROSS;
         bool dispBinary = false;
 
@@ -91,8 +92,6 @@ namespace cs370
             labelImagePath.Text = ofd.FileName;
             this.Width -= widthDif;
             this.Height -= heightDif;
-
-            updateStatusBar();
         }
 
         private void btnRestoreImg_Click(object sender, EventArgs e)
@@ -103,7 +102,99 @@ namespace cs370
 
         private void btnGetObjs_Click(object sender, EventArgs e)
         {
+            labelImage(LABEL_PRED.THRESHOLD, new Point());
+        }
+
+        private void btnOpenImg_Click(object sender, EventArgs e)
+        {
+            // crosshair mask
+            Mask crossMask = new Mask(3, 3, 1, 1);
+            crossMask.Set(0, 0, false);
+            crossMask.Set(2, 0, false);
+            crossMask.Set(0, 2, false);
+            crossMask.Set(2, 2, false);
+
+            // square mask 3x3
+            Mask squareMask = new Mask(3, 3, 1, 1);
+
+            // square mask 5x5
+            Mask squareMask5 = new Mask(5, 5, 2, 2);
+
+            // circle mask 5x5
+            Mask circleMask5 = new Mask(5, 5, 2, 2);
+            circleMask5.Set(0, 0, false);
+            circleMask5.Set(4, 0, false);
+            circleMask5.Set(0, 4, false);
+            circleMask5.Set(4, 4, false);
+
+            // circle mask 7x7
+            Mask circleMask7 = new Mask(7, 7, 3, 3);
+            circleMask7.Set(0, 0, false);
+            circleMask7.Set(6, 0, false);
+            circleMask7.Set(0, 6, false);
+            circleMask7.Set(6, 6, false);
+
+            Mask mask = crossMask;
+            switch (maskID)
+            {
+                case MORPH_MASK.CROSS:   mask = crossMask;   break;
+                case MORPH_MASK.SQUARE:  mask = squareMask;  break;
+                case MORPH_MASK.SQUARE5: mask = squareMask5; break;
+                case MORPH_MASK.CIRCLE5: mask = circleMask5; break;
+                case MORPH_MASK.CIRCLE7: mask = circleMask7; break;
+            }
+
+            try
+            {
+                applyMask(mask, false); // erode
+                applyMask(mask, true);  // dilate
+            }
+            catch (System.Exception exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            MouseEventArgs click = (MouseEventArgs)e;
+            labelImage(LABEL_PRED.DEVIANCE, new Point(click.X, click.Y));
+        }
+
+        private void checkBW_CheckedChanged(object sender, EventArgs e)
+        {
+            dispBinary = !dispBinary;
+        }
+
+        private void radioCross_CheckedChanged(object sender, EventArgs e)
+        {
+            maskID = MORPH_MASK.CROSS;
+        }
+
+        private void radioSquare_CheckedChanged(object sender, EventArgs e)
+        {
+            maskID = MORPH_MASK.SQUARE;
+        }
+
+        private void radioSquare5_CheckedChanged(object sender, EventArgs e)
+        {
+            maskID = MORPH_MASK.SQUARE5;
+        }
+
+        private void radioCircle_CheckedChanged(object sender, EventArgs e)
+        {
+            maskID = MORPH_MASK.CIRCLE5;
+        }
+
+        private void radioCircle7_CheckedChanged(object sender, EventArgs e)
+        {
+            maskID = MORPH_MASK.CIRCLE7;
+        }
+
+        private void labelImage(LABEL_PRED pred, Point click)
+        {
             int width = dispBmp.Width, height = dispBmp.Height;
+            float threshold = 0F, deviation = 0F, startGray = 0F;
 
             BitmapData srcData = dispBmp.LockBits(new Rectangle(0, 0, width, height),
                                                   ImageLockMode.ReadOnly,
@@ -122,7 +213,21 @@ namespace cs370
             byte[] polarColors = new byte[nBytes];
 
             Marshal.Copy(srcPtr, srcColors, 0, nBytes);
-            threshold = getThreshold(srcColors, 1.0F);
+
+            switch (pred)
+            {
+                case LABEL_PRED.THRESHOLD:
+                    threshold = getThreshold(srcColors, 1.0F);
+                    break;
+
+                case LABEL_PRED.DEVIANCE:
+                    deviation = getDeviation(srcColors);
+                    int index = click.X * 3 + click.Y * width * 3;
+                    startGray = (float)((int)srcColors[index + 2] +
+                                        (int)srcColors[index + 1] +
+                                        (int)srcColors[index]) / 3F;
+                    break;
+            }
 
             int xLim = width * 3;
 
@@ -134,18 +239,24 @@ namespace cs370
                     byte grayVal = (byte)(((int)srcColors[i + 2] +
                                            (int)srcColors[i + 1] +
                                            (int)srcColors[i]) / 3);
-                    if (grayVal <= threshold)
+                    bool fill = false;
+                    switch (pred)
                     {
-                        polarColors[i + 2] = 0;
-                        polarColors[i + 1] = 0;
-                        polarColors[i] = 0;
+                        case LABEL_PRED.THRESHOLD: fill = (grayVal > threshold); break;
+                        case LABEL_PRED.DEVIANCE: fill = (Math.Abs(startGray - grayVal) < deviation); break;
                     }
 
-                    else
+                    if (fill)
                     {
                         polarColors[i + 2] = 255;
                         polarColors[i + 1] = 255;
-                        polarColors[i] = 255;
+                        polarColors[i]     = 255;
+                    }
+                    else
+                    {
+                        polarColors[i + 2] = 0;
+                        polarColors[i + 1] = 0;
+                        polarColors[i]     = 0;
                     }
                 }
             }
@@ -172,7 +283,6 @@ namespace cs370
 
             Marshal.Copy(polarPtr, polarColors, 0, nBytes);
 
-            //
             toolStripProgressBar1.Visible = true;
 
             nObjects = 0;
@@ -261,6 +371,8 @@ namespace cs370
                 }
             }
 
+            int selectedID = idTable[click.X + click.Y * width];
+
             for (int y = 0; y < height; ++y)
             {
                 for (int x = 0; x < xLim; x += 3)
@@ -268,125 +380,54 @@ namespace cs370
                     int colorIndex = x + y * xLim;
                     int idIndex = x / 3 + y * width;
 
-                    objsColors[colorIndex + 2] = (byte)((977 * idTable[idIndex]) + 173 % 256);
-                    objsColors[colorIndex + 1] = (byte)((644 * idTable[idIndex]) + 45 % 256);
-                    objsColors[colorIndex] = (byte)((311 * idTable[idIndex]) + 247 % 256);
+                    switch (pred)
+                    {
+                        case LABEL_PRED.THRESHOLD:
+                            objsColors[colorIndex + 2] = (byte)((977 * idTable[idIndex]) + 173 % 256);
+                            objsColors[colorIndex + 1] = (byte)((644 * idTable[idIndex]) + 45  % 256);
+                            objsColors[colorIndex]     = (byte)((311 * idTable[idIndex]) + 247 % 256);
+                            break;
+
+                        case LABEL_PRED.DEVIANCE:
+                            if (idTable[idIndex] == selectedID)
+                            {
+                                objsColors[colorIndex + 2] = (!dispBinary) ? (byte)0 : (byte)255;
+                                objsColors[colorIndex + 1] = 255;
+                                objsColors[colorIndex]     = (!dispBinary) ? (byte)0 : (byte)255;
+                            }
+                            else if (!dispBinary)
+                            {
+                                objsColors[colorIndex + 2] = srcColors[colorIndex + 2];
+                                objsColors[colorIndex + 1] = srcColors[colorIndex + 1];
+                                objsColors[colorIndex]     = srcColors[colorIndex];
+                            }
+                            break;
+                    }
+
+
                 }
             }
 
-            //
             Marshal.Copy(objsColors, 0, objsPtr, nBytes);
             polar.UnlockBits(polarData);
             objs.UnlockBits(objsData);
 
             pictureBox1.Image = objs;
-            updateStatusBar();
-
             toolStripProgressBar1.Visible = false;
-        }
 
-        private void btnOpenImg_Click(object sender, EventArgs e)
-        {
-            // crosshair mask
-            Mask crossMask = new Mask(3, 3, 1, 1);
-            crossMask.Set(0, 0, false);
-            crossMask.Set(2, 0, false);
-            crossMask.Set(0, 2, false);
-            crossMask.Set(2, 2, false);
-
-            // square mask 3x3
-            Mask squareMask = new Mask(3, 3, 1, 1);
-
-            // square mask 5x5
-            Mask squareMask5 = new Mask(5, 5, 2, 2);
-
-            // circle mask 5x5
-            Mask circleMask5 = new Mask(5, 5, 2, 2);
-            circleMask5.Set(0, 0, false);
-            circleMask5.Set(4, 0, false);
-            circleMask5.Set(0, 4, false);
-            circleMask5.Set(4, 4, false);
-
-            // circle mask 7x7
-            Mask circleMask7 = new Mask(7, 7, 3, 3);
-            circleMask7.Set(0, 0, false);
-            circleMask7.Set(6, 0, false);
-            circleMask7.Set(0, 6, false);
-            circleMask7.Set(6, 6, false);
-
-            Mask mask = crossMask;
-            switch (maskID)
+            switch (pred)
             {
-                case MORPH_MASK.CROSS:   mask = crossMask;   break;
-                case MORPH_MASK.SQUARE:  mask = squareMask;  break;
-                case MORPH_MASK.SQUARE5: mask = squareMask5; break;
-                case MORPH_MASK.CIRCLE5: mask = circleMask5; break;
-                case MORPH_MASK.CIRCLE7: mask = circleMask7; break;
+                case LABEL_PRED.THRESHOLD:
+                    toolStripStatusLabel1.Text = "Objects: " + nObjects.ToString();
+                    toolStripStatusLabel2.Text = "Threshold: " + threshold.ToString();
+                    break;
+
+                case LABEL_PRED.DEVIANCE:
+                    toolStripStatusLabel1.Text = "Object Selected: " + selectedID.ToString();
+                    toolStripStatusLabel2.Text = "Deviance: " + deviation.ToString();
+                    break;
             }
 
-            try
-            {
-                applyMask(mask, false); // erode
-                applyMask(mask, true);  // dilate
-            }
-            catch (System.Exception exception)
-            {
-                MessageBox.Show(exception.Message);
-            }
-        }
-
-        private void checkBW_CheckedChanged(object sender, EventArgs e)
-        {
-            dispBinary = !dispBinary;
-        }
-
-        private void radioCross_CheckedChanged(object sender, EventArgs e)
-        {
-            maskID = MORPH_MASK.CROSS;
-        }
-
-        private void radioSquare_CheckedChanged(object sender, EventArgs e)
-        {
-            maskID = MORPH_MASK.SQUARE;
-        }
-
-        private void radioSquare5_CheckedChanged(object sender, EventArgs e)
-        {
-            maskID = MORPH_MASK.SQUARE5;
-        }
-
-        private void radioCircle_CheckedChanged(object sender, EventArgs e)
-        {
-            maskID = MORPH_MASK.CIRCLE5;
-        }
-
-        private void radioCircle7_CheckedChanged(object sender, EventArgs e)
-        {
-            maskID = MORPH_MASK.CIRCLE7;
-        }
-
-        private void updateStatusBar()
-        {
-            if (nObjects != 0)
-            {
-                string objsString = "Objects total: ";
-                objsString += nObjects.ToString();
-                toolStripStatusLabel1.Text = objsString;
-            }
-            else
-            {
-                toolStripStatusLabel1.Text = "";
-            }
-
-            if (threshold != 0.0F)
-            {
-                toolStripStatusLabel2.Text = "Threshold at ";
-                toolStripStatusLabel2.Text += threshold.ToString();
-            }
-            else
-            {
-                toolStripStatusLabel2.Text = "";
-            }
         }
 
         private void updateLabels(int labelKeep, int labelReplace, int xLast, int yLast)
@@ -457,6 +498,32 @@ namespace cs370
             return curThresh;
         }
 
+        private float getDeviation(byte[] rgbs)
+        {
+            int nBytes = rgbs.Length, nGrays = nBytes / 3;
+            float[] grays = new float[nGrays];
+
+            // find mean, or 'expected value'
+            float total = 0.0F;
+            for (int i = 0, j = 0; i < nBytes; i += 3, ++j)
+            {
+                grays[j] = (float)((int)rgbs[i] + (int)rgbs[i + 1] + (int)rgbs[i + 2]) / 3.0F;
+                total += grays[j];
+            }
+
+            float mean = total / (float)(nGrays);
+
+            // find variance
+            total = 0.0F;
+            for (int i = 0; i < nGrays; ++i)
+            {
+                float dif = grays[i] - mean;
+                total += (dif * dif);
+            }
+
+            return (float)Math.Sqrt(total / (float)nGrays);
+        }
+
         private void applyMask(Mask mask, bool dilate)
         {
             int width = dispBmp.Width, height = dispBmp.Height;
@@ -518,125 +585,6 @@ namespace cs370
 
             dispBmp = maskBmp;
             pictureBox1.Image = dispBmp;
-        }
-
-        private void growRegion(Point clicked)
-        {
-            int width = dispBmp.Width, height = dispBmp.Height;
-            int width3 = width * 3;
-            Bitmap destBmp = new Bitmap(width, height);
-
-            BitmapData dispData = dispBmp.LockBits(new Rectangle(0, 0, width, height),
-                                                   ImageLockMode.ReadOnly,
-                                                   PixelFormat.Format24bppRgb);
-
-            BitmapData destData = destBmp.LockBits(new Rectangle(0, 0, width, height),
-                                                   ImageLockMode.WriteOnly,
-                                                   PixelFormat.Format24bppRgb);
-
-            IntPtr srcPtr = dispData.Scan0;
-            IntPtr destPtr = destData.Scan0;
-            int nBytes = height * width * 3;
-            byte[] srcRgbs = new byte[nBytes];
-            byte[] destRgbs = new byte[nBytes];
-
-            Marshal.Copy(srcPtr, srcRgbs, 0, nBytes);
-            if (!dispBinary) Marshal.Copy(srcPtr, destRgbs, 0, nBytes);
-
-            // find standard deviation
-
-            int nGrays = nBytes / 3;
-            float[] srcGrays = new float[nGrays];
-
-            // find mean, or 'expected value'
-            float total = 0.0F;
-            for (int i = 0, j = 0; i < nBytes; i += 3, ++j)
-            {
-                srcGrays[j] = (float)((int)srcRgbs[i] + (int)srcRgbs[i + 1] + (int)srcRgbs[i + 2]) / 3.0F;
-                total += srcGrays[j];
-            }
-            float mean = total / (float)(nBytes / 3);
-
-            // find variance
-            total = 0.0F;
-            for (int i = 0; i < nGrays; ++i)
-            {
-                float dif = srcGrays[i] - mean;
-                total += (dif * dif);
-            }
-            float variance = total / (float)nGrays;
-
-            float dev = (float)Math.Sqrt(variance);
-
-            List<Point> opened = new List<Point>();
-            List<Point> closed = new List<Point>();
-
-            //if (closed.Exists(delegate(Point p) {return p.Equals(clicked);})) return;
-
-            opened.Insert(0, clicked);
-            float start = srcGrays[opened[0].X + opened[0].Y * width];
-
-            while (opened.Count != 0)
-            {
-                int x = opened[0].X, y = opened[0].Y;
-                int xnext = x + 1, ynext = y + 1, xprev = x - 1, yprev = y - 1;
-
-                // adds neighbors if not on closed list and within dev range
-                if (x != 0 && y != 0 && !found(closed, opened, xprev, yprev) && 
-                    Math.Abs(srcGrays[xprev + yprev * width] - start) < dev)
-                    opened.Add(new Point(xprev, yprev)); // top left
-                if (y != 0 && !found(closed, opened, x, yprev) && 
-                    Math.Abs(srcGrays[x + yprev * width] - start) < dev)
-                    opened.Add(new Point(x, yprev));     // top
-                if (xnext != width && y != 0 && !found(closed, opened, xnext, yprev) && 
-                    Math.Abs(srcGrays[xnext + yprev * width] - start) < dev)
-                    opened.Add(new Point(xnext, yprev)); // top right
-                if (x != 0 && !found(closed, opened, xprev, y) && 
-                    Math.Abs(srcGrays[xprev + y * width] - start) < dev)
-                    opened.Add(new Point(xprev, y));     // left
-                if (xnext != width && !found(closed, opened, xnext, y) && 
-                    Math.Abs(srcGrays[xnext + y * width] - start) < dev)
-                    opened.Add(new Point(xnext, y));     // right
-                if (x != 0 && ynext != height && !found(closed, opened, xprev, ynext) && 
-                    Math.Abs(srcGrays[xprev + ynext * width] - start) < dev)
-                    opened.Add(new Point(xprev, ynext)); // botom left
-                if (ynext != height && !found(closed, opened, x, ynext) && 
-                    Math.Abs(srcGrays[x + ynext * width] - start) < dev)
-                    opened.Add(new Point(x, ynext));     // bottom
-                if (xnext != width && ynext != height && !found(closed, opened, xnext, ynext) && 
-                    Math.Abs(srcGrays[xnext + ynext * width] - start) < dev)
-                    opened.Add(new Point(xnext, ynext)); // bottom right
-
-                // close current point
-                opened.RemoveAt(0);
-                closed.Add(new Point(x, y));
-                int index = x * 3 + y * width3;
-
-                // set color to pure green
-                destRgbs[index]     = dispBinary ? (byte)255 : (byte)0;
-                destRgbs[index + 1] = (byte)255;
-                destRgbs[index + 2] = dispBinary ? (byte)255 : (byte)0;
-            }
-
-            Marshal.Copy(destRgbs, 0, destPtr, nBytes);
-            dispBmp.UnlockBits(dispData);
-            destBmp.UnlockBits(destData);
-
-            dispBmp = destBmp;
-            pictureBox1.Image = dispBmp;
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-            MouseEventArgs click = (MouseEventArgs)e;
-            growRegion(new Point(click.X, click.Y));
-        }
-
-        private bool found(List<Point> closed, List<Point> open, int x, int y)
-        {
-            if (open.Exists(delegate(Point p) { return p.Equals(new Point(x, y)); })) return true;
-            if (closed.Exists(delegate(Point p) { return p.Equals(new Point(x, y)); })) return true;
-            return false;
         }
     }
 }
