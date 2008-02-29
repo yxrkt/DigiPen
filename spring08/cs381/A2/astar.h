@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <list>
+#include <set>
+
+#pragma warning( disable : 4290 ) // disable exception specification warning
 
 template <typename GraphType, typename Heuristic > 
 class Astar
@@ -13,49 +16,54 @@ class Astar
     // node struct: holds parent and cost info
   struct Node
   {
-    Node( int id = 0, int parent = NULL_ID, float walk = 0.f, 
-          float h = 0.f, float e = 0.f )
+    Node( int id = 0, int parent = NULL_ID, float walk = 0.f, float h = 0.f )
       : myID( id )
       , parentID( parent )
       , walkCost( walk )
       , hCost( h )
-      , edgeCost( e )
     {}
+
+    inline float fCost() const { return walkCost + hCost; }
+    inline bool operator <( const Node &rhs ) const { return ( fCost() < rhs.fCost() ); }
+    inline bool operator ==( const Node &rhs ) { return ( myID == rhs.myID ); }
 
     int    myID;
     int    parentID;
     float  walkCost;
     float  hCost;
-    float  edgeCost;
+  };
 
-    inline float fCost() const { return walkCost + hCost; }
-    bool operator <( const Node &rhs ) const { return ( fCost() < rhs.fCost() ); }
-    bool operator ==( const Node &rhs ) { return ( myID == rhs.myID ); }
+  struct NodeIDLess
+  {
+    inline bool operator ()( const Node &lhs, const Node &rhs ) const
+    {
+      return ( lhs.myID < rhs.myID );
+    }
   };
 
     // typedefs
-  typedef std::list<Node> NodeList;
-  //typedef NodeList::iterator NodeListIt;
+  typedef std::multiset<Node> NodeMSet;
+  typedef std::set<Node, NodeIDLess> NodeSet;
 
   public:
       // ctor: takes graph
-    Astar(const GraphType &_graph);
+    Astar( const GraphType &_graph );
 
       // A* search function
     std::vector<typename GraphType::Edge> search(size_t start_id, size_t goal_id) const;
     std::vector<typename GraphType::Edge> search_d(size_t start_id, size_t goal_id) const;
 
   private:
+    void operator =( const Astar &rhs );
+
       // Sub methods for A* search
     void OpenNode( const Node &node ) const;
-    void CloseNode( const Node &node ) const;
+    void CloseNode() const;
 
       // data
     const   GraphType &graph;                     // graph being searched
-    mutable NodeList   openList;                  // list of opened nodes
-    mutable NodeList   closedList;                // list of visited nodes
-
-
+    mutable NodeMSet   openList;                  // multiset of opened nodes
+    mutable NodeSet    closedList;                // set of closed nodes
 };
 
 #include "astar.cpp"

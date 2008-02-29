@@ -1,0 +1,1 @@
+cl /W3 /Wp64 /WX /EHa /O2 driver.cpp /o astar.exe
