@@ -1,5 +1,0 @@
-m = myMath.New()
-print("m = ", m)
-myMath.add(m, 3)
-print("m.get = ", myMath.sub(m, 1))
-myMath.Delete(m)
