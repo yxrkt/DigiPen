@@ -400,14 +400,24 @@ bool Intersects(const Ray3D& ray, const Triangle3D& tri, Point3D *rpoint)
   // check if coplanar
   if ( abs( n * ray.direction ) < epsilon ) return false;
 
-	// get pt of intersection w/ triangle's plane
+  // check if ray is facing away from plane
+  if ( ( tri[0] - ray.origin ) * ray.direction < 0.f ) return false;
+
   float d = -( n[0] * tri[0][0] + n[1] * tri[0][1] + n[2] * tri[0][2] );
-  Plane3D triPlane( n[0], n[1], n[2], d );
   Point3D isect;
 
-  if ( Intersects( Segment3D( ray.origin, ray.origin + ray.direction ), triPlane, &isect ) )
+  // if point intersects plane
+  if ( Intersects( Line3D( ray.origin, ray.direction ), Plane3D( n[0], n[1], n[2], d ), &isect ) )
   {
-    if ( tri.contains( isect ) )
+    int count = 0;
+    for ( int i = 0; i < 3; ++i )
+    {
+      int next = (i == 2) ? 0 : i + 1;
+      float side = (( isect - tri[i] ) ^ ( tri[next] - isect )) * n;
+      count += ( (side < 0.f) ? -1 : 1 );
+    }
+    // if point is within triangle's boundaries
+    if ( abs( count ) == 3 )
     {
       if ( rpoint ) *rpoint = isect;
       return true;
