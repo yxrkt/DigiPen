@@ -11,11 +11,12 @@
 #include "scenelib.h"
 
 
-// =============================================================================
-// Added during A2
-// =============================================================================
+// constants
 const float EPSILON = .0001f;
+const unsigned CB   = 1;
+const unsigned CI   = 5;
 
+// useful inlines
 template<typename T, typename U>
 inline T force_cast( const U &data ) { return *(T *)&data; }
 
@@ -28,6 +29,7 @@ inline float TVal( const Vertex &p, const Vertex &q, const Point3D &i )
 {
   return TVal( force_cast<Point3D>( p.V ), force_cast<Point3D>( q.V ), i );
 }
+
 
 // Polygon
 class Polygon3D
@@ -61,6 +63,17 @@ class Polygon3D
     Vector3D  center;
 };
 
+// Triangle
+class TriangleKd
+{
+  public:
+    TriangleKd( const APolygon &poly, const Object &obj ) : verts( poly ), parentObj( (Object *)&obj ) {}
+    const APolygon &Verts() const { return verts; }
+  private:
+    Object   *parentObj;
+    APolygon  verts;
+};
+
 // Node
 struct Node
 {
@@ -80,10 +93,52 @@ struct Node
   Node       *back;
 };
 
+// Node for Kd tree
+struct NodeKd
+{
+  NodeKd() : left( NULL ), right( NULL ) {}
+  NodeKd( const Box3D &_vox, NodeKd *_left = NULL, NodeKd *_right = NULL )
+    : vox( _vox ), left( _left ), right( _right ) {}
+
+  Plane3D   div;
+  Box3D     vox;
+  NodeKd   *left;
+  NodeKd   *right;
+};
 
 // typedefs
-typedef std::list<Polygon3D>    PolygonList;
-typedef PolygonList::iterator   PolygonListIt;
+typedef std::list<Polygon3D>        PolygonList;
+typedef PolygonList::iterator       PolygonListIt;
+typedef std::vector<TriangleKd>     TriangleVec;
+typedef TriangleVec::iterator       TriangleVecIt;
+typedef TriangleVec::const_iterator TriangleVecItC;
+
+enum PLANE_TYPE { PLANE_X = 0, PLANE_Y, PLANE_Z };
+
+// Functors and other stl helpers
+template <PLANE_TYPE T>
+inline bool VertMin( const Vertex &lhs, const Vertex &rhs )
+{
+  if ( T == PLANE_X ) return ( lhs.V[0] < rhs.V[0] );
+  if ( T == PLANE_Y ) return ( lhs.V[1] < rhs.V[1] );
+  return ( lhs.V[2] < rhs.V[2] );
+}
+
+template <PLANE_TYPE T>
+inline bool VertMax( const Vertex &lhs, const Vertex &rhs )
+{
+  if ( T == PLANE_X ) return ( lhs.V[0] > rhs.V[0] );
+  if ( T == PLANE_Y ) return ( lhs.V[1] > rhs.V[1] );
+  return ( lhs.V[2] > rhs.V[2] );
+}
+
+//struct MinX
+//{
+//  bool operator ()( const Vertex &lhs, const TriangleKd &rhs )
+//  {
+//    if ( lhs.V[0] < )
+//  }
+//};
 
 // Prototypes
 Polygon3D PullOutRoot( PolygonList &polys );
@@ -94,6 +149,15 @@ void DrawPoly( const Polygon3D &poly );
 unsigned GetHeight( const Node *tree );
 void GetNodes( const Node *tree, unsigned &nPolys );
 APolygon RemoveDupeVerts( const APolygon &poly );
+
+// Added during A3
+float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec &tris );
+void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL, 
+                   const Box3D &voxR, TriangleVec &trisL, TriangleVec &trisR );
+float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth, 
+                   Box3D &voxL, Box3D &voxR, float &cost );
+bool Terminate( float cost, const TriangleVec &tris, const Box3D &vox );
+NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth );
 
 
 #endif

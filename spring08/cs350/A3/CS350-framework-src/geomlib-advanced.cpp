@@ -8,8 +8,7 @@
 // Copyright © 2007 DigiPen Institute of Technology
 ////////////////////////////////////////////////////////////////////////
 
-#include "framework.h"
-#include "geomlib.h"
+#include "common.h"
 #include <vector>
 #include <queue>
 
@@ -400,18 +399,38 @@ bool Intersects(const Ray3D& ray, const Triangle3D& tri, Point3D *rpoint)
   // check if coplanar
   if ( abs( n * ray.direction ) < epsilon ) return false;
 
-	// get pt of intersection w/ triangle's plane
+  // check if ray is facing away from plane
+  if ( ( tri[0] - ray.origin ) * ray.direction < 0.f ) return false;
+
   float d = -( n[0] * tri[0][0] + n[1] * tri[0][1] + n[2] * tri[0][2] );
-  Plane3D triPlane( n[0], n[1], n[2], d );
   Point3D isect;
 
-  if ( Intersects( Segment3D( ray.origin, ray.origin + ray.direction ), triPlane, &isect ) )
+  //// if point intersects plane
+  //if ( Intersects( Line3D( ray.origin, ray.direction ), Plane3D( n[0], n[1], n[2], d ), &isect ) )
+  //{
+  //  if ( tri.contains( isect ) )
+  //  {
+  //    if ( rpoint ) *rpoint = isect;
+  //    return true;
+  //  }
+  //}
+
+  //return false;
+
+
+//=========================================================================================
+
+  Plane3D plane(n[0], n[1], n[2], d);
+
+  float den = ray.direction * plane.normal();
+  float t = -(force_cast<Vector3D>(ray.origin) * plane.normal() + plane[3]) / den;
+
+  if (t >= 0)
   {
-    if ( tri.contains( isect ) )
-    {
-      if ( rpoint ) *rpoint = isect;
-      return true;
-    }
+    isect = ray.origin + t * ray.direction;
+    bool contained = tri.contains(isect);
+    if (rpoint) *rpoint = isect;
+    return contained;
   }
 
   return false;
