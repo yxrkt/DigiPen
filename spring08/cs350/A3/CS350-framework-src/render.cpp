@@ -9,11 +9,13 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "common.h"
+#include <sstream>
 
 // globals
 NodeKd   *g_treeKd;
 unsigned  g_depth = 0;
 unsigned  g_nodes = 0;
+TriangleVec g_tris;
 
 ////////////////////////////////////////////////////////////////////////
 // This is called once after the scene is created but before it is
@@ -24,11 +26,13 @@ void PreprocessScene( Scene &scene )
 
   // convert all polys to triangles
   size_t nObjects = scene.objects.size();
-  for ( size_t i = 0; i < nObjects; ++i )
+  //for ( size_t i = 0; i < nObjects; ++i )
+  for ( size_t i = 0; i < 1; ++i )
   {
     std::vector<APolygon> triangles;
     Object &obj = scene.objects[i];
     size_t nPolys = obj.polygons.size();
+    nPolys = 10;
     for ( size_t j = 0; j < nPolys; ++j )
     {
       APolygon poly = RemoveDupeVerts( obj.polygons[j] );
@@ -51,13 +55,8 @@ void PreprocessScene( Scene &scene )
   }
 
   // build kd tree
-  // make starting bounding box
-  //Box3D vox( tris.front()
-  for ( TriangleVecIt i = tris.begin(); i != tris.end(); ++i )
-  {
-    //if (i->Verts())
-  }
-  //g_treeKd = MakeKdTree( tris,  );
+  g_treeKd = MakeKdTree( tris, GetAABB( tris ), 0 );
+  g_tris = tris;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -94,52 +93,38 @@ void DrawScene( Scene &scene, int width, int height )
     Point3D eye = scene.viewing.InverseTransform( Vector4D( 0.0, 0.0, 0.0, 1.0 ) ).Hdiv();
 
     // for each pixel
+    unsigned tests = 0;
     for ( int y = 0; y < height; ++y )
     {
       for ( int x = 0; x < width; ++x )
       {
-        float distSqr = 0xFFFFFFFF;
+        float distSqr = (float)INFINITE;
 
         Vector4D S = Vector4D((float)(x + .5f) * 2.f / (float)width - 1.f, 
                               (float)(y + .5f)  * 2.f / (float)height - 1.f, 0.f);
         Point3D W  = scene.viewing.InverseTransform(scene.projection.InverseTransform(S)).Hdiv();
-        Vector3D V = W - eye;
         
-        Ray3D ray( W, V );
+        Ray3D ray( W, W - eye );
 
-        size_t nObjs = scene.objects.size();
-        /*for ( size_t i = 0; i < nObjs; ++i )*/
-        for ( size_t i = 2; i < 3; ++i )
+        TriangleKd *tri = FindTriangle( ray, g_treeKd, tests );
+
+        if ( tri != NULL )
         {
-          Object &obj = scene.objects[i];
-          size_t nTris = obj.polygons.size();
-          for ( size_t j = 0; j < nTris; ++j )
-          {
-            Point3D isect;
-            APolygon &tri = obj.polygons[j];
-            if ( Intersects( ray, Triangle3D( force_cast<Point3D>( tri[0].V ), 
-                                              force_cast<Point3D>( tri[1].V ), 
-                                              force_cast<Point3D>( tri[2].V ) ), &isect ) )
-            {
-              Vector3D d( isect - eye );
-              float newDistSqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
-              if ( newDistSqr < distSqr )
-              {
-                distSqr = newDistSqr;
-
-                glBegin( GL_POINTS );
-                glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, obj.Kd.rgba );
-                glMateriali( GL_FRONT, GL_SHININESS, obj.n );
-                glMaterialfv( GL_FRONT, GL_SPECULAR, obj.Ks.rgba );
-                glNormal3fv( force_cast<float *>( &tri[0].N ) );
-                glVertex2i( x, y );
-                glEnd();
-              }
-            }
-          }
+          glBegin( GL_POINTS );
+          glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, tri->ParentObj()->Kd.rgba );
+          glMateriali( GL_FRONT, GL_SHININESS, tri->ParentObj()->n );
+          glMaterialfv( GL_FRONT, GL_SPECULAR, tri->ParentObj()->Ks.rgba );
+          glNormal3fv( force_cast<float *>( &tri->Verts()[0].N ) );
+          glVertex2i( x, y );
+          glEnd();
         }
       }
-      glutSwapBuffers();
+      //glutSwapBuffers();
     }
+
+    float testRatio = (float)tests / (float)( width * height * g_tris.size() );
+    std::stringstream ss;
+    ss << testRatio;
+    DrawMessage((char *)ss.str().c_str(), width, height);
 	}
 }

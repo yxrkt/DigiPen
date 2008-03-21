@@ -209,12 +209,81 @@ bool operator ==( const Vertex &lhs, const Vertex &rhs )
 // =============================================================================
 // Added during A3
 // =============================================================================
+TriangleKd *FindTriangle( const Ray3D &view, NodeKd *node, unsigned &tests )
+{
+  if ( node == NULL ) return NULL;
+  if ( !Intersects( view, node->vox ) ) return NULL;
+ 
+  // check all triangles if on leaf node
+  if ( node->left == NULL && node->right == NULL )
+  {
+    float minLen = (float)INFINITE;
+    TriangleVecIt found = node->tris.end();
+    for ( TriangleVecIt i = node->tris.begin(); i != node->tris.end(); ++i )
+    {
+      Point3D isect;
+      if ( Intersects( view, Triangle3D( force_cast<Point3D>( i->Verts()[0].V ), 
+             force_cast<Point3D>( i->Verts()[1].V ), force_cast<Point3D>( i->Verts()[2].V ) ), &isect ) )
+      {
+        float len = ( isect - view.origin ).length();
+        if ( len < minLen )
+        {
+          minLen = len;
+          found  = i;
+        }
+      }
+      tests++;
+    }
+    return ( found != node->tris.end() ) ? &(*found) : NULL;
+  }
+
+  TriangleKd *firstTri = NULL;
+
+  if ( view.origin[node->divType] < node->divVal )
+  {
+    firstTri = FindTriangle( view, node->left, tests );
+    if ( firstTri == NULL )
+      firstTri = FindTriangle( view, node->right, tests );
+  }
+  else if ( view.origin[node->divType] > node->divVal )
+  {
+    firstTri = FindTriangle( view, node->right, tests );
+    if ( firstTri == NULL )
+      firstTri = FindTriangle( view, node->left, tests );
+  }
+
+  return firstTri;
+}
+
+Box3D GetAABB( const TriangleVec &tris )
+{
+  Box3D vox = Box3D( force_cast<Point3D>( tris.front().Verts()[0].V ), 
+                     force_cast<Point3D>( tris.front().Verts()[0].V ) );
+
+  for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
+  {
+    for ( unsigned j = 0; j < 3; ++j )
+    {
+      if ( i->Verts()[j].V[0] < vox.origin[0] )      vox.origin[0] = i->Verts()[j].V[0];
+      else if ( i->Verts()[j].V[0] > vox.extent[0] ) vox.extent[0] = i->Verts()[j].V[0];
+
+      if ( i->Verts()[j].V[1] < vox.origin[1] )      vox.origin[1] = i->Verts()[j].V[1];
+      else if ( i->Verts()[j].V[1] > vox.extent[1] ) vox.extent[1] = i->Verts()[j].V[1];
+
+      if ( i->Verts()[j].V[2] < vox.origin[2] )      vox.origin[2] = i->Verts()[j].V[2];
+      else if ( i->Verts()[j].V[2] > vox.extent[2] ) vox.extent[2] = i->Verts()[j].V[2];
+    }
+  }
+
+  return vox;
+}
+
 float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec &tris )
 {
   Box3D voxL( vox ), voxR( vox );
 
   voxL.extent[planeType] = val;
-  voxL.origin[planeType] = val;
+  voxR.origin[planeType] = val;
 
   Vector3D dimL( voxL.extent - voxL.origin );
   Vector3D dimR( voxR.extent - voxR.origin );
@@ -252,25 +321,82 @@ float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec
 void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL, 
                    const Box3D &voxR, TriangleVec &trisL, TriangleVec &trisR )
 {
+  //for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
+  //{
+  //  for ( unsigned j = 0; j < 3; ++j )
+  //  {
+  //    if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      trisL.push_back(*i);
+  //      continue;
+  //    }
+  //  }
+
+  //  for ( unsigned j = 0; j < 3; ++j )
+  //  {
+  //    if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      trisR.push_back(*i);
+  //      continue;
+  //    }
+  //  }
+  //}
+
+// ================================================================================
+
+
   for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
   {
+    bool checkL = true, checkR = true;
+    unsigned lScore = 0, rScore = 0;
     for ( unsigned j = 0; j < 3; ++j )
     {
-      if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+      const Point3D &point = force_cast<Point3D>( i->Verts()[j].V );
+      if ( checkL && voxL.contains( point ) )
       {
-        trisL.push_back(*i);
-        continue;
+        checkL = OnFace( point, voxL );
+        checkL ? lScore++ : trisL.push_back(*i);
       }
-    }
-    for ( unsigned j = 0; j < 3; ++j )
-    {
-      if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+      if ( checkR && voxR.contains( point ) )
       {
-        trisR.push_back(*i);
-        continue;
+        checkR = OnFace( point, voxR );
+        checkR ? rScore++ : trisR.push_back(*i);
       }
     }
   }
+
+//===================================================================================
+  //for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
+  //{
+  //  unsigned lScore = 0, rScore = 0;
+  //  for ( unsigned j = 0; j < 3; ++j )
+  //  {
+  //    if ( voxL.contains2( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      trisL.push_back(*i);
+  //      continue;
+  //    }
+  //    else if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      lScore++;
+  //    }
+  //  }
+  //  if ( lScore == 3 ) trisL.push_back(*i);
+
+  //  for ( unsigned j = 0; j < 3; ++j )
+  //  {
+  //    if ( voxR.contains2( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      trisR.push_back(*i);
+  //      continue;
+  //    }
+  //    else if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
+  //    {
+  //      rScore++;
+  //    }
+  //  }
+  //  if ( rScore == 3 ) trisR.push_back(*i);
+  //}
 }
 
 float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth, 
@@ -278,7 +404,7 @@ float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth,
 {
   PLANE_TYPE planeType = (PLANE_TYPE)( depth % 3 );
   float planeVal = 0.f;
-  cost           = 0x7FFFFFFF;
+  cost           = (float)INFINITE;
 
   // for each triangle
   for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
@@ -321,11 +447,6 @@ float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth,
   return planeVal;
 }
 
-bool Terminate( float cost, const TriangleVec &tris, const Box3D &vox )
-{
-  return ( cost > CI ); // TODO: Fix this
-}
-
 NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth )
 {
   Box3D voxL( vox ), voxR( vox );
@@ -334,9 +455,10 @@ NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth )
 
   float planeVal = GetPlaneVal( tris, vox, depth, voxL, voxR, cost );
 
-  if ( Terminate( cost, tris, vox ) ) return new NodeKd( vox );
+  if ( cost > CI * tris.size() ) return new NodeKd( tris, vox, planeVal, (PLANE_TYPE)( depth % 3 ) );
 
   BuildTriVecs( tris, voxL, voxR, trisL, trisR );
 
-  return new NodeKd( vox, MakeKdTree( trisL, voxL, depth + 1 ), MakeKdTree( trisR, voxR, depth + 1 ) );
+  return new NodeKd( vox, planeVal, (PLANE_TYPE)( depth % 3 ), MakeKdTree( trisL, voxL, depth + 1 ), 
+                     MakeKdTree( trisR, voxR, depth + 1 ) );
 }

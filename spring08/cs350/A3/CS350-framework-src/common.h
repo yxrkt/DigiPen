@@ -67,11 +67,12 @@ class Polygon3D
 class TriangleKd
 {
   public:
-    TriangleKd( const APolygon &poly, const Object &obj ) : verts( poly ), parentObj( (Object *)&obj ) {}
-    const APolygon &Verts() const { return verts; }
+    TriangleKd( const APolygon &poly, const Object &obj ) : verts( poly ), parentObj( (Object *)&obj ), temp( poly ) {}
+    inline const APolygon &Verts() const { return verts; }
+    inline const Object *ParentObj() const { return parentObj; }
   private:
     Object   *parentObj;
-    APolygon  verts;
+    APolygon  verts, temp;
 };
 
 // Node
@@ -93,19 +94,6 @@ struct Node
   Node       *back;
 };
 
-// Node for Kd tree
-struct NodeKd
-{
-  NodeKd() : left( NULL ), right( NULL ) {}
-  NodeKd( const Box3D &_vox, NodeKd *_left = NULL, NodeKd *_right = NULL )
-    : vox( _vox ), left( _left ), right( _right ) {}
-
-  Plane3D   div;
-  Box3D     vox;
-  NodeKd   *left;
-  NodeKd   *right;
-};
-
 // typedefs
 typedef std::list<Polygon3D>        PolygonList;
 typedef PolygonList::iterator       PolygonListIt;
@@ -114,6 +102,23 @@ typedef TriangleVec::iterator       TriangleVecIt;
 typedef TriangleVec::const_iterator TriangleVecItC;
 
 enum PLANE_TYPE { PLANE_X = 0, PLANE_Y, PLANE_Z };
+
+// Node for Kd tree
+struct NodeKd
+{
+  NodeKd() : left( NULL ), right( NULL ) {}
+  NodeKd( const Box3D &_vox, float _divVal, PLANE_TYPE _divType, NodeKd *_left = NULL, NodeKd *_right = NULL )
+    : vox( _vox ), divVal( _divVal ), divType( _divType ), left( _left ), right( _right ) {}
+  NodeKd( const TriangleVec &_tris, const Box3D &_vox, float _divVal, PLANE_TYPE _divType )
+    : tris( _tris ), vox( _vox ), divVal( _divVal ), divType( _divType ), left( NULL ), right( NULL ) {}
+
+  float         divVal;
+  PLANE_TYPE    divType;
+  Box3D         vox;
+  NodeKd       *left;
+  NodeKd       *right;
+  TriangleVec   tris;
+};
 
 // Functors and other stl helpers
 template <PLANE_TYPE T>
@@ -132,13 +137,14 @@ inline bool VertMax( const Vertex &lhs, const Vertex &rhs )
   return ( lhs.V[2] > rhs.V[2] );
 }
 
-//struct MinX
-//{
-//  bool operator ()( const Vertex &lhs, const TriangleKd &rhs )
-//  {
-//    if ( lhs.V[0] < )
-//  }
-//};
+
+// inlines
+inline bool OnFace( const Point3D &p, const Box3D &box )
+{
+  return ( p[0] == box.origin[0] || p[0] == box.extent[0] ||
+           p[1] == box.origin[1] || p[1] == box.extent[1] ||
+           p[2] == box.origin[2] || p[2] == box.extent[2] );
+}
 
 // Prototypes
 Polygon3D PullOutRoot( PolygonList &polys );
@@ -151,12 +157,13 @@ void GetNodes( const Node *tree, unsigned &nPolys );
 APolygon RemoveDupeVerts( const APolygon &poly );
 
 // Added during A3
+TriangleKd *FindTriangle( const Ray3D &view, NodeKd *node, unsigned &tests );
+Box3D GetAABB( const TriangleVec &tris );
 float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec &tris );
 void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL, 
                    const Box3D &voxR, TriangleVec &trisL, TriangleVec &trisR );
 float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth, 
                    Box3D &voxL, Box3D &voxR, float &cost );
-bool Terminate( float cost, const TriangleVec &tris, const Box3D &vox );
 NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth );
 
 

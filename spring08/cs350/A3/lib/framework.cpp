@@ -201,7 +201,7 @@ void MouseMotion(int x, int y)
 int main(int argc, char** argv)
 {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(480, 480);
+	glutInitWindowSize(100, 100);//480 480
     glutInit(&argc, argv);
 	glutCreateWindow("Class Framework");
 

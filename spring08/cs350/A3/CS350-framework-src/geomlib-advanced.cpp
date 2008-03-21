@@ -143,7 +143,7 @@ void AddIsects( const Ray3D &ray, const Box3D &box, PointQueue &isects )
         float t = (!m) ? ( box.origin[i] - ray.origin[i] ) / ( ray.direction[i] )
                        : ( box.extent[i] - ray.origin[i] ) / ( ray.direction[i] );
 
-        if ( t >= -epsilon && t <= 1.f + epsilon )
+        if ( t >= -epsilon/* && t <= 1.f + epsilon*/ )
         {
           Point3D isect = ray.origin + t * ray.direction;
           if ( ( isect[j] >= box.origin[j] && isect[j] <= box.extent[j] ) &&
@@ -234,6 +234,17 @@ bool Box3D::contains(const Point3D& point) const
   if ( point[0] >= origin[0] && point[1] >= origin[1] && point[2] >= origin[2] )
   {
     if ( point[0] <= extent[0] && point[1] <= extent[1] && point[2] <= extent[2] )
+      return true;
+  }
+
+  return false;
+}
+
+bool Box3D::contains2(const Point3D& point) const
+{
+  if ( point[0] > origin[0] && point[1] > origin[1] && point[2] > origin[2] )
+  {
+    if ( point[0] < extent[0] && point[1] < extent[1] && point[2] < extent[2] )
       return true;
   }
 
