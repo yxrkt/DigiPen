@@ -240,17 +240,6 @@ bool Box3D::contains(const Point3D& point) const
   return false;
 }
 
-bool Box3D::contains2(const Point3D& point) const
-{
-  if ( point[0] > origin[0] && point[1] > origin[1] && point[2] > origin[2] )
-  {
-    if ( point[0] < extent[0] && point[1] < extent[1] && point[2] < extent[2] )
-      return true;
-  }
-
-  return false;
-}
-
 // Determines if point (known to be on a plane) is contained within a triangle.
 bool Triangle3D::contains(const Point3D& point) const
 {

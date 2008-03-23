@@ -285,13 +285,9 @@ float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec
   voxL.extent[planeType] = val;
   voxR.origin[planeType] = val;
 
-  Vector3D dimL( voxL.extent - voxL.origin );
-  Vector3D dimR( voxR.extent - voxR.origin );
-  Vector3D dimT( vox.extent - vox.origin );
-
-  float leftSA  = 2.f * ( dimL[0] * dimL[1] + dimL[1] * dimL[2] + dimL[2] * dimL[0] );
-  float rightSA = 2.f * ( dimR[0] * dimR[1] + dimR[1] * dimR[2] + dimR[2] * dimR[0] );
-  float totalSA = 2.f * ( dimT[0] * dimT[1] + dimT[1] * dimT[2] + dimT[2] * dimT[0] );
+  float leftSA  = GetSA( voxL );
+  float rightSA = GetSA( voxR );
+  float totalSA = GetSA( vox );
 
   unsigned nTrisInL = 0, nTrisInR = 0;
   
@@ -300,12 +296,13 @@ float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec
     bool lFound = false, rFound = false;
     for ( unsigned j = 0; j < 3; ++j )
     {
-      if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) && !lFound )
+      Point3D &vert = force_cast<Point3D>( i->Verts()[j].V );
+      if ( vert[planeType] <= val && !lFound )
       {
         nTrisInL++;
         lFound = true;
       }
-      if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) && !rFound )
+      if ( vert[planeType] >= val && !rFound )
       {
         nTrisInR++;
         rFound = true;
@@ -314,37 +311,14 @@ float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec
     }
   }
 
-  return (float)CB + (float)CI * ( ( leftSA / totalSA ) * 
-           (float)nTrisInL + ( rightSA / totalSA ) * (float)nTrisInR );
+  float cost = CB + CI * ( ( ( leftSA / totalSA )  * (float)nTrisInL 
+                           + ( rightSA / totalSA ) * (float)nTrisInR ) );
+  return cost;
 }
 
-void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL, 
-                   const Box3D &voxR, TriangleVec &trisL, TriangleVec &trisR )
+void BuildTriVecs( const TriangleVec &tris, float planeVal, PLANE_TYPE planeType, 
+                   TriangleVec &trisL, TriangleVec &trisR )
 {
-  //for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
-  //{
-  //  for ( unsigned j = 0; j < 3; ++j )
-  //  {
-  //    if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      trisL.push_back(*i);
-  //      continue;
-  //    }
-  //  }
-
-  //  for ( unsigned j = 0; j < 3; ++j )
-  //  {
-  //    if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      trisR.push_back(*i);
-  //      continue;
-  //    }
-  //  }
-  //}
-
-// ================================================================================
-
-
   for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
   {
     bool checkL = true, checkR = true;
@@ -352,51 +326,22 @@ void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL,
     for ( unsigned j = 0; j < 3; ++j )
     {
       const Point3D &point = force_cast<Point3D>( i->Verts()[j].V );
-      if ( checkL && voxL.contains( point ) )
+      if ( checkL && ( point[planeType] <= planeVal ) )
       {
-        checkL = OnFace( point, voxL );
+        checkL = ( point[planeType] == planeVal );
         checkL ? lScore++ : trisL.push_back(*i);
       }
-      if ( checkR && voxR.contains( point ) )
+      if ( checkR && ( point[planeType] >= planeVal ) )
       {
-        checkR = OnFace( point, voxR );
+        checkR = ( point[planeType] == planeVal );
         checkR ? rScore++ : trisR.push_back(*i);
       }
     }
+    if ( lScore == 3 )
+      trisL.push_back(*i);
+    if ( rScore == 3 )
+      trisR.push_back(*i);
   }
-
-//===================================================================================
-  //for ( TriangleVecItC i = tris.begin(); i != tris.end(); ++i )
-  //{
-  //  unsigned lScore = 0, rScore = 0;
-  //  for ( unsigned j = 0; j < 3; ++j )
-  //  {
-  //    if ( voxL.contains2( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      trisL.push_back(*i);
-  //      continue;
-  //    }
-  //    else if ( voxL.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      lScore++;
-  //    }
-  //  }
-  //  if ( lScore == 3 ) trisL.push_back(*i);
-
-  //  for ( unsigned j = 0; j < 3; ++j )
-  //  {
-  //    if ( voxR.contains2( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      trisR.push_back(*i);
-  //      continue;
-  //    }
-  //    else if ( voxR.contains( force_cast<Point3D>( i->Verts()[j].V ) ) )
-  //    {
-  //      rScore++;
-  //    }
-  //  }
-  //  if ( rScore == 3 ) trisR.push_back(*i);
-  //}
 }
 
 float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth, 
@@ -413,16 +358,16 @@ float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth,
     switch ( planeType )
     {
       case PLANE_X:
-        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertMin<PLANE_X> )->V[0];
-        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertMax<PLANE_X> )->V[0];
+        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_X> )->V[0];
+        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_X> )->V[0];
         break;
       case PLANE_Y:
-        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertMin<PLANE_Y> )->V[1];
-        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertMax<PLANE_Y> )->V[1];
+        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_Y> )->V[1];
+        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_Y> )->V[1];
         break;
       case PLANE_Z:
-        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertMin<PLANE_Z> )->V[2];
-        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertMax<PLANE_Z> )->V[2];
+        min = std::min_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_Z> )->V[2];
+        max = std::max_element( i->Verts().begin(), i->Verts().end(), VertCmp<PLANE_Z> )->V[2];
     }
 
 
@@ -449,16 +394,21 @@ float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth,
 
 NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth )
 {
+  if ( tris.empty() ) return NULL;
+
   Box3D voxL( vox ), voxR( vox );
   TriangleVec trisL, trisR;
+  PLANE_TYPE planeType = (PLANE_TYPE)( depth % 3 );
   float cost;
 
   float planeVal = GetPlaneVal( tris, vox, depth, voxL, voxR, cost );
 
-  if ( cost > CI * tris.size() ) return new NodeKd( tris, vox, planeVal, (PLANE_TYPE)( depth % 3 ) );
+  if ( cost > ( CI * (float)( tris.size() ) ) )
+    return new NodeKd( tris, vox, planeVal, planeType );
 
-  BuildTriVecs( tris, voxL, voxR, trisL, trisR );
+  BuildTriVecs( tris, planeVal, planeType, trisL, trisR );
 
-  return new NodeKd( vox, planeVal, (PLANE_TYPE)( depth % 3 ), MakeKdTree( trisL, voxL, depth + 1 ), 
-                     MakeKdTree( trisR, voxR, depth + 1 ) );
+  unsigned nextDepth = depth + 1;
+  return new NodeKd( vox, planeVal, planeType, MakeKdTree( trisL, voxL, nextDepth ), 
+                     MakeKdTree( trisR, voxR, nextDepth ) );
 }

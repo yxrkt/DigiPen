@@ -173,7 +173,7 @@ void MouseButton(int button, int state, int x, int y)
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Called by GLut when a mouse moves (while a button is doen)
+// Called by GLut when a mouse moves (while a button is down)
 void MouseMotion(int x, int y)
 {
 	// This uses changes in x mouse position to spin the model around
@@ -201,7 +201,7 @@ void MouseMotion(int x, int y)
 int main(int argc, char** argv)
 {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(100, 100);//480 480
+	glutInitWindowSize(200, 200);//480 480
     glutInit(&argc, argv);
 	glutCreateWindow("Class Framework");
 

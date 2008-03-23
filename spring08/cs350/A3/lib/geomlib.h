@@ -492,7 +492,6 @@ public:
 
 	// Utility method
     bool contains(const Point3D& point) const;
-    bool contains2(const Point3D& point) const;
 
     Point3D origin;
     Point3D extent;

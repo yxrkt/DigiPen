@@ -11,12 +11,12 @@
 #include "scenelib.h"
 
 
-// constants
+// Constants
 const float EPSILON = .0001f;
-const unsigned CB   = 1;
-const unsigned CI   = 5;
+const float CB      = 1.f;        // Base cost estimate
+const float CI      = 7.f;        // Intersection cost estimate
 
-// useful inlines
+// Useful inlines
 template<typename T, typename U>
 inline T force_cast( const U &data ) { return *(T *)&data; }
 
@@ -30,6 +30,11 @@ inline float TVal( const Vertex &p, const Vertex &q, const Point3D &i )
   return TVal( force_cast<Point3D>( p.V ), force_cast<Point3D>( q.V ), i );
 }
 
+inline float GetSA( const Box3D &box )
+{
+  Vector3D dim( box.extent - box.origin );
+  return ( 2.f * ( dim[0] * dim[1] + dim[1] * dim[2] + dim[2] * dim[0] ) );
+}
 
 // Polygon
 class Polygon3D
@@ -67,12 +72,14 @@ class Polygon3D
 class TriangleKd
 {
   public:
-    TriangleKd( const APolygon &poly, const Object &obj ) : verts( poly ), parentObj( (Object *)&obj ), temp( poly ) {}
+    TriangleKd( const APolygon &poly, const Object &obj )
+      : verts( poly ), parentObj( (Object *)&obj ) {}
     inline const APolygon &Verts() const { return verts; }
     inline const Object *ParentObj() const { return parentObj; }
+
   private:
     Object   *parentObj;
-    APolygon  verts, temp;
+    APolygon  verts;
 };
 
 // Node
@@ -109,7 +116,7 @@ struct NodeKd
   NodeKd() : left( NULL ), right( NULL ) {}
   NodeKd( const Box3D &_vox, float _divVal, PLANE_TYPE _divType, NodeKd *_left = NULL, NodeKd *_right = NULL )
     : vox( _vox ), divVal( _divVal ), divType( _divType ), left( _left ), right( _right ) {}
-  NodeKd( const TriangleVec &_tris, const Box3D &_vox, float _divVal, PLANE_TYPE _divType )
+  NodeKd( const TriangleVec &_tris, const Box3D &_vox, float _divVal, PLANE_TYPE _divType  )
     : tris( _tris ), vox( _vox ), divVal( _divVal ), divType( _divType ), left( NULL ), right( NULL ) {}
 
   float         divVal;
@@ -120,33 +127,16 @@ struct NodeKd
   TriangleVec   tris;
 };
 
-// Functors and other stl helpers
+// Functors and other STL helpers
 template <PLANE_TYPE T>
-inline bool VertMin( const Vertex &lhs, const Vertex &rhs )
+inline bool VertCmp( const Vertex &lhs, const Vertex &rhs )
 {
-  if ( T == PLANE_X ) return ( lhs.V[0] < rhs.V[0] );
-  if ( T == PLANE_Y ) return ( lhs.V[1] < rhs.V[1] );
-  return ( lhs.V[2] < rhs.V[2] );
-}
-
-template <PLANE_TYPE T>
-inline bool VertMax( const Vertex &lhs, const Vertex &rhs )
-{
-  if ( T == PLANE_X ) return ( lhs.V[0] > rhs.V[0] );
-  if ( T == PLANE_Y ) return ( lhs.V[1] > rhs.V[1] );
-  return ( lhs.V[2] > rhs.V[2] );
-}
-
-
-// inlines
-inline bool OnFace( const Point3D &p, const Box3D &box )
-{
-  return ( p[0] == box.origin[0] || p[0] == box.extent[0] ||
-           p[1] == box.origin[1] || p[1] == box.extent[1] ||
-           p[2] == box.origin[2] || p[2] == box.extent[2] );
+  return ( lhs.V[T] < rhs.V[T] );
 }
 
 // Prototypes
+
+// Added during A2
 Polygon3D PullOutRoot( PolygonList &polys );
 void SplitPolygon( const Polygon3D &poly, Node *tree, PolygonList &front, PolygonList &back );
 void MakeBSPT( PolygonList polys, Node *&tree );
@@ -160,8 +150,8 @@ APolygon RemoveDupeVerts( const APolygon &poly );
 TriangleKd *FindTriangle( const Ray3D &view, NodeKd *node, unsigned &tests );
 Box3D GetAABB( const TriangleVec &tris );
 float Cost( float val, PLANE_TYPE planeType, const Box3D &vox, const TriangleVec &tris );
-void BuildTriVecs( const TriangleVec &tris, const Box3D &voxL, 
-                   const Box3D &voxR, TriangleVec &trisL, TriangleVec &trisR );
+void BuildTriVecs( const TriangleVec &tris, float planeVal, PLANE_TYPE planeType, 
+                   TriangleVec &trisL, TriangleVec &trisR );
 float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth, 
                    Box3D &voxL, Box3D &voxR, float &cost );
 NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth );

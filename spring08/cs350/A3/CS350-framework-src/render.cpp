@@ -12,10 +12,10 @@
 #include <sstream>
 
 // globals
-NodeKd   *g_treeKd;
-unsigned  g_depth = 0;
-unsigned  g_nodes = 0;
-TriangleVec g_tris;
+NodeKd      *g_treeKd;
+unsigned     g_depth = 0;
+unsigned     g_nodes = 0;
+TriangleVec  g_tris;
 
 ////////////////////////////////////////////////////////////////////////
 // This is called once after the scene is created but before it is
@@ -26,13 +26,11 @@ void PreprocessScene( Scene &scene )
 
   // convert all polys to triangles
   size_t nObjects = scene.objects.size();
-  //for ( size_t i = 0; i < nObjects; ++i )
-  for ( size_t i = 0; i < 1; ++i )
+  for ( size_t i = 0; i < nObjects; ++i )
   {
     std::vector<APolygon> triangles;
     Object &obj = scene.objects[i];
     size_t nPolys = obj.polygons.size();
-    nPolys = 10;
     for ( size_t j = 0; j < nPolys; ++j )
     {
       APolygon poly = RemoveDupeVerts( obj.polygons[j] );
@@ -98,15 +96,11 @@ void DrawScene( Scene &scene, int width, int height )
     {
       for ( int x = 0; x < width; ++x )
       {
-        float distSqr = (float)INFINITE;
-
-        Vector4D S = Vector4D((float)(x + .5f) * 2.f / (float)width - 1.f, 
-                              (float)(y + .5f)  * 2.f / (float)height - 1.f, 0.f);
-        Point3D W  = scene.viewing.InverseTransform(scene.projection.InverseTransform(S)).Hdiv();
+        Vector4D &S = Vector4D( (float)( x + .5f ) * 2.f / (float)width - 1.f, 
+                                (float)( y + .5f ) * 2.f / (float)height - 1.f, 0.f );
+        Point3D &W  = scene.viewing.InverseTransform( scene.projection.InverseTransform(S) ).Hdiv();
         
-        Ray3D ray( W, W - eye );
-
-        TriangleKd *tri = FindTriangle( ray, g_treeKd, tests );
+        TriangleKd *tri = FindTriangle( Ray3D( W, W - eye ), g_treeKd, tests );
 
         if ( tri != NULL )
         {
@@ -122,9 +116,9 @@ void DrawScene( Scene &scene, int width, int height )
       //glutSwapBuffers();
     }
 
-    float testRatio = (float)tests / (float)( width * height * g_tris.size() );
+    float testRatio = 100.f * (float)tests / (float)( width * height * g_tris.size() );
     std::stringstream ss;
-    ss << testRatio;
+    ss << testRatio << "% of tests performed";
     DrawMessage((char *)ss.str().c_str(), width, height);
 	}
 }
