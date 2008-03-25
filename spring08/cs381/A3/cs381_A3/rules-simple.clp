@@ -1,33 +1,41 @@
-	(deffacts initial-data 
-	 (start)
+	(deftemplate answer
+	 (slot index)
+	 (slot color)
 	)
-
-	(printout t "DICKS" crlf)
 	
-	(defrule wild-guess
-	 ?f1 <- (start)
+	(deffacts initial-data
+	 (answer (index 0) (color 0))
+	 (answer (index 1) (color 0))
+	 (answer (index 2) (color 0))
+	 (answer (index 3) (color 0))
+	)
+	
+	(defrule guess
+	 (answer (index 0) (color ?c0))
+	 (answer (index 1) (color ?c1))
+	 (answer (index 2) (color ?c2))
+	 (answer (index 3) (color ?c3))
 	 =>
-	 (retract ?f1)
-    (guess_simple 2 1 5 4)
+	 (guess_simple ?c0 ?c1 ?c2 ?c3)
 	)
-
+	
+	(defrule bull-not-at-x
+	 ?color-fact <- (answer (index ?i) (color ?c))
+	 (not (bull-at ?i))
+	 =>
+	 (retract ?color-fact)
+	 (assert (answer (index ?i) (color (+ ?c 1))))
+	)
+	
 	(defrule done
-	 (bulls ?x) 
-	 (seq-size ?x) 
-	 => 
-	 (printout t "DONE!!!" crlf) 
-	)
-
-	(defrule bulls
-	 (bulls ?x) 
-	 => 
-	 (printout t "BULLS " ?x crlf) 
-	)
-
-	(defrule cows
-	 (cows ?x) 
-	 => 
-	 (printout t "COWS " ?x crlf) 
+	 (answer (index 0) (color ?c0))
+	 (answer (index 1) (color ?c1))
+	 (answer (index 2) (color ?c2))
+	 (answer (index 3) (color ?c3))
+	 (and (bull-at 0) (bull-at 1) (bull-at 2) (bull-at 3))
+	 =>
+	 (printout t "all bulls found" crlf)
+	 (printout t "colors: " ?c0 " " ?c1 " " ?c2 " " ?c3 crlf)
 	)
 
 	(deffunction print_all_facts () (facts))
