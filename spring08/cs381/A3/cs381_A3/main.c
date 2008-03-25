@@ -40,7 +40,7 @@ void guess( DATA_OBJECT_PTR val )
 		}
 	}
 	if ( bulls == SIZE )
-    done=1;
+    done = 1;
 
 	for ( i = 0; i < SIZE; ++i )
   {
