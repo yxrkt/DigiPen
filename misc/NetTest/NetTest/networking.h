@@ -89,6 +89,7 @@ class Networking_impl
     PlayerInfoList GetPlayers() const;
     bool Hosting() const;
     void AddVLANAddr( const std::string &addr );
+    bool BootPlayer( const char *name );
 
       // ugly templated stuff
     template < typename TList >
@@ -172,9 +173,10 @@ class Networking_impl
     void CleanupPlayers();
     inline int Contains( const NetPacket &pkt, NET_MSG type );
     bool CopyBufToNames( BYTE *buffer, UINT size );
-    bool CopyNamesToBuf( BYTE *buffer, UINT size );
+    int CopyNamesToBuf( BYTE *buffer, UINT size, const char *skip = NULL );
     void ErrCheck( int err, const char *msg ) const;
     void ExtractMessages( const NetPacket &pkt );
+    PlayerIter GetPlayer( const std::string &name );
     PlayerIter GetPlayer( const UINT addr );
     PlayerIter GetPlayer( const SOCKADDR_IN &addr );
     void IdleCheck();

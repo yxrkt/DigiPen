@@ -410,11 +410,7 @@ void Networking_impl::TranslateMessages()
       case MSG_LEAVE:
       {
         if ( bHost )
-        {
-          PlayerIter leaver = GetPlayer( msgIn.addrFrom );
-          qToDrop.push( GetPlayer( msgIn.addrFrom ) );
-          PushMessage( msgIn );
-        }
+          BootPlayer( GetPlayer( msgIn.addrFrom )->szName );
       }
       break;
 
@@ -443,6 +439,25 @@ void Networking_impl::TranslateMessages()
             player.saAddr = saPlayer;
             strcpy( player.szTime, (char *)msgIn.data + strlen( player.szName ) + 1 );
             lsPlayers.push_back( player );
+          }
+        }
+      }
+      break;
+
+      case MSG_BOOT:
+      {
+        if ( bHost )
+        {
+          ReportError( "Received boot message as host..." );
+        }
+        else
+        {
+          CopyBufToNames( msgIn.data, sizeof( msgIn.data ) );
+          StringVecIt found = std::find( playerNames.begin(), playerNames.end(), entMe.h_name );
+          if ( found == playerNames.end() )
+          {
+            Reset();
+            return;
           }
         }
       }
@@ -517,7 +532,7 @@ void Networking_impl::LeaveGame()
   {
     NetMessage leaveMsg;
     leaveMsg.mType = MSG_LEAVE;
-    PushMessage( leaveMsg, false, false );
+    PushMessage( leaveMsg );
   }
 }
 
@@ -746,7 +761,7 @@ const StringVec &Networking_impl::GetPlayerNames() const
 // Copies names to buffer
 // Used by host for updating clients' player list
 // -----------------------------------------------------------------------------
-bool Networking_impl::CopyNamesToBuf( BYTE *buffer, UINT size )
+int Networking_impl::CopyNamesToBuf( BYTE *buffer, UINT size, const char *skip )
 {
   UINT pos = 0;
   *(buffer + pos++)  = (BYTE)playerNames.size();
@@ -755,11 +770,14 @@ bool Networking_impl::CopyNamesToBuf( BYTE *buffer, UINT size )
   for ( StringVecIt i = playerNames.begin(); i != playerNames.end(); ++i )
   {
     if ( pos >= size )
-      return false;
-    strcpy( (char *)( buffer + pos ), i->c_str() );
-    pos += ( (UINT)i->length() + 1 );
+      return -1;
+    if ( ( skip == NULL ) || ( strcmp( i->c_str(), skip ) ) )
+    {
+      strcpy( (char *)( buffer + pos ), i->c_str() );
+      pos += ( (UINT)i->length() + 1 );
+    }
   }
-  return true;
+  return pos;
 }
 
 // -----------------------------------------------------------------------------
@@ -789,6 +807,10 @@ void Networking_impl::ReportError( const std::string &err )
   errStrings.push_back( err );
 }
 
+// -----------------------------------------------------------------------------
+// Add an address to advertise session to
+// Only necessary for addresses not on lan
+// -----------------------------------------------------------------------------
 void Networking_impl::AddVLANAddr( const std::string &addr )
 {
   SOCKADDR_IN saVAddr;
@@ -796,4 +818,29 @@ void Networking_impl::AddVLANAddr( const std::string &addr )
   saVAddr.sin_port        = htons( PORT );
   saVAddr.sin_addr.s_addr = inet_addr( addr.c_str() );
   vLANAddrs.push_back( saVAddr );
+}
+
+// -----------------------------------------------------------------------------
+// Boot a player
+// Returns false and does nothing if player was not found or if client
+// -----------------------------------------------------------------------------
+bool Networking_impl::BootPlayer( const char *name )
+{
+  if ( bHost )
+  {
+    PlayerIter i = lsPlayers.begin();
+    while ( i != lsPlayers.end() )
+    {
+      if ( !strcmp( i->szName, name ) )
+      {
+        NetMessage msgBoot;
+        msgBoot.mType = MSG_BOOT;
+        msgBoot.nSize = CopyNamesToBuf( msgBoot.data, sizeof( msgBoot.data ), name );
+        PushMessage( msgBoot );
+        qToDrop.push( i );
+        return true;
+      }
+    }
+  }
+  return false;
 }

@@ -157,7 +157,20 @@ void UpdateJoin( UPDATE_STATE &state, std::stringstream &cwnd )
 
 void UpdateLobby( UPDATE_STATE &state, std::stringstream &cwnd )
 {
-
+  if ( !Networking.Hosting() )
+  {
+    cwnd << "L to leave game" << std::endl;
+    if ( Input.IsDown( 'L' ) )
+      Networking.LeaveGame();
+  }
+  else
+  {
+    cwnd << "B to boot first client" << std::endl;
+    if ( Input.IsDown( 'B' ) && !Networking.GetPlayers().empty() )
+    {
+      Networking.BootPlayer( Networking.GetPlayers().front().szName );
+    }
+  }
 }
 
 void DisplayInfo( HWND &hDebug, std::stringstream &cwnd )
