@@ -170,6 +170,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\main.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\net_entities.cpp"
 				>
 			</File>
@@ -196,10 +200,6 @@
 						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\NetTest.cpp"
-				>
 			</File>
 			<File
 				RelativePath=".\networking.cpp"
