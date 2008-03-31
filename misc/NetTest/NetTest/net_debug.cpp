@@ -17,7 +17,7 @@ void Networking_impl::UpdateDebug()
 
   // Errors
   for ( StringVecIt i = errStrings.begin(); i != errStrings.end(); ++i )
-    debugStrings.push( *i );
+    debugStrings.push( "ERROR: " +  *i );
 
   // Host or client
   std::string strMyRank = bHost ? "(Host)" : "(Client)";
@@ -30,7 +30,6 @@ void Networking_impl::UpdateDebug()
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
   }
-
   else
   {
     // Join info

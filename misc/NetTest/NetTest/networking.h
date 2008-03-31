@@ -88,6 +88,7 @@ class Networking_impl
     const StringVec &GetPlayerNames() const;
     PlayerInfoList GetPlayers() const;
     bool Hosting() const;
+    void AddVLANAddr( const std::string &addr );
 
       // ugly templated stuff
     template < typename TList >
@@ -157,13 +158,14 @@ class Networking_impl
     typedef std::queue< NetMessage, std::list< NetMessage > > MessageQueue;
     typedef std::list< NetMessage >::iterator MessageListIt, MessageQueueIt;
     typedef std::set< unsigned > UAddrSet;
+    typedef std::vector< SOCKADDR_IN > SockAddrVec;
+    typedef SockAddrVec::const_iterator SockAddrVecItC;
 
       // state updaters
     void UpdateJoinMenu();
     void UpdateSession();
 
       // others
-
     void AdjustPacketWindow( const NetPacket &pkt, PlayerIter &iPlayer );
     void AdvertiseSession() const;
     void BuildPackets();
@@ -210,7 +212,8 @@ class Networking_impl
     bool          bJoining;               // true if in the process of joining game
     bool          bOpenSession;           // true if host and advertising game
     std::string   creationTime;           // time of creation for advertising session
-    StringVec     playerNames;             // player names
+    StringVec     playerNames;            // player names
+    SockAddrVec   vLANAddrs;              // 'virtual lan' addrs; will 'broadcast' to
 
     mutable DWORD dwAdTimer;              // timer used for advertising session
     mutable DWORD dwIdleTimer;            // timer used for sending checkup Messages

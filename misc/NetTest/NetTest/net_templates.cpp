@@ -3,6 +3,8 @@
 #ifndef NETTEMPLATES_CPP
 #define NETTEMPLATES_CPP
 
+#include "networking.h"
+
 // =============================================================================
 // Pushes a game message onto message queue. 
 // Requires all types to not have pointers.

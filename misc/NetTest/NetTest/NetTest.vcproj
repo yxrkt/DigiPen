@@ -174,43 +174,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\net_debug.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\net_entities.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\netdebug.cpp"
+				RelativePath=".\net_helpers.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\netTemplates.cpp"
+				RelativePath=".\net_misc.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\net_templates.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\networking.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ntwkhelpers.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ntwkmisc.cpp"
 				>
 			</File>
 		</Filter>

@@ -48,7 +48,7 @@ void Networking_impl::AdvertiseSession() const
 {
   if ( timeGetTime() - dwAdTimer >= BROADCAST_COOLDOWN )
   {
-      // create packet
+    // create packet
     NetMessage msgHost;
     msgHost.mType = MSG_HOSTING;
     msgHost.reliable = false;
@@ -59,14 +59,18 @@ void Networking_impl::AdvertiseSession() const
     size_t l2 = name.length();
     strcpy( (char *)msgHost.data + name.length() + 1, creationTime.c_str() );
 
-      // load packet into message
+    // load packet into message
     NetPacket pktHost;
     pktHost.nMsgs = 1;
     pktHost.Messages[0] = msgHost;
 
 
-      // send broadcast
-    sendto( sUDP, (char *)&pktHost, sizeof( NetPacket ), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );
+    // send broadcast
+    sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );
+
+    // broadcast on 'virtual lan'
+    for ( SockAddrVecItC i = vLANAddrs.begin(); i != vLANAddrs.end(); ++i )
+      sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&(*i), sizeof( SOCKADDR_IN ) );
 
     dwAdTimer = timeGetTime();
   }
@@ -345,27 +349,27 @@ void Networking_impl::TranslateMessages()
 
     switch ( msgIn.mType )
     {
-      case MSG_DATA:
-      {
-        Message< TypeList1( RawStorage< MAX_DATA_LEN > ) > *msg = NEW(
-          Message< TypeList1( RawStorage< MAX_DATA_LEN > ) >, ( ) );
-				if ( msgIn.nSize > MAX_DATA_LEN )
-					ASSERT( "You received a network message that tried to send too much data" );
-        memcpy( msg, msgIn.data, msgIn.nSize );
+    //  case MSG_DATA:
+    //  {
+    //    Message< TypeList1( RawStorage< MAX_DATA_LEN > ) > *msg = NEW(
+    //      Message< TypeList1( RawStorage< MAX_DATA_LEN > ) >, ( ) );
+				//if ( msgIn.nSize > MAX_DATA_LEN )
+				//	ASSERT( "You received a network message that tried to send too much data" );
+    //    memcpy( msg, msgIn.data, msgIn.nSize );
 
-        const EntityID *receiverID = entityIDTable.GetID( msgIn.dest );
-        if ( receiverID != NULL )
-        {
-				  GameEntity* receiver = GetEntityByID( *receiverID );
-          if ( receiver != NULL )
-				  {
-            msg->Send( receiver );
-				  }
-          if ( bHost )
-            PushMessage( msgIn, !msg->toResend, msg->reliable );
-        }
-      }
-      break;
+    //    const EntityID *receiverID = entityIDTable.GetID( msgIn.dest );
+    //    if ( receiverID != NULL )
+    //    {
+				//  GameEntity* receiver = GetEntityByID( *receiverID );
+    //      if ( receiver != NULL )
+				//  {
+    //        msg->Send( receiver );
+				//  }
+    //      if ( bHost )
+    //        PushMessage( msgIn, !msg->toResend, msg->reliable );
+    //    }
+    //  }
+    //  break;
 
       case MSG_TEXT:
       {
@@ -783,4 +787,13 @@ bool Networking_impl::CopyBufToNames( BYTE *buffer, UINT size )
 void Networking_impl::ReportError( const std::string &err )
 {
   errStrings.push_back( err );
+}
+
+void Networking_impl::AddVLANAddr( const std::string &addr )
+{
+  SOCKADDR_IN saVAddr;
+  saVAddr.sin_family      = AF_INET;
+  saVAddr.sin_port        = htons( PORT );
+  saVAddr.sin_addr.s_addr = inet_addr( addr.c_str() );
+  vLANAddrs.push_back( saVAddr );
 }

@@ -51,6 +51,8 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nShowCmd )
   ShowWindow( hDebug, nShowCmd );
 
   UPDATE_STATE state = US_MENU;
+  Networking.AddVLANAddr( "192.168.1.107" );
+  Networking.AddVLANAddr( "192.168.1.110" );
 
   MSG msg;
   memset( &msg, 0, sizeof( MSG ) );
@@ -162,13 +164,6 @@ void DisplayInfo( HWND &hDebug, std::stringstream &cwnd )
 {
   // Add extra space if text added by state
   if ( !cwnd.str().empty() )
-    cwnd << std::endl;
-
-  // Add net error reports
-  StringVec errStrs = Networking.GetErrStrs();
-  for ( StringVecIt i = errStrs.begin(); i != errStrs.end(); ++i )
-    cwnd << "ERROR: " << (*i) << std::endl;
-  if ( !errStrs.empty() )
     cwnd << std::endl;
 
   // Add net debug strings to output stream
