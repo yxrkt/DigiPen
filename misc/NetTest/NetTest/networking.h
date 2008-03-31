@@ -224,6 +224,6 @@ class Networking_impl
     UAddrSet      waitSet;
 };
 
-#include "netTemplates.cpp"
+#include "net_templates.cpp"
 
 #endif

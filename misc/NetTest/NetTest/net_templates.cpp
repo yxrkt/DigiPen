@@ -18,15 +18,15 @@ void Networking_impl::PushMessage( Message< TList > *pMsg, EntityIDTable::Entity
   //  ASSERT( "There is no CreationKey associated with this EntityID" );
   //  return;
   //}
-  //  // create net message
+  //// create net message
   //NetMessage netMsg;
   //netMsg.mType    = MSG_DATA;
   //netMsg.addrFrom = saMyAddr.sin_addr.s_addr;
 
-  //  // add data for game message
+  //// add data for game message
   //netMsg.nSize = sizeof( Message< TList > );
   //netMsg.dest  = *destKey;
-  //memcpy( netMsg.Data, pMsg, netMsg.nSize );
+  //memcpy( netMsg.data, pMsg, netMsg.nSize );
 
   //PushMessage( netMsg, !pMsg->toResend, pMsg->reliable );
 }

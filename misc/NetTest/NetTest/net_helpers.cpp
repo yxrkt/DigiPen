@@ -250,7 +250,7 @@ void Networking_impl::SendMessages()
       unreliablePktOut.nMsgs = 0;
     }
 
-    CleanupPlayers();
+  CleanupPlayers();
   }
 }
 
@@ -347,23 +347,23 @@ void Networking_impl::TranslateMessages()
     {
       case MSG_DATA:
       {
-    //    Message< TypeList1( RawStorage< MAX_DATA_LEN > ) > *msg = NEW(
-    //      Message< TypeList1( RawStorage< MAX_DATA_LEN > ) >, ( ) );
-				//if ( msgIn.nSize > MAX_DATA_LEN )
-				//	ASSERT( "You received a network message that tried to send too much data" );
-    //    memcpy( msg, msgIn.data, msgIn.nSize );
+        Message< TypeList1( RawStorage< MAX_DATA_LEN > ) > *msg = NEW(
+          Message< TypeList1( RawStorage< MAX_DATA_LEN > ) >, ( ) );
+				if ( msgIn.nSize > MAX_DATA_LEN )
+					ASSERT( "You received a network message that tried to send too much data" );
+        memcpy( msg, msgIn.data, msgIn.nSize );
 
-    //    const EntityID *receiverID = entityIDTable.GetID( msgIn.dest );
-    //    if ( receiverID != NULL )
-    //    {
-				//  GameEntity* receiver = GetEntityByID( *receiverID );
-    //      if ( receiver != NULL )
-				//  {
-    //        msg->Send( receiver );
-				//  }
-    //      if ( bHost )
-    //        PushMessage( msgIn, !msg->toResend, msg->reliable );
-    //    }
+        const EntityID *receiverID = entityIDTable.GetID( msgIn.dest );
+        if ( receiverID != NULL )
+        {
+				  GameEntity* receiver = GetEntityByID( *receiverID );
+          if ( receiver != NULL )
+				  {
+            msg->Send( receiver );
+				  }
+          if ( bHost )
+            PushMessage( msgIn, !msg->toResend, msg->reliable );
+        }
       }
       break;
 
@@ -574,13 +574,11 @@ void Networking_impl::BuildPackets()
       reliablePktOut.Messages[reliablePktOut.nMsgs++] = *i;
       qMsgsOut.c.erase( i++ );
     }
-
     else if ( !i->reliable && unreliablePktOut.nMsgs < MAX_MESSAGES )
     {
       unreliablePktOut.Messages[unreliablePktOut.nMsgs++] = *i;
       qMsgsOut.c.erase( i++ );
     }
-
     else
     {
       i++;

@@ -52,7 +52,7 @@ Networking_impl::Networking_impl()
     // Initialize sockaddr for sending broadcasts
   saBroadcast.sin_family      = AF_INET;
   saBroadcast.sin_port        = htons( PORT );
-  saBroadcast.sin_addr.s_addr = inet_addr( "192.168.1.110" );//INADDR_BROADCAST;
+  saBroadcast.sin_addr.s_addr = INADDR_BROADCAST;
 
     // Create sockaddr for user
   SetMySA();

@@ -9,54 +9,87 @@ void Networking_impl::UpdateDebug()
 {
   std::stringstream ssDebug;
 
-    // Reset String
+  // Reset String
   debugStrings.c.clear();
 
-    // Title
+  // Title
   debugStrings.push( "Networking Debugger" );
 
-    // Host or client
-  std::string strMyRank = bHost ? "HOST" : "CLIENT";
+  // Errors
+  for ( StringVecIt i = errStrings.begin(); i != errStrings.end(); ++i )
+    debugStrings.push( *i );
+
+  // Host or client
+  std::string strMyRank = bHost ? "(Host)" : "(Client)";
   debugStrings.push( strMyRank.c_str() );
 
   if ( bHost )
   {
-      // Number of players
-    ssDebug << "Players: " << lsPlayers.size() + 1;
+    // Number of players
+    ssDebug << "Players:  " << lsPlayers.size() + 1;
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
   }
 
-    // Player info
+  else
+  {
+    // Join info
+    ssDebug << "Joining: " << ( bJoining ? "true" : "false" );
+    debugStrings.push( ssDebug.str() );
+    ssDebug.str("");
+
+    ssDebug << "Join Attempt: " << nJoinAttempt;
+    debugStrings.push( ssDebug.str() );
+    ssDebug.str("");
+  }
+
+  // Game mode
+  ssDebug << "Update State: ";
+  switch ( gsMode )
+  {
+    case GS_MENU:
+      ssDebug << "Title";
+      break;
+    case GS_JOIN:
+      ssDebug << "Join Menu";
+      break;
+    case GS_SESSION:
+      ssDebug << "Session";
+      break;
+  }
+  debugStrings.push( ssDebug.str() );
+  ssDebug.str("");
+
+  // Player info
   unsigned nPlayer = bHost ? 2 : 1;
   for ( PlayerIter i = lsPlayers.begin(); i != lsPlayers.end(); ++i )
   {
     debugStrings.push("");
 
     if ( bHost )
-      ssDebug << "Player " << nPlayer;
+      ssDebug << "Player " << nPlayer << " Info";
     else
-      ssDebug << "Host";
+      ssDebug << "Host Info";
 
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
 
-      // Window info
+    // Window info
     size_t nPkts = i->qPktWnd.size();
-    ssDebug << "Wnd: " << i->qPktWnd.size() << ( nPkts ? " ( " : "" );
+    ssDebug << "WndSize: " << i->qPktWnd.size() << ( nPkts ? " ( " : "" );
     for ( size_t j = 0; j < nPkts; ++j )
       ssDebug << (unsigned)i->qPktWnd.c[j].nIndex << " ";
     ssDebug << ( nPkts ? ")" : "" );
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");      
 
-      // Last recvd
-    ssDebug << "LR: " << (unsigned)i->nLRIndex;
+    // Last recvd
+    ssDebug << "Last Received: " << (unsigned)i->nLRIndex;
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
 
-      // Last sent
-    ssDebug << "LS: " << (unsigned)nLSIndex;
+    // Last sent
+    ssDebug << "Last Sent: " << (unsigned)nLSIndex;
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
 
