@@ -214,13 +214,14 @@ void Networking_impl::SendMessages()
           if ( bHost )
           {
             ManageLagger( i );
+            continue;
           }
           else
           {
-            errStrings.push_back( "Connection to host lost" );
+            ReportError( "Connection to host lost" );
             Reset();
+            return;
           }
-          continue;
         }
 
           // send the packet
