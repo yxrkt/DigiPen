@@ -16,6 +16,30 @@
 // ever drawn to allow for any pre-processing steps.
 void PreprocessScene( Scene &scene )
 {
+  size_t nObjs = scene.objects.size();
+  for ( size_t i = 0; i < nObjs; ++i )
+  {
+    Object &obj = scene.objects[i];
+    obj.occluder = ( i == 0 );
+    obj.bound.origin = obj.polygons[0][0].V.Hdiv();
+    obj.bound.extent = obj.polygons[0][0].V.Hdiv();
+    size_t nPolys = obj.polygons.size();
+    for ( size_t j = 0; j < nPolys; ++j )
+    {
+      APolygon &poly = obj.polygons[j];
+      size_t nVerts = poly.size();
+      for ( size_t k = 0; k < nVerts; ++k )
+      {
+        for ( size_t v = 0; v < 3; ++v )
+        {
+          if ( poly[k].V.Hdiv()[v] < obj.bound.origin[v] )
+            obj.bound.origin[v] = poly[k].V.Hdiv()[v];
+          else if ( poly[k].V.Hdiv()[v] > obj.bound.extent[v] )
+            obj.bound.extent[v] = poly[k].V.Hdiv()[v];
+        }
+      }
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -40,7 +64,8 @@ void DrawScene( Scene &scene, int width, int height )
     Scene sceneNew = scene;
     cmsg << "Occluded Objects: " << RemoveOccludedObjects( sceneNew.objects );
     glEnable( GL_DEPTH_TEST );
-    DrawSceneWithOpenGL( sceneNew, width, height );
+    PrepareToDraw( scene );
+    DrawObjects( sceneNew.objects );
     glDisable( GL_DEPTH_TEST );
     DrawMessage( (char *)cmsg.str().c_str(), width, height );
   }
