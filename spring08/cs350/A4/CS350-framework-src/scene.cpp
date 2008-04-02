@@ -15,6 +15,11 @@
 
 int sceneID = 1;
 
+inline float randf()
+{
+ return ( (float)( rand() % 101 ) / 100.f );
+}
+
 void CreateScene(Scene& scene)
 {
 	scene.Clear();
@@ -26,29 +31,25 @@ void CreateScene(Scene& scene)
 	scene.AddLight(Point3D(100,0,50), Color(0.8, 0.8, 0.8));
 	scene.AddLight(Point3D(0,100,80), Color(0.5, 0.5, 0.5));
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.00, 1.0, 0.7), HSVColor(0.0, 0.0, 0.8), 30);
-	scene.modeling.Translate( 0.5, -0.5, 0);
-	CreateSphere(scene, 0.5, 12);
-	scene.modeling.Pop();
+  // load occluder
+  scene.modeling.Push();
+  scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 200);
+  scene.modeling.Translate(-2.75f, 0.f, 0.f);
+  CreateRectangularPrism(scene, 5.0, .25, 1.0);
+  scene.modeling.Pop();
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.15, 1.0, 0.9), HSVColor(0.0, 0.0, 0.8), 120);
-	scene.modeling.Translate(-0.5, -0.5, 0);
-	scene.modeling.RotateZ(-45);
-	scene.modeling.RotateX(90);
-	CreateCylinder(scene, 0.2, 1.0, 12);
-	scene.modeling.Pop();
-
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.66, 1.0, 0.9), HSVColor(0.0, 0.0, 1.5), 120);
-	scene.modeling.Translate(-0.5,  0.5, 0);
-	CreateRectangularPrism(scene, 0.75, 0.75, 0.75);
-	scene.modeling.Pop();
-
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.33, 1.0, 0.7), HSVColor(0.0, 0.0, 0.8), 30);
-	scene.modeling.Translate( 0.5, 0.5, 0);
-	CreateCone(scene, 0.5, 1.0, 12);
-	scene.modeling.Pop();
+  // load objects that can be occluded
+  double scale = .25;
+  int nRows = 10, nCols = 10;
+  for ( int y = 0; y < nRows; ++y )
+  {
+    for ( int x = 0; x < nCols; ++x )
+    {
+      scene.modeling.Push();
+      scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 200);
+      scene.modeling.Translate((float)(x - nCols) / 2.f, (float)(y - nRows) / 2.f, 0.f);
+      CreateRectangularPrism(scene, scale, scale, scale);
+      scene.modeling.Pop();
+    }
+  }
 }

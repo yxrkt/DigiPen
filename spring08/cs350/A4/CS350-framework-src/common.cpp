@@ -412,3 +412,11 @@ NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth )
   return new NodeKd( vox, planeVal, planeType, MakeKdTree( trisL, voxL, nextDepth ), 
                      MakeKdTree( trisR, voxR, nextDepth ) );
 }
+
+// =============================================================================
+// Added during A4
+// =============================================================================
+unsigned RemoveOccludedObjects( std::vector< Object > &objs )
+{
+  return 0;
+}

@@ -156,5 +156,7 @@ float GetPlaneVal( const TriangleVec &tris, const Box3D &vox, unsigned depth,
                    Box3D &voxL, Box3D &voxR, float &cost );
 NodeKd *MakeKdTree( const TriangleVec &tris, const Box3D &vox, unsigned depth );
 
+// Added during A4
+unsigned RemoveOccludedObjects( std::vector< Object > &objs );
 
 #endif
