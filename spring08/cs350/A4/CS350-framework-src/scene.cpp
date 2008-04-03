@@ -33,7 +33,7 @@ void CreateScene(Scene& scene)
 
   // load occluder
   scene.modeling.Push();
-  scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 200);
+  scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 120);
   scene.modeling.Translate(-2.75f, 0.f, 0.f);
   CreateRectangularPrism(scene, 5.0, .25, 1.0);
   scene.modeling.Pop();
@@ -46,7 +46,7 @@ void CreateScene(Scene& scene)
     for ( int x = 0; x < nCols; ++x )
     {
       scene.modeling.Push();
-      scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 200);
+      scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 120);
       scene.modeling.Translate((float)(x - nCols) / 2.f, (float)(y - nRows) / 2.f, 0.f);
       CreateRectangularPrism(scene, scale, scale, scale);
       scene.modeling.Pop();

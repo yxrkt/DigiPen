@@ -104,6 +104,7 @@ public:
 	bool closed;				// Object is back-face cullable.
   Box3D bound;        // Object's bounding volume
   bool occluder;      // Object is occluder
+  bool occluded;      // Object is occluded
 };
 
 ////////////////////////////////////////////////////////////////////////

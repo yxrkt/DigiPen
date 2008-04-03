@@ -144,7 +144,7 @@
 				ProgramDataBaseFileName="..\CS350-framework-bin\Debug\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
 			<Tool
@@ -203,20 +203,6 @@
 			<File
 				RelativePath=".\common.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\lib\framework.cpp"

@@ -21,6 +21,7 @@ void PreprocessScene( Scene &scene )
   {
     Object &obj = scene.objects[i];
     obj.occluder = ( i == 0 );
+    obj.occluded = false;
     obj.bound.origin = obj.polygons[0][0].V.Hdiv();
     obj.bound.extent = obj.polygons[0][0].V.Hdiv();
     size_t nPolys = obj.polygons.size();
@@ -51,6 +52,7 @@ void DrawScene( Scene &scene, int width, int height )
 
 	if (scene.UseOpenGLRendering)
   {
+    BeginDefaultDraw( width, height );
 		glEnable(GL_DEPTH_TEST);
 		DrawSceneWithOpenGL(scene, width, height);
 		glDisable(GL_DEPTH_TEST);
@@ -62,11 +64,15 @@ void DrawScene( Scene &scene, int width, int height )
     cmsg.str( "" );
     
     Scene sceneNew = scene;
-    cmsg << "Occluded Objects: " << RemoveOccludedObjects( sceneNew.objects );
+    cmsg << "Occluded Objects: " << RemoveOccludedObjects( sceneNew, width, height );
     glEnable( GL_DEPTH_TEST );
-    PrepareToDraw( scene );
-    DrawObjects( sceneNew.objects );
+    //glViewport( 0, 0, 64, 64 );
+    BeginDraw( scene, width, height );
+    size_t nObjs = sceneNew.objects.size();
+    for ( size_t i = 0; i < nObjs; ++i )
+      DrawObject( sceneNew.objects[i], !sceneNew.objects[i].occluder );
     glDisable( GL_DEPTH_TEST );
     DrawMessage( (char *)cmsg.str().c_str(), width, height );
+    ERRCHECK( "line 76 in render.cpp" );
   }
 }
