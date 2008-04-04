@@ -19,20 +19,26 @@
   }
 
 // constants
-const float OPACITY_THRESHOLD       = .95f;
-const float TRANSPARENCY_THRESHOLD  = .50f;
+const float OPACITY_THRESHOLD       = .975f;
+const float TRANSPARENCY_THRESHOLD  = .80f;
 
 // classes and structs
 struct HOM
 {
   HOM( int _width = 0, int _height = 0, HOM *_prev = NULL )
-    : width( _width ), height( _height ), map( new float[width * height] ), prev( _prev ), next( NULL ) {}
+    : width( _width )
+    , height( _height )
+    , map( new float[width * height] )
+    , depth( new float[width * height] )
+    , prev( _prev )
+    , next( NULL ) {}
 
   ~HOM()
   {
     if ( this->next != NULL )
       delete this->next;
     delete [] map;
+    delete [] depth;
   }
 
   inline float &Map( int x, int y )
@@ -40,10 +46,15 @@ struct HOM
     return map[x + y * width];
   }
 
+  inline float &Depth( int x, int y )
+  {
+    return depth[x + y * width];
+  }
   const int width;
   const int height;
 
   float  *map;
+  float  *depth;
   HOM    *prev;
   HOM    *next;
 };
@@ -66,20 +77,10 @@ typedef ObjectVec::iterator ObjectVecIt;
 // useful inlines
 template< typename T, typename U >
 inline T force_cast( const U &data ) { return *(T *)&data; }
-inline Point2D GetScreenCrds( const Point3D &world, Scene &scene )
+inline Point3D GetScreenCrds( const Point3D &world, Scene &scene, int width, int height )
 {
-  return force_cast< Point2D >( scene.projection.Transform( 
-    scene.viewing.Transform( Vector4D( world ) ) ).Hdiv() );
-}
-
-inline float TVal( const Point3D &p, const Point3D &q, const Point3D &i )
-{
-  return abs( ( i - p ).length() / ( q - p ).length() );
-}
-
-inline float TVal( const Vertex &p, const Vertex &q, const Point3D &i )
-{
-  return TVal( force_cast<Point3D>( p.V ), force_cast<Point3D>( q.V ), i );
+  Point3D ndc = ( scene.projection.Transform( scene.viewing.Transform( Vector4D( world ) ) ).Hdiv() );
+  return Point3D( ( ndc[0] + 1.f ) * (float)( width / 2 ), ( ndc[1] + 1.f ) * (float)( height / 2 ), ndc[2] );
 }
 
 // other forward decls
@@ -88,7 +89,8 @@ unsigned RemoveOccludedObjects( Scene &scene, int width, int height );
 void BeginDraw( Scene &scene, int width, int height );
 void DrawObject( Object &obj, bool filled = true );
 void BeginDefaultDraw( int width, int height );
-bool Occluded( const Box2D &bound, const HOM *hom, int scnWidth, int scnHeight, bool autoFind = true );
-
+bool Occluded( const Box2D &bound, float depth, const HOM *hom, 
+               int scnWidth, int scnHeight, bool autoFind = true );
+float GetMaxDepth( const Object &obj, Scene &scene, int width, int height );
 
 #endif

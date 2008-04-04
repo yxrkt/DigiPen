@@ -34,7 +34,7 @@ void CreateScene(Scene& scene)
   // load occluder
   scene.modeling.Push();
   scene.SetColor(HSVColor(randf(), randf(), randf()), HSVColor(0.f, 0.f, .5f), rand() % 120);
-  scene.modeling.Translate(-2.75f, 0.f, 0.f);
+  scene.modeling.Translate(-2.75f, 1.f, 0.f);
   CreateRectangularPrism(scene, 5.0, .25, 1.0);
   scene.modeling.Pop();
 

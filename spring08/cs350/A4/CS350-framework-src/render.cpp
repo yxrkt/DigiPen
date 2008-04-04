@@ -65,14 +65,15 @@ void DrawScene( Scene &scene, int width, int height )
     
     Scene sceneNew = scene;
     cmsg << "Occluded Objects: " << RemoveOccludedObjects( sceneNew, width, height );
+
     glEnable( GL_DEPTH_TEST );
-    //glViewport( 0, 0, 64, 64 );
     BeginDraw( scene, width, height );
     size_t nObjs = sceneNew.objects.size();
     for ( size_t i = 0; i < nObjs; ++i )
       DrawObject( sceneNew.objects[i], !sceneNew.objects[i].occluder );
     glDisable( GL_DEPTH_TEST );
     DrawMessage( (char *)cmsg.str().c_str(), width, height );
-    ERRCHECK( "line 76 in render.cpp" );
+
+    ERRCHECK( "end (uncaught)" );
   }
 }
