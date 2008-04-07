@@ -1,0 +1,21 @@
+The Adapter Design Pattern
+- more commonly known as wrapper code
+- not to be confused with bridge
+  - bridge good for one interface over multiple APIs ( ex: opengl and direct3d )
+  - adapter mainly an abstraction over adaptee ( or adaptees )
+- two types of adapters
+  - object adapter
+    - show wikipedia diagram
+    - traditionally contains instance of adaptee class
+    - stl containers
+      - .empty(), .size()
+  - class adapter
+    - show wikipedia diagram
+    - often involves multiple inheritance
+    - show wiipedia java example
+    - stl containers
+      - std::stack, std::queue
+- examples of adapters in game development
+  - components ( object )
+    - wrap engine's classes
+    - 'walk' component wraps physics and sound: move and play footstep noise
