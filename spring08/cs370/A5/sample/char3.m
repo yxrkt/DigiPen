@@ -9,8 +9,11 @@ img = edu_imgpreprocess(I);
 for cnt = 1:50
     bw2 = edu_imgcrop(img{cnt});
     charvec = edu_imgresize(bw2);
+    imshow( charvec );
     out(:,cnt) = charvec;
 end
+
+out
 
 %% Create Vectors for the components (objects)
 P = out(:,1:40); 
