@@ -39,6 +39,3 @@ ind = Ic2(:,4);
 for cnt = 1:50
     img{cnt} = imcrop(Ibw,Ibox(:,ind(cnt)));
 end
-
-
-

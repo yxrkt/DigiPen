@@ -3,7 +3,7 @@
 #include "networking.h"
 
 // -----------------------------------------------------------------------------
-// Generic error checking function
+// Error checker
 // -----------------------------------------------------------------------------
 void Networking_impl::ErrCheck( int err, const char *msg ) const
 {
@@ -131,23 +131,23 @@ void Networking_impl::ReceivePackets()
   int nFromLen = sizeof( SOCKADDR_IN );
   int nIndex = 0;
 
-    // receive messages until a WSAEWOULDBLOCK or another error occurs
+  // receive messages until a WSAEWOULDBLOCK or another error occurs
   while ( 1 )
   {
     err = recvfrom( sUDP, (char *)&pktIn, sizeof( NetPacket ), 0, (sockaddr *)&saFrom, &nFromLen );
 
-      // break on socket error (most likely WSAEWOULDBLOCK)
+    // break on socket error (most likely WSAEWOULDBLOCK)
     if ( err == SOCKET_ERROR ) break;
 
-      // verify message header
+    // verify message header
     if ( pktIn.nHeader != MESSAGE_HEADER ) continue;
 
     PlayerIter iPlayer = GetPlayer( saFrom );
 
-      // if message comes from someone not in current session
+    // if message comes from someone not in current session
     if ( iPlayer == lsPlayers.end() )
     {
-        // if a join message
+      // if a join message
       nIndex = Contains( pktIn, MSG_JOIN );
       if ( nIndex != INDEX_NOT_FOUND )
       {
@@ -158,12 +158,12 @@ void Networking_impl::ReceivePackets()
           continue;
         }
       }
-        // otherwise, ignore it if not an ad message
+      // otherwise, ignore it if not an ad message
       else if ( Contains( pktIn, MSG_HOSTING ) == INDEX_NOT_FOUND )
         continue;
     }
 
-      // if join message from host
+    // if join message from host
     if ( ( Contains( pktIn, MSG_JOIN ) != INDEX_NOT_FOUND ) && bJoining )
     {
       lsPlayers.front().nLRIndex = pktIn.nIndex - 1;
@@ -171,7 +171,7 @@ void Networking_impl::ReceivePackets()
       bJoining                   = false;
     }
 
-      // ignore messages if one was missed
+    // ignore messages if one was missed
     if ( !pktIn.msgFront.reliable || IsNext( iPlayer->nLRIndex, pktIn.nIndex ) )
     {
       ExtractMessages( pktIn );
@@ -196,23 +196,23 @@ void Networking_impl::SendMessages()
   {
     BuildPackets();
 
-      // send reliable outgoing packet if there is one
+    // send reliable outgoing packet if there is one
     if ( reliablePktOut.nMsgs )
     {
-        // stamp message with index
+      // stamp message with index
       reliablePktOut.nIndex = ++nLSIndex;
 
       for ( PlayerIter i = lsPlayers.begin(); i != lsPlayers.end(); ++i )
       {
-          // resend messages in window first if needed
+        // resend messages in window first if needed
         ResendPackets( i );
 
-          // stamp message with index of last received
+        // stamp message with index of last received
         reliablePktOut.nLRIndex = i->nLRIndex;
 
         i->qPktWnd.push( reliablePktOut );
 
-          // check if player is lagging badly
+        // check if player is lagging badly
         if ( i->qPktWnd.size() > WINDOW_SIZE )
         {
           if ( bHost )
@@ -228,20 +228,20 @@ void Networking_impl::SendMessages()
           }
         }
 
-          // send the packet
+        // send the packet
         err = sendto( sUDP, (char *)&reliablePktOut, reliablePktOut.Size(), 0,
                       (sockaddr *)&i->saAddr, sizeof( SOCKADDR_IN ) );
 
         ErrCheck( err, "Sending reliable message failed." );
 
-          // reset resend timer
+        // reset resend timer
         i->dwResendTimer = timeGetTime();
       }
 
       reliablePktOut.nMsgs = 0;
     }
     
-      // unreliable messages
+    // unreliable messages
     if ( unreliablePktOut.nMsgs )
     {
       for ( PlayerIter i = lsPlayers.begin(); i != lsPlayers.end(); ++i )

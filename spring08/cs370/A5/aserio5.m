@@ -1,25 +1,36 @@
 %% CS 370 - Assignment 5
 
 %% Read image, keep backup
-train  = imread( 'A_Train.png' );
-cached = train;
+curImg = imread( 'A_Train.png' );
+cached = curImg;
 
 %% Convert image to black & white
-train = rgb2gray( train );
-train = im2bw( train, graythresh( train ) );
+curImg = rgb2gray( curImg );
+curImg = im2bw( curImg, graythresh( curImg ) );
 
 %% Find edges and fill
-train = edge( uint8( train ) );
-train = imdilate( train, strel( 'square', 2 ) );
-train = imfill( train, 'holes' );
-imshow( train );
+curImg = edge( uint8( curImg ) );
+curImg = imdilate( curImg, strel( 'square', 2 ) );
+curImg = imfill( curImg, 'holes' );
 
 %% Find the objects
-[Ilabel num] = bwlabel( train );
-Iprops = regionprops( Ilabel );
+label = bwlabel( curImg );
+props = regionprops( label );
+box   = reshape( [props.BoundingBox], [4 10] );
+
+%% Draw bounding boxes
+imshow( cached );
+hold on;
+for i = 1:10
+    rectangle( 'position', box( :, i ), 'edgecolor', 'r' );
+end
+
+%% Create and train neural net
+i10 = eye(10);
 
 %% Check each block
-for i = 0:9
-    min = i * 50;
-    cur = imcrop( train, [min 0 49 49] );
+for i = 1:10
+    %min = i * 50;
+    cur = imcrop( cached, box( :, i ) );
 end
+

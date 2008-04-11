@@ -6,6 +6,7 @@ I = imread('sample.bmp');
 
 %% Image Preprocessing
 img = edu_imgpreprocess(I);
+imshow( img );
 for cnt = 1:50
     bw2 = edu_imgcrop(img{cnt});
     charvec = edu_imgresize(bw2);
@@ -13,10 +14,8 @@ for cnt = 1:50
     out(:,cnt) = charvec;
 end
 
-out
-
 %% Create Vectors for the components (objects)
-P = out(:,1:40); 
+P = out(:,1:40);
 T = [eye(10) eye(10) eye(10) eye(10)];
 Ptest = out(:,41:50);
 

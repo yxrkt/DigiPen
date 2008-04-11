@@ -92,8 +92,8 @@ class Networking_impl
     bool BootPlayer( const char *name );
 
       // ugly templated stuff
-    template < typename TList >
-    void PushMessage( Message< TList > *pMsg, EntityIDTable::EntityID dest );
+    template < typename T >
+    void PushMessage( const T &msg, EntityIDTable::EntityID dest );
 
       // other
     void PushText( const std::string &text );
