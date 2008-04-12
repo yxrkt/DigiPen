@@ -6,11 +6,9 @@ I = imread('sample.bmp');
 
 %% Image Preprocessing
 img = edu_imgpreprocess(I);
-imshow( img );
 for cnt = 1:50
     bw2 = edu_imgcrop(img{cnt});
     charvec = edu_imgresize(bw2);
-    imshow( charvec );
     out(:,cnt) = charvec;
 end
 
