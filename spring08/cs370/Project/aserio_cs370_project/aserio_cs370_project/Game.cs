@@ -20,13 +20,15 @@ namespace aserio_cs370_project
 public partial class Form1 : Form
 {
   float gravity   = 9.81F / 2.0F;
-  Bitmap cached   = new Bitmap( "../../../test.bmp" );
   Stopwatch clock = new Stopwatch();
   long lastTick;
 
   // Player and game data
   GameObject player = new GameObject();
   float objThresh = 40.0F;
+  bool autoThresh = true;
+
+  byte[] grays;
 
   private void UpdateGame()
   {
@@ -56,6 +58,9 @@ public partial class Form1 : Form
     byte[] rgbs = new byte[nBytes];
     Marshal.Copy( ptr, rgbs, 0, nBytes );
 
+    grays = new byte[width * height];
+
+    // Histogram stretch
     HistStretch( ref rgbs, width, height, step, stride );
 
     // Specify region checked by physics
@@ -73,12 +78,12 @@ public partial class Form1 : Form
         int index = y * stride + xs;
         int x = xs / step;
 
+        int gray = ( (int)rgbs[index + 2] + (int)rgbs[index + 1] + (int)rgbs[index] ) / 3;
+        grays[y * width + x] = (byte)gray;
+
         // Fill physics update region
         if ( x >= min.x && x <= max.x && y >= min.y && y <= max.y )
-        {
-          int gray = ( (int)rgbs[index + 2] + (int)rgbs[index + 1] + (int)rgbs[index] ) / 3;
           player.window[regionIndex++] = (byte)( gray );
-        }
 
         // Draw player
         int xTrans = x - player.pos.XInt();
@@ -119,6 +124,8 @@ public partial class Form1 : Form
     Vector2D disp = new Vector2D();
     Vector2D n = new Vector2D( player.vel.y, -player.vel.x ).Normalized();
     Vector2D relPos = new Vector2D( player.pos - player.coords.min );
+    if ( autoThresh )
+      objThresh = AutoThresh( ref grays );
 
     for ( int y = 0; y < height; ++y )
     {
@@ -242,6 +249,45 @@ public partial class Form1 : Form
       else if ( val > 255 ) val = 255;
       rgbs[i] = (byte)val;
     }
+  }
+
+  private float AutoThresh( ref byte[] grays )
+  {
+    float termVal = 1.0F;
+
+    // Starting gray value: mean gray val
+    int nGrays = grays.Length;
+    float avgGray = 0.0F;
+
+    for ( int i = 0; i < nGrays; ++i )
+        avgGray += grays[i];
+    avgGray /= nGrays;
+
+    float curThresh = avgGray, prevThresh;
+
+    do
+    {
+      // Get values for groups using cur threshold
+      prevThresh = curThresh;
+      float G1 = 0.0F, G2 = 0.0F;
+      float nG1 = 0.0F, nG2 = 0.0F;
+      for ( int i = 0; i < nGrays; ++i )
+      {
+        if (grays[i] < curThresh)
+        {
+          G1 += grays[i];
+          nG1 += 1.0F;
+        }
+        else
+        {
+          G2 += grays[i];
+          nG2 += 1.0F;
+        }
+      }
+      curThresh = ((G1 / nG1) + (G2 / nG2)) / 2.0F;
+    } while ( Math.Abs( prevThresh - curThresh ) > termVal );
+
+    return curThresh;
   }
 
   protected override bool ProcessCmdKey( ref Message msg, Keys keyData )

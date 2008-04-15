@@ -17,3 +17,12 @@ C:\Users\Alyx\Desktop\aserio_cs370_project\aserio_cs370_project\obj\Release\aser
 C:\Users\Alyx\Desktop\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.csproj.GenerateResource.Cache
 C:\Users\Alyx\Desktop\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.exe
 C:\Users\Alyx\Desktop\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.pdb
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.exe
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.pdb
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\ResolveAssemblyReference.cache
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.Form1.resources
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.Properties.Resources.resources
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\obj\Release\aserio_cs370_project.csproj.GenerateResource.Cache
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\bin\Release\aserio_cs370_project.exe
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\bin\Release\aserio_cs370_project.pdb
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\aserio_cs370_project\bin\Release\DShowNET.dll

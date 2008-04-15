@@ -6,3 +6,6 @@ C:\Users\Alyx\Desktop\ASDF_ZXCV\ASDF_ZXCV\CamLib\obj\Debug\DShowNET.pdb
 C:\Users\Alyx\Desktop\ASDF_ZXCV\ASDF_ZXCV\CamLib\bin\Release\DShowNET.dll
 C:\Users\Alyx\Desktop\ASDF_ZXCV\ASDF_ZXCV\CamLib\obj\Release\ResolveAssemblyReference.cache
 C:\Users\Alyx\Desktop\ASDF_ZXCV\ASDF_ZXCV\CamLib\obj\Release\DShowNET.dll
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\CamLib\bin\Release\DShowNET.dll
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\CamLib\obj\Release\ResolveAssemblyReference.cache
+C:\Users\Alyx\Desktop\aserio\spring08\cs370\Project\aserio_cs370_project\CamLib\obj\Release\DShowNET.dll

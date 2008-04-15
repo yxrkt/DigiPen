@@ -76,10 +76,34 @@ public partial class Form1 : Form
   {
     MouseEventArgs args = (MouseEventArgs)e;
 
-    if ( args.Button == MouseButtons.Left )
+    MouseButtons key = args.Button;
+    byte minThresh = 255;
+
+    switch ( key )
     {
-      player.pos = new Vector2D( (float)args.X, (float)args.Y );
-      player.touching = false;
+      case MouseButtons.Left:
+        player.pos = new Vector2D( (float)args.X, (float)args.Y );
+        player.touching = false;
+        break;
+
+      case MouseButtons.Right:
+        for ( int y = args.Y - 1; y < args.Y + 1; ++y )
+        {
+          if ( y < 0 || y >= disp.Height ) continue;
+          for ( int x = args.X - 1; x < args.X + 1; ++x )
+          {
+            if ( x < 0 || x >= disp.Width ) continue;
+            Color c = disp.GetPixel( x, y );
+            int gray = ( (int)c.R + (int)c.G + (int)c.B ) / 3;
+            if ( (byte)gray < minThresh )
+            {
+              autoThresh = false;
+              minThresh = (byte)gray;
+              objThresh = minThresh;
+            }
+          }
+        }
+        break;
     }
   }
 }

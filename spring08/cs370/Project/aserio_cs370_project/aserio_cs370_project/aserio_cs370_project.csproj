@@ -77,7 +77,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ASDF_ZXCV\ASDF_ZXCV\CamLib\DShowNET.csproj">
+    <ProjectReference Include="..\CamLib\DShowNET.csproj">
       <Project>{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}</Project>
       <Name>DShowNET</Name>
     </ProjectReference>
