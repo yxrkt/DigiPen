@@ -27,6 +27,7 @@ public partial class Form1 : Form
 
     diagram  = new Bitmap( pictureBox.Width, pictureBox.Height );
     color    = new byte[3];
+    points   = new List<Point>();
     color[2] = 128;
     color[1] = 0;
     color[0] = 255;
@@ -36,7 +37,7 @@ public partial class Form1 : Form
   {
     MouseEventArgs args = (MouseEventArgs)e;
 
-    if ( args.Button = MouseButtons.Left )
+    if ( args.Button == MouseButtons.Left )
       points.Add( new Point( args.X, args.Y ) );
 
     UpdateImage();
@@ -52,24 +53,9 @@ public partial class Form1 : Form
     int step   = stride / width;
     int nBytes = stride * height;
     rgbs       = new byte[nBytes];
-    Point testPoint = new Point();
-
-    for ( int y = 0; y < height; ++y )
-    {
-      for ( int xs = 0; xs < stride; xs += step )
-      {
-        int x = xs / step;
-        int index = y * width + x;
-        int strideIndex = y * stride + xs;
-        testPoint.X = x;
-        testPoint.Y = y;
-        if ( points.Contains( testPoint ) )
-        {
-          for ( int i = 0; i < 3; ++i )
-            rgbs[i] = color[i];
-        }
-      }
-    }
+    for ( int i = 0; i < nBytes; ++i )
+      rgbs[i] = 255;
+    SetPointHandles();
 
     Marshal.Copy( rgbs, 0, data.Scan0, nBytes );
     diagram.UnlockBits( data );
@@ -79,6 +65,39 @@ public partial class Form1 : Form
 
     // Update displayed image
     pictureBox.Image = diagram;
+  }
+
+  private void SetPointHandles()
+  {
+    foreach ( Point p in points )
+    {
+      int x = p.X, y = p.Y, width = pictureBox.Width, step = 3;
+
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 2 ) * width + ( x - 1 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 2 ) * width + ( x - 0 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 2 ) * width + ( x + 1 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 1 ) * width + ( x + 2 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 0 ) * width + ( x + 2 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y + 1 ) * width + ( x + 2 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y + 2 ) * width + ( x + 1 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y + 2 ) * width + ( x - 0 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y + 2 ) * width + ( x - 1 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y + 1 ) * width + ( x - 2 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 0 ) * width + ( x - 2 ) ) + i] = color[i];
+      for ( int i = 0; i < 3; ++i )
+        rgbs[step * ( ( y - 1 ) * width + ( x - 2 ) ) + i] = color[i];
+    }
   }
 }
 
