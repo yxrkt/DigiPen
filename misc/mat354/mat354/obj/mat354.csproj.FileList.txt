@@ -1,0 +1,8 @@
+bin\Debug\mat354.exe
+bin\Debug\mat354.pdb
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\mat354.Form1.resources
+obj\Debug\mat354.Properties.Resources.resources
+obj\Debug\mat354.csproj.GenerateResource.Cache
+obj\Debug\mat354.exe
+obj\Debug\mat354.pdb
