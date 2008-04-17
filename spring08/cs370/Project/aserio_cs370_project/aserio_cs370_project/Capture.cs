@@ -158,7 +158,7 @@ public partial class Form1 : Form, ISampleGrabberCB
       if ( hr < 0 )
         Marshal.ThrowExceptionForHR( hr );
 
-      //DsUtils.ShowCapPinDialog( capGraph, capFilter, this.Handle );
+      DsUtils.ShowCapPinDialog( capGraph, capFilter, this.Handle );
 
       AMMediaType media = new AMMediaType();
       media.majorType = MediaType.Video;
