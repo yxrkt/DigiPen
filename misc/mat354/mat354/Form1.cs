@@ -13,29 +13,34 @@ namespace mat354
 {
 public partial class Form1 : Form
 {
-  // Consts
-  const int BIG_NUMBER = 0x4FF;
-
   // Data
-  byte[] rgbs;
-  List<Point> points;
-  Point[] region;
-  Bitmap diagram;
-  int k = 1;
-  byte[] color;
-  List<Region> regions;
+  private byte[]        rgbs;
+  private List<Point>   points;
+  private Bitmap        diagram;
+  private int           k;
+  private byte[]        color;
+  private List<VRegion> regions;
+  private bool          adding;
 
   // Functions
   public Form1()
   {
     InitializeComponent();
 
-    diagram  = new Bitmap( pictureBox.Width, pictureBox.Height );
-    color    = new byte[3];
     points   = new List<Point>();
-    color[2] = 128;
+    k        = 1;
+    color    = new byte[3];
+    color[2] = 0;
     color[1] = 0;
-    color[0] = 255;
+    color[0] = 0;
+    regions  = new List<VRegion>();
+    adding   = true;
+  }
+
+  private void Form1_Load( object sender, EventArgs e )
+  {
+    toolStripStatusLabel1.Text = "Mode: Add Points (click to add points)";
+    toolStripStatusLabel2.Text = "Regions: 0";
   }
 
   private void pictureBox_Click( object sender, EventArgs e )
@@ -43,21 +48,47 @@ public partial class Form1 : Form
     MouseEventArgs args = (MouseEventArgs)e;
 
     if ( args.Button == MouseButtons.Left )
-      points.Add( new Point( args.X, args.Y ) );
-
-    UpdateImage();
+    {
+      if ( adding )
+      {
+        points.Add( new Point( args.X, args.Y ) );
+        UpdateImage();
+      }
+      else
+      {
+        if ( points.Count > k )
+        {
+          RemoveRegion( args.X, args.Y );
+        }
+        else
+        {
+          points.Clear();
+          toolStripStatusLabel2.Text = "Regions: 1";
+        }
+        UpdateImage();
+      }
+    }
   }
 
   private void UpdateImage()
   {
-    int width       = pictureBox.Width, height = pictureBox.Height;
+    int width       = pictureBox.Width;
+    int height      = pictureBox.Height;
     Rectangle rec   = new Rectangle( 0, 0, width, height );
+    diagram         = new Bitmap( pictureBox.Width, pictureBox.Height );
     BitmapData data = diagram.LockBits( rec, ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb );
 
     int stride = data.Stride;
     int step   = stride / width;
     int nBytes = stride * height;
     rgbs       = new byte[nBytes];
+
+    if ( toolStripTextBox1.Text != "" )
+    {
+      k = Convert.ToInt32( toolStripTextBox1.Text );
+      if ( k == 0 ) k = 1;
+    }
+    regions.Clear();
 
     if ( points.Count > k )
     {
@@ -84,22 +115,32 @@ public partial class Form1 : Form
   private void FillRegions( int width, int height )
   {
     Point tester = new Point();
+    toolStripProgressBar1.Visible = true;
 
     // For each pixel method
     for ( int y = 0; y < height; ++y )
     {
+      toolStripProgressBar1.Value = (int)( (float)y / (float)height );
       for ( int x = 0; x < width; ++x )
       {
-        Point[] nears = new Point[k];
         tester.X = x;
         tester.Y = y;
-        Region region = GetRegion( tester, false );
+        VRegion region = GetRegion( tester );
 
         int found = -1;
         int index = 0;
-        foreach ( Region r in regions )
+        foreach ( VRegion r in regions )
         {
-          if ( r.indices.Equals( (object)region ) )
+          bool regionAlreadyExists = false;
+          for ( int i = 0; i < k; ++i )
+          {
+            if ( r.indices[i] != region.indices[i] )
+            {
+              regionAlreadyExists = true;
+              break;
+            }
+          }
+          if ( regionAlreadyExists == false )
           {
             found = index;
             break;
@@ -108,41 +149,42 @@ public partial class Form1 : Form
         }
 
         if ( found != -1 )
-          region = regions[found];
+        {
+          for ( int i = 0; i < 3; ++i )
+            rgbs[3 * ( y * width + x ) + i] = regions[found].color[i];
+        }
         else
+        {
+          region.color = Rainbow.GetNext();
           regions.Add( region );
-
-        for ( int i = 0; i < 3; ++i )
-          rgbs[3 * ( y * width + x ) + i] = region.color[i];
+          for ( int i = 0; i < 3; ++i )
+            rgbs[3 * ( y * width + x ) + i] = region.color[i];
+        }
       }
     }
+
+    toolStripStatusLabel2.Text    = "Regions: " + regions.Count.ToString();
+    toolStripProgressBar1.Visible = false;
   }
 
-  private Region GetRegion( Point cur, bool exclude )
+  private VRegion GetRegion( Point cur )
   {
     int nPoints = points.Count;
 
-    //if ( !exclude )
-    //{
-      List<RelPoint> rpoints = new List<RelPoint>( nPoints );
+    List<RelPoint> rpoints = new List<RelPoint>( nPoints );
 
-      int index = 0;
-      foreach ( Point p in points )
-      {
-        int x = p.X, y = p.Y;
-        rpoints.Add( new RelPoint( x * x + y * y, index++ ) );
-      }
+    int index = 0;
+    foreach ( Point p in points )
+    {
+      int x = p.X - cur.X, y = p.Y - cur.Y;
+      rpoints.Add( new RelPoint( x * x + y * y, index++ ) );
+    }
 
-      rpoints.Sort();
+    rpoints.Sort( delegate( RelPoint lhs, RelPoint rhs ) { return lhs.cost.CompareTo( rhs.cost ); } );
 
-      rpoints.RemoveRange( k, nPoints - 1 );
+    rpoints.RemoveRange( k, nPoints - k );
 
-      return new Region( rpoints );
-    //}
-    //else
-    //{
-    //  List<RelPoint> rpoints = new List<RelPoint>( nPoints - 1 );
-    //}
+    return new VRegion( rpoints );
   }
 
   private void SetPointHandles()
@@ -178,7 +220,57 @@ public partial class Form1 : Form
     }
   }
 
+  private void RemoveRegion( int x, int y )
+  {
+    Point clicked = new Point();
+    clicked.X = x;
+    clicked.Y = y;
+    VRegion clickedRegion = GetRegion( clicked ); 
+    VRegion found = regions.Find(
+      delegate( VRegion val )
+      {
+        for ( int i = 0; i < k; ++i )
+        {
+          if ( val.indices[i] != clickedRegion.indices[i] )
+            return false;
+        }
+        return true;
+      } );
 
+    List<Point> toRemove = new List<Point>( k );
+    foreach ( int i in found.indices )
+      toRemove.Add( points[i] );
+    foreach ( Point p in toRemove )
+      points.Remove( p );
+  }
+
+  private void toolStripButtonAdd_Click( object sender, EventArgs e )
+  {
+    toolStripButtonRemove.Checked = false;
+    toolStripButtonAdd.Checked    = true;
+    toolStripStatusLabel1.Text    = "Mode: Add Points (click to add points)";
+    adding = true;
+  }
+
+  private void toolStripButtonRemove_Click( object sender, EventArgs e )
+  {
+    toolStripButtonAdd.Checked    = false;
+    toolStripButtonRemove.Checked = true;
+    toolStripStatusLabel1.Text    = "Mode: Remove Regions (click to remove regions)";
+    adding = false;
+  }
+
+  private void toolStripButtonUpdate_Click( object sender, EventArgs e )
+  {
+    UpdateImage();
+  }
+
+  private void toolStripButtonClear_Click( object sender, EventArgs e )
+  {
+    points.Clear();
+    toolStripStatusLabel2.Text = "Regions: 0";
+    UpdateImage();
+  }
 }
 
 class Rainbow
@@ -189,46 +281,46 @@ class Rainbow
   {
     byte[] color = new byte[3];
 
-    //switch ( count )
-    //{
-    //  case 0: // RED
-    //    c.R = 255;
-    //    c.G = 0;
-    //    c.B = 0;
-    //    break;
-    //  case 1: // ORANGE
-    //    c.R = 255;
-    //    c.G = 128;
-    //    c.B = 0;
-    //    break;
-    //  case 2: // YELLOW
-    //    c.R = 255;
-    //    c.G = 0;
-    //    c.B = 255;
-    //    break;
-    //  case 3: // GREEN
-    //    c.R = 0;
-    //    c.G = 255;
-    //    c.B = 0;
-    //    break;
-    //  case 4: // BLUE
-    //    c.R = 0;
-    //    c.G = 0;
-    //    c.B = 255;
-    //    break;
-    //  case 5: // INDIGO
-    //    c.R = 128;
-    //    c.G = 0;
-    //    c.B = 255;
-    //    break;
-    //  case 6: // VIOLET
-    //    c.R = 255;
-    //    c.G = 0;
-    //    c.B = 255;
-    //    break;
-    //}
+    switch ( count )
+    {
+      case 0: // RED
+        color[2] = 255;
+        color[1] = 0;
+        color[0] = 0;
+        break;
+      case 1: // ORANGE
+        color[2] = 255;
+        color[1] = 128;
+        color[0] = 0;
+        break;
+      case 2: // YELLOW
+        color[2] = 255;
+        color[1] = 255;
+        color[0] = 0;
+        break;
+      case 3: // GREEN
+        color[2] = 0;
+        color[1] = 255;
+        color[0] = 0;
+        break;
+      case 4: // BLUE
+        color[2] = 0;
+        color[1] = 0;
+        color[0] = 255;
+        break;
+      case 5: // INDIGO
+        color[2] = 128;
+        color[1] = 0;
+        color[0] = 255;
+        break;
+      case 6: // VIOLET
+        color[2] = 255;
+        color[1] = 0;
+        color[0] = 255;
+        break;
+    }
 
-    count = count % 7;
+    count = ( count + 1 ) % 7;
     return color;
   }
 }
@@ -255,29 +347,23 @@ class RelPoint
   public int index;
 }
 
-class Region
+class VRegion
 {
-  public Region( List<RelPoint> rpoints )
+  public VRegion( List<RelPoint> rpoints )
   {
     indices = new List<int>( rpoints.Count );
     foreach ( RelPoint p in rpoints )
       indices.Add( p.index );
     indices.Sort();
-
-    color = Rainbow.GetNext();
-
     //index = count++;
   }
 
-  public Region( int[] indices_ )
+  public VRegion( int[] indices_ )
   {
     indices = new List<int>( indices_.Length );
     foreach ( int i in indices_ )
       indices.Add( i );
     indices.Sort();
-
-    color = Rainbow.GetNext();
-
     //index = count++;
   }
 

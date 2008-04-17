@@ -6,3 +6,11 @@ obj\Debug\mat354.Properties.Resources.resources
 obj\Debug\mat354.csproj.GenerateResource.Cache
 obj\Debug\mat354.exe
 obj\Debug\mat354.pdb
+bin\Release\mat354.exe
+bin\Release\mat354.pdb
+obj\Release\ResolveAssemblyReference.cache
+obj\Release\mat354.Form1.resources
+obj\Release\mat354.Properties.Resources.resources
+obj\Release\mat354.csproj.GenerateResource.Cache
+obj\Release\mat354.exe
+obj\Release\mat354.pdb
