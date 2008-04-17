@@ -1,6 +1,10 @@
 #include <windows.h>
 #include <string>
 
+void __fastcall reg( bool hide )
+{
+}
+
 int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR site, int )
 {
   while ( true )
