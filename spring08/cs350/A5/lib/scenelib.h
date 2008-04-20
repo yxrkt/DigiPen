@@ -102,6 +102,8 @@ public:
 	Texture* refl;				// Reflection map -- may be NULL
 
 	bool closed;				// Object is back-face cullable.
+  Box3D aabb;         // Axis-aligned bounding box
+  mutable unsigned start;     // Starting plane
 };
 
 ////////////////////////////////////////////////////////////////////////

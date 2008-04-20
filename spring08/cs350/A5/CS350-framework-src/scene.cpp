@@ -22,33 +22,31 @@ void CreateScene(Scene& scene)
 	scene.EnableLighting = true;
 	scene.EnableFlatShading = true;
 
-	scene.SetAmbient(Color(0.2, 0.2, 0.2));
+	scene.SetAmbient(Color(0.3, 0.3, 0.3));
 	scene.AddLight(Point3D(100,0,50), Color(0.8, 0.8, 0.8));
-	scene.AddLight(Point3D(0,100,80), Color(0.5, 0.5, 0.5));
+	scene.AddLight(Point3D(-100,0,80), Color(0.5, 0.5, 0.5));
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.00, 1.0, 0.7), HSVColor(0.0, 0.0, 0.8), 30);
-	scene.modeling.Translate( 0.5, -0.5, 0);
-	CreateSphere(scene, 0.5, 12);
-	scene.modeling.Pop();
+	int n = 5;
+	float w = 3.0/(4*n);
+	int count = 0;
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.15, 1.0, 0.9), HSVColor(0.0, 0.0, 0.8), 120);
-	scene.modeling.Translate(-0.5, -0.5, 0);
-	scene.modeling.RotateZ(-45);
-	scene.modeling.RotateX(90);
-	CreateCylinder(scene, 0.2, 1.0, 12);
-	scene.modeling.Pop();
+	for (int i=0;  i<=2*n;  i++) {
+		for (int j=0;  j<=2*n;  j++) {
+			float xpos = (i-n)/float(n) + .01*i/10.0 + .03*j/10.0;
+			float ypos = (j-n)/float(n) + .02*i/10.0 + .01*j/10.0;
+			float zpos =                  .03*i/10.0 + .02*j/10.0;
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.66, 1.0, 0.9), HSVColor(0.0, 0.0, 1.5), 120);
-	scene.modeling.Translate(-0.5,  0.5, 0);
-	CreateRectangularPrism(scene, 0.75, 0.75, 0.75);
-	scene.modeling.Pop();
+			float hue = (atan2f(ypos,xpos)+PI)/(2*PI);
+			float sat = max(abs(xpos), abs(ypos));
+			
+			scene.modeling.Push();
+			scene.SetColor(HSVColor(hue,sat,0.9), HSVColor(0.0,0.0,1.5), 120);
+			scene.modeling.Translate(xpos, ypos, 0);
+			CreateRectangularPrism(scene, w, w, 0.3-sat/4.);
+			scene.modeling.Pop();
+			count++;
+		}
+	}
+	printf("Count: %d\n", count*6);
 
-	scene.modeling.Push();
-	scene.SetColor(HSVColor(0.33, 1.0, 0.7), HSVColor(0.0, 0.0, 0.8), 30);
-	scene.modeling.Translate( 0.5, 0.5, 0);
-	CreateCone(scene, 0.5, 1.0, 12);
-	scene.modeling.Pop();
 }

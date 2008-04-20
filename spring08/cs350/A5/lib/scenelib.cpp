@@ -879,7 +879,6 @@ void DrawSceneWithOpenGL(Scene& scene, int width, int height)
 		glDisable(GL_TEXTURE_2D); }
 
 	glFlush();
-	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 		
 }

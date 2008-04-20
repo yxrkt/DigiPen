@@ -76,7 +76,6 @@ void ReDrawScene()
 	glLoadIdentity();
 
 	BuildProjection(scene, width, height);
-	glDisable(GL_DEPTH_TEST);
 	DrawScene(scene, width, height);
 
 	glutSwapBuffers();

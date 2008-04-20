@@ -10,90 +10,115 @@
 #include "transformation.h"
 #include "scenelib.h"
 
+// Thanks microsoft
+#undef near
+#undef far
+#undef NEAR
+#undef FAR
 
-// =============================================================================
-// Added during A2
-// =============================================================================
-const float EPSILON = .0001f;
-
-template<typename T, typename U>
-inline T force_cast( const U &data ) { return *(T *)&data; }
-
-inline float TVal( const Point3D &p, const Point3D &q, const Point3D &i )
+// Used by frustum
+inline void MakePlane( const Point3D &a, const Point3D &b, const Point3D &c, Plane3D &plane )
 {
-  return abs( ( i - p ).length() / ( q - p ).length() );
+  Vector3D n( ( ( b - a ) ^ ( c - b ) ).normalized() );
+  plane[0] = n[0];
+  plane[1] = n[1];
+  plane[2] = n[2];
+  plane[3] = -( n[0] * a[0] + n[1] * a[1] + n[2] * a[2] );
 }
 
-inline float TVal( const Vertex &p, const Vertex &q, const Point3D &i )
-{
-  return TVal( force_cast<Point3D>( p.V ), force_cast<Point3D>( q.V ), i );
-}
+// Types
+enum OBJ_STATE { INSIDE, INTERSECTING, OUTSIDE };
 
-// Polygon
-class Polygon3D
+class Frustum
 {
   public:
-    Polygon3D( const APolygon &poly, const Color &_color ) : verts( poly ), color( _color ), center()
+    Frustum( Scene &scene )
     {
-      size_t nVerts = verts.size();
-      for ( size_t i = 0; i < nVerts; ++i ) center += force_cast<Vector3D>( verts[i].V );
-      center /= (float)nVerts;
-      Vector3D u( force_cast<Point3D>( verts[1].V ) - force_cast<Point3D>( verts[0].V ) );
-      Vector3D v( force_cast<Point3D>( verts[2].V ) - force_cast<Point3D>( verts[1].V ) );
-      Vector3D n( ( u ^ v ).normalized() );
-      if ( n * verts[0].N < 0 ) n *= -1.f;
-      plane = Plane3D( n[0], n[1], n[2], -( n[0] * verts[0].V[0] + n[1] * verts[0].V[1] + n[2] * verts[0].V[2] ) );
+      // Get points of frustum in world space
+      Point3D points[2][2][2];
+      for ( int x = 0; x < 2; ++x )
+      {
+        for ( int y = 0; y < 2; ++y )
+        {
+          for ( int z = 0; z < 2; ++z )
+          {
+            Vector4D ndc( x == 0 ? -1.f : 1.f, y == 0 ? -1.f : 1.f, z == 0 ? -1.f : 1.f, 1.f );
+            points[x][y][z] = scene.viewing.InverseTransform( scene.projection.InverseTransform( ndc ) ).Hdiv();
+          }
+        }
+      }
+
+      MakePlane( points[0][1][1], points[0][1][0], points[0][0][0], planes[LEFT]   );
+      MakePlane( points[1][0][0], points[1][1][0], points[1][1][1], planes[RIGHT]  );
+      MakePlane( points[0][0][0], points[0][1][0], points[1][1][0], planes[NEAR]   );
+      MakePlane( points[1][1][1], points[0][1][1], points[0][0][1], planes[FAR]    );
+      MakePlane( points[0][0][0], points[1][0][0], points[1][0][1], planes[BOTTOM] );
+      MakePlane( points[1][1][1], points[1][1][0], points[0][1][0], planes[TOP]    );
     }
 
-    inline Plane3D &Plane() { return plane; }
-    inline const Plane3D &Plane() const { return plane; }
-    inline APolygon &Verts() { return verts; }
-    inline const APolygon &Verts() const { return verts; }
-    inline Color &ColorRgba() { return color; }
-    inline const Color &ColorRgba() const { return color; }
-    inline Vector3D &Center() { return center; }
-    inline const Vector3D &Center() const { return center; }
+    OBJ_STATE Contains( const Object &obj, unsigned &tries, unsigned &triesAlt ) const
+    {
+      float result;
 
-  private:
-    Plane3D   plane;
-    APolygon  verts;
-    Color     color;
-    Vector3D  center;
+      for ( unsigned i = 0; i < NPLANES; ++i )
+      {
+        int cur = ( i + obj.start ) % NPLANES;
+        Point3D min( obj.aabb.origin ), max( obj.aabb.extent );
+        for ( unsigned j = 0; j < 3; ++j )
+        {
+          if ( planes[cur][j] < 0 )
+          {
+            min[j] = obj.aabb.extent[j];
+            max[j] = obj.aabb.origin[j];
+          }
+        }
+
+        result = planes[cur].Evaluate( max ); tries++;
+        if ( result < 0.f )
+        {
+          triesAlt = ( i + obj.start ) * 2 + 1;
+          obj.start = cur;
+          return OUTSIDE;
+        }
+
+        result = planes[cur].Evaluate( min ); tries++;
+        if ( result < 0.f )
+        {
+          triesAlt = ( i + obj.start ) * 2 + 2;
+          obj.start = cur;
+          return INTERSECTING;
+        }
+      }
+
+      triesAlt = tries;
+      return INSIDE;
+    }
+
+    enum { LEFT, RIGHT, NEAR, FAR, BOTTOM, TOP, NPLANES };
+    Plane3D planes[NPLANES];
 };
 
-// Node
-struct Node
-{
-  Node( Polygon3D *_root = NULL )
-    : root( _root )
-    , front( NULL )
-    , back( NULL ) {}
-  ~Node()
-  {
-    if ( back ) this->~Node();
-    if ( root ) delete root;
-    if ( front ) this->~Node();
-  }
+typedef std::vector< Object >       ObjectVec;
+typedef ObjectVec::iterator         ObjectVecIt;
+typedef ObjectVec::const_iterator   ObjectVecItC;
+typedef std::vector< APolygon >     APolygonVec;
+typedef APolygonVec::iterator       APolygonVecIt;
+typedef APolygonVec::const_iterator APolygonVecItC;
+typedef APolygon::iterator          VertexIt;
+typedef APolygon::const_iterator    VertexItC;
 
-  Polygon3D  *root;
-  Node       *front;
-  Node       *back;
-};
+// Constants
+const float EPSILON = .0001f;
 
-
-// typedefs
-typedef std::list<Polygon3D>    PolygonList;
-typedef PolygonList::iterator   PolygonListIt;
+// Inlines
+template<typename T, typename U>
+inline T &force_cast( const U &data ) { return *(T *)&data; }
 
 // Prototypes
-Polygon3D PullOutRoot( PolygonList &polys );
-void SplitPolygon( const Polygon3D &poly, Node *tree, PolygonList &front, PolygonList &back );
-void MakeBSPT( PolygonList polys, Node *&tree );
-void DrawBSPT( Node *tree, const Point3D &eye );
-void DrawPoly( const Polygon3D &poly );
-unsigned GetHeight( const Node *tree );
-void GetNodes( const Node *tree, unsigned &nPolys );
-APolygon RemoveDupeVerts( const APolygon &poly );
+void GenerateAABB( Object &obj );
+void BeginDraw( Scene &scene, int width, int height );
+void BeginDefaultDraw( int width, int height );
+void DrawObject( const Object &obj );
 
 
 #endif
