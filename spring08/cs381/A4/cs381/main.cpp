@@ -2,7 +2,8 @@
 #include <ctime>
 #include <string>
 
-void test0() {
+void test0()
+{
 	BayesianNetwork bn(5);
 
 	//from the book B,E,A,J,M (Burglary,Earthquake,Alarm,Mary,John)
@@ -96,6 +97,11 @@ void test0() {
 
 void test1()
 {
+  std::cout << std::endl;
+  std::cout << "===================================" << std::endl;
+  std::cout << " Test 1: Estimating Probabilities  " << std::endl;
+  std::cout << "===================================" << std::endl;
+
 	BayesianNetwork bn(5);
 	//this is not a native ordering (notice that A has parents B and E which
 	//are ordered after A. GenerateData(...) will fix that)
@@ -127,11 +133,25 @@ void test1()
 	std::string p4("-1---|--1--");
 	std::cout << "P(" <<p4<< ") = " << td.EstimateProbability(p4) << std::endl;
 
-  bn.Print();
+  std::cout << std::endl;
+  std::string p5("1----|---1-");
+	std::cout << "P(" << p5 << ") = " << td.EstimateProbability( p5 ) << std::endl;
+  std::string p6("1--1-|---1-");
+	std::cout << "P(" << p6 << ") = " << td.EstimateProbability( p6 ) << std::endl;
+  std::string p7("1--1-|-----");
+	std::cout << "P(" << p7 << ") = " << td.EstimateProbability( p7 ) << std::endl;
+  std::cout << std::endl;
+
+  //bn.Print();
 }
 
 void test2()
 {
+  std::cout << std::endl;
+  std::cout << "===================================" << std::endl;
+  std::cout << " Test 2: Exact Inference           " << std::endl;
+  std::cout << "===================================" << std::endl;
+
 	BayesianNetwork bn( 5 );
 	enum { A, J, M, B, E };
 
@@ -155,15 +175,14 @@ void test2()
   std::cout << "P(" << p3 << ") = " << bn.ExactInference( p3 ) << std::endl;
   std::string p4( "-1---|--1--" );
   std::cout << "P(" << p4 << ") = " << bn.ExactInference( p4 ) << std::endl;
-
-  //std::cout << std::endl;
-  //double pAgM = ( 0.9 * bn.ExactInference( "1----|-----" ) ) / bn.ExactInference( "--1--|-----" );
-  //double pJ = 0.1 * ( 1.0 - pAgM ) + 0.5 * pAgM;
-  //std::cout << "P(" << p4 << ") = " << pJ << std::endl;
 }
 
 void test3()
 {
+  std::cout << std::endl;
+  std::cout << "===================================" << std::endl;
+  std::cout << " Test 3: Creating Bayesian network " << std::endl;
+  std::cout << "===================================" << std::endl;
 	//this is the learning part of the assignment - learn BN from data
 	TrainingData td("data2");
 	BayesianNetwork my_bn = td.Learn();
@@ -184,5 +203,5 @@ int main()
 	//test0();
 	test1();
   test2();
-  //test3();
+  test3();
 }

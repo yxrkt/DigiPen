@@ -55,7 +55,7 @@ class TrainingData
     std::string MakeQuery( unsigned state, unsigned given );
     void MakeBitsQuery( unsigned bits, std::string &query );
 
-    inline bool Equals( const double &lhs, const double &rhs ) { return ( abs( lhs - rhs ) < 0.1 ); }
+    inline bool Equals( const double &lhs, const double &rhs ) { return ( abs( lhs - rhs ) < 0.01 ); }
 };
 
 class BayesianNetwork
@@ -118,7 +118,7 @@ class BayesianNetwork
     inline double not( double p ) { return 1.0 - p; }
     Statement ParseSide( const std::string &in );
     void ParseQuery( const std::string &query, Statement &lhs, Statement &rhs );
-    double P( unsigned e, const Statement &given );
+    double P( unsigned e, const Statement &given, const Statement *full = NULL );
     double P( unsigned e, unsigned given );
 
 		unsigned int BN_size;

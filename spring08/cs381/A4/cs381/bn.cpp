@@ -338,7 +338,7 @@ double BayesianNetwork::ExactInference( const std::string &query )
   return 1.0;
 }
 
-double BayesianNetwork::P( unsigned e, const Statement &given )
+double BayesianNetwork::P( unsigned e, const Statement &given, const Statement *full )
 {
   if ( given[e] != 2 )
     return (double)given[e];
