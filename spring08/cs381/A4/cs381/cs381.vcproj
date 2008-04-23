@@ -166,29 +166,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\aserio\spring08\cs381\A4\bn.cpp"
+				RelativePath=".\bn.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\aserio\spring08\cs381\A4\main.cpp"
+				RelativePath=".\main.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\aserio\spring08\cs381\A4\main.training-data-7.cpp"
+				RelativePath=".\main.training-data-7.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -214,7 +200,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\aserio\spring08\cs381\A4\bn.h"
+				RelativePath=".\bn.h"
 				>
 			</File>
 		</Filter>
