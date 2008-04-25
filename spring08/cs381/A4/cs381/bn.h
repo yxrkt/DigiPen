@@ -81,6 +81,7 @@ class BayesianNetwork
 		// Probability by sampling
 		// double EstimateProbability( const std::string & query );
     double ExactInference( const std::string &query );
+    double ExactInference2( const std::string &query );
 
 		unsigned int Size() const { return BN_size; }
 		// Seed RNG to simplify debugging - see main.cpp
@@ -115,10 +116,15 @@ class BayesianNetwork
 
 	private:
     typedef std::vector<unsigned char> Statement;
+    typedef std::vector<unsigned> UIntVec;
+    typedef UIntVec::iterator     UIntVecIt;
+
     inline double not( double p ) { return 1.0 - p; }
     Statement ParseSide( const std::string &in );
     void ParseQuery( const std::string &query, Statement &lhs, Statement &rhs );
-    double P( unsigned e, const Statement &given, const Statement *full = NULL );
+    double AccProb( const Statement &state );
+    double P( const Statement &atom );
+    double P( unsigned e, const Statement &given );
     double P( unsigned e, unsigned given );
 
 		unsigned int BN_size;

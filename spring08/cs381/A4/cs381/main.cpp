@@ -102,45 +102,49 @@ void test1()
   std::cout << " Test 1: Estimating Probabilities  " << std::endl;
   std::cout << "===================================" << std::endl;
 
-	BayesianNetwork bn(5);
+	BayesianNetwork bn( 5 );
 	//this is not a native ordering (notice that A has parents B and E which
 	//are ordered after A. GenerateData(...) will fix that)
 	//to see internal ordering uncomment DEBUG in command line (see Makefile)
-	enum {A,J,M,B,E}; //non-native, but still works, see nativeOrdering
+	enum { A, J, M, B, E }; //non-native, but still works, see nativeOrdering
 
-	bn.AddLink(B,A); //B becomes the first parent of A
-	bn.AddLink(E,A); //E becomes the second parent of A
-	bn.AddLink(A,J);
-	bn.AddLink(A,M);
+	bn.AddLink( B, A ); //B becomes the first parent of A
+	bn.AddLink( E, A ); //E becomes the second parent of A
+	bn.AddLink( A, J );
+	bn.AddLink( A, M );
 
-	bn.AddCPT(B, 0.25);
-	bn.AddCPT(E, 0.1);
-	bn.AddCPT(A, 0.1,   0.9,   0.8,   0.95);
-	bn.AddCPT(J,   0.1,        0.5);
-	bn.AddCPT(M,   0.2,        0.9);
+	bn.AddCPT( B, 0.25 );
+	bn.AddCPT( E, 0.10 );
+	bn.AddCPT( A, 0.10, 0.90, 0.80, 0.95 );
+	bn.AddCPT( J, 0.10, 0.50 );
+	bn.AddCPT( M, 0.20, 0.90 );
 
-	bn.SeedRNG( static_cast<unsigned int>(std::time(0)));
+	bn.SeedRNG( static_cast<unsigned int>( std::time( 0 ) ) );
 
-	bn.GenerateData(10000,"data2");
+	bn.GenerateData( 10000, "data2" );
 
-	TrainingData td("data2");
-	std::string p1("-1---|1----");
+	TrainingData td( "data2" );
+
+	std::string p1( "-1---|1----" );
 	std::cout << "P(" <<p1<< ") = " << td.EstimateProbability(p1) << std::endl;
-	std::string p2("---1-|-----");
+
+	std::string p2( "---1-|-----" );
 	std::cout << "P(" <<p2<< ") = " << td.EstimateProbability(p2) << std::endl;
-	std::string p3("1----|---10");
+
+	std::string p3( "1----|---10" );
 	std::cout << "P(" <<p3<< ") = " << td.EstimateProbability(p3) << std::endl;
-	std::string p4("-1---|--1--");
+
+  std::string p4( "-1---|--100" );
 	std::cout << "P(" <<p4<< ") = " << td.EstimateProbability(p4) << std::endl;
 
-  std::cout << std::endl;
-  std::string p5("1----|---1-");
-	std::cout << "P(" << p5 << ") = " << td.EstimateProbability( p5 ) << std::endl;
-  std::string p6("1--1-|---1-");
-	std::cout << "P(" << p6 << ") = " << td.EstimateProbability( p6 ) << std::endl;
-  std::string p7("1--1-|-----");
-	std::cout << "P(" << p7 << ") = " << td.EstimateProbability( p7 ) << std::endl;
-  std::cout << std::endl;
+ // std::cout << std::endl;
+ // std::string p5("1----|---1-");
+	//std::cout << "P(" << p5 << ") = " << td.EstimateProbability( p5 ) << std::endl;
+ // std::string p6("1--1-|---1-");
+	//std::cout << "P(" << p6 << ") = " << td.EstimateProbability( p6 ) << std::endl;
+ // std::string p7("1--1-|-----");
+	//std::cout << "P(" << p7 << ") = " << td.EstimateProbability( p7 ) << std::endl;
+ // std::cout << std::endl;
 
   //bn.Print();
 }
@@ -160,20 +164,23 @@ void test2()
 	bn.AddLink( A, J );
 	bn.AddLink( A, M );
 
-	bn.AddCPT( B, 0.250 );
-	bn.AddCPT( E, 0.100 );
-	bn.AddCPT( A, 0.100, 0.9, 0.8, 0.95 );
-	bn.AddCPT( J, 0.100, 0.5 );
-	bn.AddCPT( M, 0.200, 0.9 );
+	bn.AddCPT( B, 0.25 );
+	bn.AddCPT( E, 0.10 );
+	bn.AddCPT( A, 0.10, 0.90, 0.80, 0.95 );
+	bn.AddCPT( J, 0.10, 0.50 );
+	bn.AddCPT( M, 0.20, 0.90 );
 
 	//this is the first part of the assignment - exact inference in BN
 	std::string p1( "-1---|1----" ); 
   std::cout << "P(" << p1 << ") = " << bn.ExactInference( p1 ) << std::endl;
+
   std::string p2( "---1-|-----" );
   std::cout << "P(" << p2 << ") = " << bn.ExactInference( p2 ) << std::endl;
+
   std::string p3( "1----|---10" );
   std::cout << "P(" << p3 << ") = " << bn.ExactInference( p3 ) << std::endl;
-  std::string p4( "-1---|--1--" );
+
+  std::string p4( "-1---|--100" );
   std::cout << "P(" << p4 << ") = " << bn.ExactInference( p4 ) << std::endl;
 }
 
@@ -201,7 +208,7 @@ void test3()
 int main()
 {
 	//test0();
-	test1();
+	//test1();
   test2();
-  test3();
+  //test3();
 }

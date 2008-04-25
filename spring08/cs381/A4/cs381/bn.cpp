@@ -23,8 +23,24 @@ BayesianNetwork::BayesianNetwork(unsigned int size) :
 void BayesianNetwork::AddLink(unsigned int parent, unsigned int child) {
 	//quit if attempting to modify topology after some CPT have been specified
 	//CPT size depends on the number of parents!
-	assert (!topologyDone); 
-	parents[ child ].push_back ( parent ); //absolutely need this
+	assert (!topologyDone);
+	parents[ child ].push_back( parent ); //absolutely need this
+
+  // adjust native ordering
+  unsigned childIndex = 0, parentIndex = 0;
+  for ( unsigned i = 0; i < BN_size; ++i )
+  {
+    if ( nativeOrdering[i] == parent )
+      parentIndex = i;
+    else if ( nativeOrdering[i] == child )
+      childIndex = i;
+  }
+
+  if ( childIndex < parentIndex )
+  {
+    nativeOrdering.erase( nativeOrdering.begin() + parentIndex );
+    nativeOrdering.insert( nativeOrdering.begin() + childIndex, parent );
+  }
 }
 
 ////////////////////////////////////////////////////////////
@@ -320,6 +336,26 @@ void BayesianNetwork::GenerateData_aux( unsigned int datasize, T inserter )
 	}
 }
 
+double BayesianNetwork::ExactInference2( const std::string &query )
+{
+  Statement lhs, rhs;
+  ParseQuery( query, lhs, rhs );
+
+  // step 1: eliminate conditional probabilities
+  for ( unsigned i = 0; i < BN_size; ++i )
+  {
+    if ( rhs[i] != 2 )
+    {
+      if ( lhs[i] != 2 && lhs[i] != rhs[i] )
+        return 0.0;
+      lhs[i] = rhs[i];
+    }
+  }
+
+  // step 2: decompose into atomic cases
+  return ( AccProb( lhs ) / AccProb( rhs ) );
+}
+
 double BayesianNetwork::ExactInference( const std::string &query )
 {
   Statement lhs, rhs;
@@ -338,7 +374,49 @@ double BayesianNetwork::ExactInference( const std::string &query )
   return 1.0;
 }
 
-double BayesianNetwork::P( unsigned e, const Statement &given, const Statement *full )
+double BayesianNetwork::AccProb( const Statement &state )
+{
+  double    acc      = 0.0;
+  unsigned  fillMax  = 1 << std::count( state.begin(), state.end(), 2 );
+  unsigned  fillStep = 0;
+  Statement fillCur  = state;
+  std::replace( fillCur.begin(), fillCur.end(), 2, 0 );
+
+  while ( fillStep < fillMax )
+  {
+    unsigned bitNo = 0;
+    for ( unsigned i = 0; i < BN_size; ++i )
+    {
+      if ( state[i] == 2 )
+        fillCur[i] = ( ( ( 1 << bitNo++ ) & fillStep ) != 0 ) ? 1 : 0;
+    }
+
+    acc += P( fillCur );
+    fillStep++;
+  }
+
+  return acc;
+}
+
+double BayesianNetwork::P( const Statement &atom )
+{
+  double prod = 1.0;
+
+  // for each node
+  for ( unsigned i = 0; i < BN_size; ++i )
+  {
+    // for each parent
+    unsigned cptIndex = 0;
+    size_t nParents   = parents[i].size();
+    for ( unsigned j = 0; j < nParents; ++j )
+      cptIndex |= ( atom[parents[i][j]] << ( nParents - j - 1 ) );
+    prod *= ( atom[i] ? CPTs[i][cptIndex] : not( CPTs[i][cptIndex] ) );
+  }
+
+  return prod;
+}
+
+double BayesianNetwork::P( unsigned e, const Statement &given )
 {
   if ( given[e] != 2 )
     return (double)given[e];
