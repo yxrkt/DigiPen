@@ -42,8 +42,14 @@ class TrainingData
 		void AddRecord( const std::vector<bool> &record );
 		double EstimateProbability( const std::string &query );
     BayesianNetwork Learn();
+    BayesianNetwork Learn2();
+    void FillCPTs( BayesianNetwork &bn );
 
 	private:
+    typedef std::vector<unsigned char> Statement;
+    typedef std::vector<unsigned> UIntVec;
+    typedef UIntVec::iterator     UIntVecIt;
+
 		unsigned int BN_size;
 		std::vector<std::vector<bool> > dataset;
 		std::map<std::string, double> cache;
@@ -54,6 +60,8 @@ class TrainingData
     std::string MakeQuery( unsigned state, const std::string &given );
     std::string MakeQuery( unsigned state, unsigned given );
     void MakeBitsQuery( unsigned bits, std::string &query );
+
+    double BuildBN( BayesianNetwork &bn );
 
     inline bool Equals( const double &lhs, const double &rhs ) { return ( abs( lhs - rhs ) < 0.01 ); }
 };

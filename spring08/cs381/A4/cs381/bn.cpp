@@ -110,17 +110,23 @@ void BayesianNetwork::AddCPT(unsigned int nodeID, double p0, double p1, double p
 ////////////////////////////////////////////////////////////
 void BayesianNetwork::Print () const {
 	std::cout << "Number of nodes: " << BN_size << std::endl;
-	for (unsigned i=0; i<BN_size;++i) {
+	for ( unsigned i = 0; i < BN_size; ++i )
+  {
 		std::cout << "Node " << i << "\nparents:  ";
-		for (unsigned int j=0;j<parents[i].size();++j) {
+
+    unsigned nParents = (unsigned)parents[i].size();
+		for ( unsigned j = 0; j < nParents; ++j )
 			std::cout << parents[i][j] << " ";
-		}
 		std::cout << std::endl;
-		for (unsigned int j=0;j<CPTs[i].size();++j) {
+
+    unsigned nCPT = (unsigned)CPTs[i].size();
+		for ( unsigned j = 0; j < nCPT; ++j )
 			std::cout << CPTs[i][j] << " ";
-		}
 		std::cout << std::endl;
 	}
+
+  for ( unsigned j = 0; j < BN_size; ++j )
+    std::cout << nativeOrdering[j] << " ";
 }
 
 ////////////////////////////////////////////////////////////
@@ -474,7 +480,7 @@ TrainingData::TrainingData( std::string filename) {
 }
 
 ////////////////////////////////////////////////////////////
-double TrainingData::EstimateProbability( const std::string & query)
+double TrainingData::EstimateProbability( const std::string & query )
 {
 	std::map<std::string,double>::const_iterator it = cache.find( query );
 	if ( it != cache.end() )
@@ -595,12 +601,14 @@ unsigned int TrainingData::Size() const { return BN_size; }
 
 ////////////////////////////////////////////////////////////
 bool TrainingData::Match(
-		const std::vector<bool> & record,
-		const std::vector<unsigned char> & pattern
-		) const {
-	for (unsigned int i=0; i<BN_size; ++i) { 
-		if ( record[i]==true && pattern[i]==0 ) return false; 
-		if ( record[i]==false && pattern[i]==1 ) return false; 
+		const std::vector<bool> &record,
+		const std::vector<unsigned char> &pattern
+		) const
+{
+	for ( unsigned int i = 0; i < BN_size; ++i )
+  { 
+		if ( record[i] == true  && pattern[i] == 0 ) return false; 
+		if ( record[i] == false && pattern[i] == 1 ) return false; 
 	}
 	return true;
 }
@@ -609,23 +617,196 @@ BayesianNetwork TrainingData::Learn()
 {
   BayesianNetwork bn( BN_size );
 
+  double bestErr = 4e9;
+
+  UIntVec curOrder( BN_size );
+  for ( unsigned i = 0; i < BN_size; ++i )
+    curOrder[i] = i;
+
+  unsigned count = 0;
+  unsigned nfac  = BN_size;
+  for ( unsigned i = 2; i < BN_size; ++i )
+    nfac *= i;
+
+  do {
+    BayesianNetwork curBN( BN_size );
+    curBN.nativeOrdering = curOrder;
+
+    double totalErr = BuildBN( curBN );
+    std::cout << "permutaion: " << count++ << "/" << nfac << "\r";
+
+  if ( curBN.nativeOrdering[0] == 3 && bn.nativeOrdering[1] == 4 && 
+       curBN.nativeOrdering[2] == 0 && bn.nativeOrdering[3] == 1 && 
+       curBN.nativeOrdering[4] == 2 )
+  {
+    std::cout << "we hit it(" << totalErr << " vs " << bestErr << ")" <<  std::endl;
+    curBN.Print();
+  }
+
+    if ( totalErr < bestErr )
+    {
+      bestErr = totalErr;
+      bn      = curBN;
+    }
+  } while ( std::next_permutation( curOrder.begin(), curOrder.end() ) );
+
+  return bn;
+}
+
+double TrainingData::BuildBN( BayesianNetwork &bn )
+{
+  if ( bn.nativeOrdering[0] == 3 && bn.nativeOrdering[1] == 4 && 
+       bn.nativeOrdering[2] == 0 && bn.nativeOrdering[3] == 1 && 
+       bn.nativeOrdering[4] == 2 )
+       int i = '1234';
+
+  // for each node
+  for ( unsigned i = 1; i < BN_size; ++i )
+  {
+    std::string given( BN_size, '-' );
+    for ( unsigned j = 0; j < i; ++j )
+      given[j] = '1';
+
+    // current node value
+    unsigned n = bn.nativeOrdering[i];
+
+    // value to match
+    double prob = EstimateProbability( MakeQuery( n, given ) );
+    std::string query( MakeQuery( n, std::string( BN_size, '-' ) ) );
+
+    double dif = abs( EstimateProbability( query ) - prob );
+    if ( dif < 0.17 )
+      continue;
+
+    unsigned level = 0;  // no. of branches that will be connected
+    unsigned limit = 1 << i;
+
+    double minThresh = .20, curMin = 4e9;
+
+    // for each possible case
+    std::string state( BN_size, '-' );
+    for ( unsigned j = 0; j < limit; ++j )
+    {
+      MakeBitsQuery( j, state );
+      unsigned nOnes = (unsigned)std::count( state.begin(), state.end(), '1' );
+
+      double dif = abs( EstimateProbability( MakeQuery( n, state ) ) - prob );
+      if ( dif < minThresh && ( nOnes > level || dif < curMin ) )
+      {
+        given = state;
+        level = nOnes;
+      }
+      if ( level == i ) break;
+    }
+
+    for ( unsigned j = 0; j < i; ++j )
+    {
+      if ( given[j] == '1' )
+        bn.AddLink( bn.nativeOrdering[j], n );
+    }
+  }
+
+  FillCPTs( bn );
+
+  double err = 0.0;
+
+  std::string test0( "1----|---1-" );
+  err += abs( bn.ExactInference( test0 ) - EstimateProbability( test0 ) );
+  std::string test1( "-1---|1----" );
+  err += abs( bn.ExactInference( test1 ) - EstimateProbability( test1 ) );
+  std::string test2( "1----|---00" );
+  err += abs( bn.ExactInference( test2 ) - EstimateProbability( test2 ) );
+  std::string test3( "--1--|----1" );
+  err += abs( bn.ExactInference( test3 ) - EstimateProbability( test3 ) );
+  std::string test4( "-1---|---11" );
+  err += abs( bn.ExactInference( test4 ) - EstimateProbability( test4 ) );
+
+  return err;
+}
+
+void TrainingData::FillCPTs( BayesianNetwork &bn )
+{
+  unsigned nDone = 0;
+  std::vector<unsigned> finished( BN_size, BN_size );
+  while ( nDone != BN_size )
+  {
+    // for each non-root
+    for ( unsigned i = 0; i < BN_size; ++i )
+    {
+      if ( finished[i] != BN_size )
+        continue;
+
+      if ( bn.parents[i].empty() )
+      {
+        bn.AddCPT( i, EstimateProbability( MakeQuery( i, std::string( BN_size, '-' ) ) ) );
+      }
+      else
+      {
+        unsigned nCases = 1, nParents = (unsigned)bn.parents[i].size();
+        for ( unsigned j = 0; j < nParents; ++j )
+          nCases <<= 1;
+
+        std::string given( BN_size, '-' );
+
+        // for each case
+        bool tryAgain = false;
+        std::vector<double> weights( nCases );
+        for ( unsigned j = 0; j < nCases; ++j )
+        {
+          unsigned parBit = nCases >> 1;
+          for ( unsigned p = 0; p < nParents; ++p )
+          {
+            // make sure parent is done first
+            if ( bn.CPTs[bn.parents[i][p]].empty() )
+            {
+              tryAgain = true;
+              break;
+            }
+
+            if ( ( parBit & j ) != 0 )
+              given[bn.parents[i][p]] = '1';
+            else
+              given[bn.parents[i][p]] = '0';
+            parBit >>= 1;
+          }
+          if ( tryAgain ) break;
+          weights[j] = EstimateProbability( MakeQuery( i, given ) );
+        }
+        if ( tryAgain ) continue;
+        bn.AddCPT( i, weights );
+      }
+
+      finished[i] = i;
+      nDone++;
+    }
+  }
+}
+
+BayesianNetwork TrainingData::Learn2()
+{
+  BayesianNetwork bn( BN_size );
+
   // Connect the Nodes
   for ( unsigned i = 1; i < BN_size; ++i )
   {
     std::string given( BN_size, '-' );
-
-    // value to beat
     for ( unsigned j = 0; j < i; ++j )
       given[j] = '1';
-    double prob = EstimateProbability( MakeQuery( i, given ) );
 
-    if ( Equals( EstimateProbability( MakeQuery( i, std::string( BN_size, '-' ) ) ), prob ) )
+    // current node value
+    unsigned n = bn.nativeOrdering[i];
+
+    // value to beat
+    double prob = EstimateProbability( MakeQuery( n, given ) );
+    std::string query( MakeQuery( n, std::string( BN_size, '-' ) ) );
+
+    double dif = abs( EstimateProbability( query ) - prob );
+    
+    if ( Equals( EstimateProbability( query ), prob ) )
       continue; // add no parents
 
     unsigned level = i;
-    unsigned limit = 1;
-    for ( unsigned j = 0; j < i; ++j )
-      limit <<= 1;
+    unsigned limit = 1 << level;
 
     // for each possible case
     std::string tempGiven( BN_size, '-' );

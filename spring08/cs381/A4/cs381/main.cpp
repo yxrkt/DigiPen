@@ -137,16 +137,7 @@ void test1()
   std::string p4( "-1---|--1--" );
 	std::cout << "P(" <<p4<< ") = " << td.EstimateProbability(p4) << std::endl;
 
- // std::cout << std::endl;
- // std::string p5("1----|---1-");
-	//std::cout << "P(" << p5 << ") = " << td.EstimateProbability( p5 ) << std::endl;
- // std::string p6("1--1-|---1-");
-	//std::cout << "P(" << p6 << ") = " << td.EstimateProbability( p6 ) << std::endl;
- // std::string p7("1--1-|-----");
-	//std::cout << "P(" << p7 << ") = " << td.EstimateProbability( p7 ) << std::endl;
- // std::cout << std::endl;
-
-  //bn.Print();
+  bn.Print();
 }
 
 void test2()
@@ -191,17 +182,23 @@ void test3()
   std::cout << " Test 3: Creating Bayesian network " << std::endl;
   std::cout << "===================================" << std::endl;
 	//this is the learning part of the assignment - learn BN from data
-	TrainingData td("data2");
+	TrainingData td( "data2" );
 	BayesianNetwork my_bn = td.Learn();
 
-	std::string p1("-1---|1----"); 
-	std::cout << "P(" <<p1<< ") = " << my_bn.ExactInference(p1) << std::endl;
-	std::string p2("---1-|-----");
-	std::cout << "P(" <<p2<< ") = " << my_bn.ExactInference(p2) << std::endl;
-	std::string p3("1----|---10");
-	std::cout << "P(" <<p3<< ") = " << my_bn.ExactInference(p3) << std::endl;
-	std::string p4("-1---|--1--");
-	std::cout << "P(" <<p4<< ") = " << my_bn.ExactInference(p4) << std::endl;
+  my_bn.Print();
+  return;
+
+	std::string p1( "-1---|1----" ); 
+	std::cout << "P(" << p1 << ") = " << my_bn.ExactInference( p1 ) << std::endl;
+
+	std::string p2( "---1-|-----" );
+	std::cout << "P(" << p2 << ") = " << my_bn.ExactInference( p2 ) << std::endl;
+
+	std::string p3( "1----|---10" );
+	std::cout << "P(" << p3 << ") = " << my_bn.ExactInference( p3 ) << std::endl;
+
+	std::string p4( "-1---|--1--" );
+	std::cout << "P(" << p4 << ") = " << my_bn.ExactInference( p4 ) << std::endl;
 }
 
 
@@ -209,6 +206,6 @@ int main()
 {
 	//test0();
 	//test1();
-  test2();
-  //test3();
+  //test2();
+  test3();
 }
