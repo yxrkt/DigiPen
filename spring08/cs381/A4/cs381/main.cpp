@@ -134,7 +134,7 @@ void test1()
 	std::string p3( "1----|---10" );
 	std::cout << "P(" <<p3<< ") = " << td.EstimateProbability(p3) << std::endl;
 
-  std::string p4( "-1---|--100" );
+  std::string p4( "-1---|--1--" );
 	std::cout << "P(" <<p4<< ") = " << td.EstimateProbability(p4) << std::endl;
 
  // std::cout << std::endl;
@@ -180,7 +180,7 @@ void test2()
   std::string p3( "1----|---10" );
   std::cout << "P(" << p3 << ") = " << bn.ExactInference( p3 ) << std::endl;
 
-  std::string p4( "-1---|--100" );
+  std::string p4( "-1---|--1--" );
   std::cout << "P(" << p4 << ") = " << bn.ExactInference( p4 ) << std::endl;
 }
 

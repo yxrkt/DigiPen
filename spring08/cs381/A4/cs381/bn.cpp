@@ -336,7 +336,7 @@ void BayesianNetwork::GenerateData_aux( unsigned int datasize, T inserter )
 	}
 }
 
-double BayesianNetwork::ExactInference2( const std::string &query )
+double BayesianNetwork::ExactInference( const std::string &query )
 {
   Statement lhs, rhs;
   ParseQuery( query, lhs, rhs );
@@ -354,24 +354,6 @@ double BayesianNetwork::ExactInference2( const std::string &query )
 
   // step 2: decompose into atomic cases
   return ( AccProb( lhs ) / AccProb( rhs ) );
-}
-
-double BayesianNetwork::ExactInference( const std::string &query )
-{
-  Statement lhs, rhs;
-  ParseQuery( query, lhs, rhs );
-
-  assert( lhs.size() == BN_size );
-
-  for ( unsigned i = 0; i < BN_size; ++i )
-  {
-    if ( lhs[i] == 0 )
-      return not( P( i, rhs ) );
-    else if ( lhs[i] == 1 )
-      return P( i, rhs );
-  }
-
-  return 1.0;
 }
 
 double BayesianNetwork::AccProb( const Statement &state )
@@ -414,52 +396,6 @@ double BayesianNetwork::P( const Statement &atom )
   }
 
   return prod;
-}
-
-double BayesianNetwork::P( unsigned e, const Statement &given )
-{
-  if ( given[e] != 2 )
-    return (double)given[e];
-
-  if ( parents[e].empty() )
-    return CPTs[e][0];
-
-  double sum = 0.0;
-
-  size_t nParents = parents[e].size();
-  std::vector<double> p( parents[e].size() );
-  for ( size_t i = 0; i < nParents; ++i )
-    p[i] = P( parents[e][i], given );
-
-  size_t nStates = CPTs[e].size();
-  for ( size_t i = 0; i < nStates; ++i )
-  {
-    double totalP = 1.0;
-    for ( size_t j = 0; j < nParents; ++j )
-      totalP *= ( ( i & ( nParents - j ) ) ? p[j] : not( p[j] ) );
-    sum += CPTs[e][i] * totalP;
-  }
-
-  for ( unsigned i = 0; i < BN_size; ++i )
-  {
-    if ( given[i] == 2 ) continue;
-    if ( std::find( parents[i].begin(), parents[i].end(), e ) == parents[i].end() ) continue;
-    Statement next( given );
-    next[i] = 2;
-    if ( given[i] == 0 )
-      sum = not( P( i, e ) ) * sum / not( P( i, next ) );
-    else
-      sum = P( i, e ) * sum / P( i, next );
-  }
-
-  return sum;
-}
-
-double BayesianNetwork::P( unsigned e, unsigned given )
-{
-  Statement state( BN_size, 2 );
-  state[given] = 1;
-  return P( e, state );
 }
 
 ////////////////////////////////////////////////////////////
