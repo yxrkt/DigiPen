@@ -69,7 +69,15 @@ Networking_impl::~Networking_impl() {}
 void Networking_impl::Update()
 {
   UpdateDebug();
-  ReceivePackets();
+  //
+  int err;
+  char buf[1492];
+  do {
+    err = recvfrom( sUDP, buf, sizeof( buf ), 0, NULL, NULL );
+  } while ( err != SOCKET_ERROR );
+  ErrCheck( err, "!" );
+  //
+  /*ReceivePackets();*/
   TranslateMessages();
 
   switch ( gsMode )

@@ -51,8 +51,8 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nShowCmd )
   ShowWindow( hDebug, nShowCmd );
 
   UPDATE_STATE state = US_MENU;
-  Networking.AddVLANAddr( "192.168.1.107" );
-  Networking.AddVLANAddr( "192.168.1.110" );
+  //Networking.AddVLANAddr( "192.168.1.107" );
+  //Networking.AddVLANAddr( "192.168.1.110" );
 
   MSG msg;
   memset( &msg, 0, sizeof( MSG ) );
