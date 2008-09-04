@@ -48,6 +48,8 @@ void Networking_impl::AdvertiseSession() const
 {
   if ( timeGetTime() - dwAdTimer >= BROADCAST_COOLDOWN )
   {
+    int err;
+
     // create packet
     NetMessage msgHost;
     msgHost.mType = MSG_HOSTING;
@@ -64,13 +66,16 @@ void Networking_impl::AdvertiseSession() const
     pktHost.nMsgs = 1;
     pktHost.Messages[0] = msgHost;
 
-
     // send broadcast
-    sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );
+    err = sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );
+    ErrCheck( err, "Broadcasting message failed." );
 
     // broadcast on 'virtual lan'
     for ( SockAddrVecItC i = vLANAddrs.begin(); i != vLANAddrs.end(); ++i )
-      sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&(*i), sizeof( SOCKADDR_IN ) );
+    {
+      err = sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&(*i), sizeof( SOCKADDR_IN ) );
+      ErrCheck( err, "Advertising on VLAN failed." );
+    }
 
     dwAdTimer = timeGetTime();
   }
