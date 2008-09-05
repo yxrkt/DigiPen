@@ -29,6 +29,7 @@ void UpdateMenu( UPDATE_STATE &state, std::stringstream &cwnd );
 void UpdateJoin( UPDATE_STATE &state, std::stringstream &cwnd );
 void UpdateLobby( UPDATE_STATE &state, std::stringstream &cwnd );
 void DisplayInfo( HWND &hDebug, std::stringstream &cwnd );
+void LeaveGame( UPDATE_STATE &state );
 
 // Entry point
 int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nShowCmd )
@@ -161,7 +162,7 @@ void UpdateLobby( UPDATE_STATE &state, std::stringstream &cwnd )
   {
     cwnd << "L to leave game" << std::endl;
     if ( Input.IsDown( 'L' ) )
-      Networking.LeaveGame();
+      LeaveGame( state );
   }
   else
   {
@@ -198,4 +199,10 @@ void DisplayInfo( HWND &hDebug, std::stringstream &cwnd )
     InvalidateRect( hDebug, NULL, TRUE );
     lastClear = timeGetTime();
   }
+}
+
+void LeaveGame( UPDATE_STATE &state )
+{
+  Networking.LeaveGame();
+  state = US_MENU;
 }
