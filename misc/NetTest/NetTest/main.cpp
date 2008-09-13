@@ -7,6 +7,7 @@ const DWORD REFRESH_RATE = 250;
 class KeyboardInput
 {
   public:
+    KeyboardInput() : cursorPos( 0 ), enterHit( false ) {}
     void Update()
     {
       GetKeyboardState( keyboard );
@@ -16,8 +17,106 @@ class KeyboardInput
       return ( ( GetAsyncKeyState( key ) & 0x8000 ) != 0 );
     }
 
+    // text input
+    const std::string &GetActiveText() const
+    {
+      return activeText;
+    }
+    void SetActiveText( const std::string &text )
+    {
+      activeText = text;
+      End();
+    }
+    void FlushActiveText()
+    {
+      activeText.clear();
+      Home();
+      enterHit  = false;
+    }
+    void SetTypedKey( char newkey )
+    {
+      switch ( newkey )
+      {
+        case '\b': // backspace
+          Backspace();
+          break;
+
+        case '\r':
+          enterHit = true;
+          break;
+
+        default:
+          activeText.insert( cursorPos++, 1, newkey );
+      }
+    }
+
+    const unsigned &GetCursorPos() const
+    {
+      return cursorPos;
+    }
+
+    void SetCursorPos( unsigned pos )
+    {
+      unsigned len = (unsigned) activeText.size();
+
+      if ( pos < 0 )        cursorPos = 0;
+      else if ( pos > len ) cursorPos = len;
+      else                  cursorPos = pos;
+    }
+
+    void Backspace()
+    {
+      if ( DecCursorPos() ) Delete();
+    }
+
+    void Delete()
+    {
+      activeText.erase( cursorPos, 1 );
+    }
+
+    void Home()
+    {
+      SetCursorPos(0);
+    }
+
+    void End()
+    {
+      SetCursorPos( (unsigned)std::string::npos );
+    }
+
+    bool IncCursorPos()
+    {
+      if ( cursorPos < activeText.size() )
+      {
+        cursorPos++;
+        return true;
+      }
+
+      return false;
+    }
+
+    bool DecCursorPos()
+    {
+      if ( cursorPos != 0 )
+      {
+        cursorPos--;
+        return true;
+      }
+
+      return false;
+    }
+
+    bool EnterHit() const
+    {
+      return enterHit;
+    }
+
   private:
-    BYTE keyboard[256];
+    BYTE        keyboard[256];
+    std::string activeText;
+    unsigned    cursorPos;
+    bool        enterHit;
+
 } Input;
 
 enum UPDATE_STATE { US_MENU, US_JOIN, US_LOBBY };
@@ -48,7 +147,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nShowCmd )
     return MessageBoxA( NULL, "Registering class failed", "ERROR", MB_ICONERROR );
 
   HWND hDebug = CreateWindow( "SimpleWindow", "Net Test", WS_OVERLAPPEDWINDOW,
-                              350, 300, 570, 375, NULL, NULL, hInstance, NULL );
+                              350, 300, 570, 575, NULL, NULL, hInstance, NULL );
 
   ShowWindow( hDebug, nShowCmd );
 
@@ -80,6 +179,10 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
   switch ( msg )
   {
+    case WM_CHAR:
+      Input.SetTypedKey( (char)wParam );
+      break;
+
     case WM_MOUSEMOVE:
       SetCursor( LoadCursor( NULL, IDC_ARROW ) );
       break;
@@ -120,20 +223,20 @@ void Update( HWND &hDebug, UPDATE_STATE &state )
 
 void UpdateMenu( UPDATE_STATE &state, std::stringstream &cwnd )
 {
-  if ( Input.IsDown( 'J' ) )
+  if ( Input.IsDown( VK_F2 ) )
   {
     Networking.BrowseGames();
     state = US_JOIN;
   }
-  else if ( Input.IsDown( 'H' ) )
+  else if ( Input.IsDown( VK_F1 ) )
   {
     Networking.HostGame();
     state = US_LOBBY;
   }
   else
   {
-    cwnd << "[H]ost Game" << std::endl;
-    cwnd << "[J]oin Game" << std::endl;
+    cwnd << "[F1]Host Game" << std::endl;
+    cwnd << "[F2]Join Game" << std::endl;
   }
 }
 
@@ -165,17 +268,48 @@ void UpdateLobby( UPDATE_STATE &state, std::stringstream &cwnd )
 {
   if ( !Networking.Hosting() )
   {
-    cwnd << "L to leave game" << std::endl;
-    if ( Input.IsDown( 'L' ) )
+    cwnd << "F1 to leave game" << std::endl;
+    if ( Input.IsDown( VK_F1 ) )
       Networking.LeaveGame();
   }
   else
   {
-    cwnd << "B to boot first client" << std::endl;
-    if ( Input.IsDown( 'B' ) && !Networking.GetPlayers().empty() )
+    cwnd << "F1 to boot first client" << std::endl;
+    if ( Input.IsDown( VK_F1 ) && !Networking.GetPlayers().empty() )
     {
       Networking.BootPlayer( Networking.GetPlayers().front().szName );
     }
+  }
+
+  static StringQueue output;
+
+  while ( output.size() > 5 )
+  {
+    output.pop();
+  }
+
+  // show messages received over network
+  cwnd << std::endl;
+  size_t nLines = output.size();
+  for ( size_t i = 0; i < nLines; ++i )
+  {
+    cwnd << output.c[i] << std::endl;
+  }
+  for ( size_t i = nLines; i < 6; ++i )
+  {
+    cwnd << std::endl;
+  }
+
+  // get input from user
+  cwnd << Input.GetActiveText();
+  if ( Input.EnterHit() )
+  {
+    std::string message( Networking.GetMe().h_name );
+    message += ": ";
+    message += Input.GetActiveText();
+    Networking.PushText( message );
+    output.push( message );
+    Input.FlushActiveText();
   }
 }
 
@@ -183,7 +317,10 @@ void DisplayInfo( HWND &hDebug, std::stringstream &cwnd )
 {
   // Add extra space if text added by state
   if ( !cwnd.str().empty() )
-    cwnd << std::endl;
+  {
+    for ( unsigned i = 0; i < 2; ++i )
+      cwnd << std::endl;
+  }
 
   // Add net debug strings to output stream
   Networking_impl::StringQueue dbgStrs = Networking.GetDbgStrs();
@@ -217,13 +354,23 @@ void UpdateState( UPDATE_STATE &state )
   switch( Networking.GetMode() )
   {
     case GS_MENU:
-      state = US_MENU;
+      if ( state != US_MENU )
+      {
+        state = US_MENU;
+      }
       break;
     case GS_JOIN:
-      state = US_JOIN;
+      if ( state != US_JOIN )
+      {
+        state = US_JOIN;
+      }
       break;
     case GS_SESSION:
-      state = US_LOBBY;
+      if ( state != US_LOBBY )
+      {
+        state = US_LOBBY;
+        Input.FlushActiveText();
+      }
       break;
   }
 }

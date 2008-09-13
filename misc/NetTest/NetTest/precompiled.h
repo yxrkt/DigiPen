@@ -30,5 +30,6 @@
 
 typedef std::vector<std::string> StringVec;
 typedef StringVec::iterator      StringVecIt;
+typedef std::queue<std::string>  StringQueue;
 
 #endif
