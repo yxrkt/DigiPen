@@ -283,6 +283,13 @@ void UpdateLobby( UPDATE_STATE &state, std::stringstream &cwnd )
 
   static StringQueue output;
 
+  StringQueue &netMessages( Networking.GetText() );
+  while ( !netMessages.empty() )
+  {
+    output.push( netMessages.front() );
+    netMessages.pop();
+  }
+
   while ( output.size() > 5 )
   {
     output.pop();
@@ -323,7 +330,7 @@ void DisplayInfo( HWND &hDebug, std::stringstream &cwnd )
   }
 
   // Add net debug strings to output stream
-  Networking_impl::StringQueue dbgStrs = Networking.GetDbgStrs();
+  StringQueue dbgStrs = Networking.GetDbgStrs();
   size_t nStrs = dbgStrs.size();
   for ( size_t i = 0; i < nStrs; ++i )
     cwnd << dbgStrs.c[i] << std::endl;

@@ -99,7 +99,7 @@ void Networking_impl::UpdateDebug()
 // -----------------------------------------------------------------------------
 // return debugging info string
 // -----------------------------------------------------------------------------
-Networking_impl::StringQueue Networking_impl::GetDbgStrs() const
+StringQueue Networking_impl::GetDbgStrs() const
 {
   return debugStrings;
 }
@@ -126,7 +126,7 @@ void Networking_impl::PushText( const std::string &text )
 // -----------------------------------------------------------------------------
 // return string buffer for text messages
 // -----------------------------------------------------------------------------
-Networking_impl::StringQueue &Networking_impl::GetText()
+StringQueue &Networking_impl::GetText()
 {
   return netStrings;
 }

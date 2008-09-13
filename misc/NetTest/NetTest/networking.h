@@ -70,7 +70,6 @@ class Networking_impl
 
     typedef std::list< PlayerInfo > PlayerInfoList;
     typedef PlayerInfoList::iterator PlayerILIter;
-    typedef std::queue< std::string > StringQueue;
 
       // ctor/dtor
     Networking_impl();
