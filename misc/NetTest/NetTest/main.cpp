@@ -53,8 +53,11 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nShowCmd )
   ShowWindow( hDebug, nShowCmd );
 
   UPDATE_STATE state = US_MENU;
-  //Networking.AddVLANAddr( "192.168.1.107" );
-  //Networking.AddVLANAddr( "192.168.1.110" );
+
+#pragma message( "*** REMOVE VLAN ADDR LINES WHEN NOT TESTING OVER VIRTUAL MACHINES ***" )
+  Networking.AddVLANAddr( "192.168.1.107" );
+  Networking.AddVLANAddr( "192.168.1.108" );
+  Networking.AddVLANAddr( "192.168.1.110" );
 
   MSG msg;
   memset( &msg, 0, sizeof( MSG ) );
