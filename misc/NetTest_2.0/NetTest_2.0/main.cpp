@@ -14,6 +14,9 @@ NetworkingEngine NETWORKING;
 
 int main()
 {
+  NETWORKING.AddVLANAddr( "192.168.1.110" );
+  NETWORKING.AddVLANAddr( "192.168.1.107" );
+
   GAME_STATE state  = MENU;
   bool entry        = true;;
 
