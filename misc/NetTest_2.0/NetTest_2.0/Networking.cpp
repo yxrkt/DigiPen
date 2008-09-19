@@ -224,7 +224,6 @@ void NetworkingEngine::AdvertiseSession() const
 
     // load packet into message
     NetPacket pktHost;
-    pktHost.nMsgs = 1;
     pktHost.PushMessage( msgHost );
 
     // send broadcast
