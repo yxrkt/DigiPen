@@ -82,7 +82,7 @@ GAME_STATE UpdateMenu( bool &entry )
 {
   if ( entry )
   {
-    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_MENU, "Networking not in menu!" );
+    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_MENU, "Networking not in menu state!" );
     std::cout << "Welcome to NetTest 2.0, " << g_name << "!" << std::endl
               << "[1]Host Game" << std::endl
               << "[2]Join Game" << std::endl
@@ -121,7 +121,7 @@ GAME_STATE UpdateJoin( bool &entry )
 {
   if ( entry )
   {
-    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_JOIN, "Networking not in join menu!" );
+    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_JOIN, "Networking not in join state!" );
     std::cout << std::endl << "JOIN MENU (Esc to exit)" << std::endl;
     entry = false;
   }
@@ -132,6 +132,7 @@ GAME_STATE UpdateJoin( bool &entry )
   NetworkingEngine::PlayerInfoList hosts = NETWORKING.GetPlayers();
   if ( time - lastUpdate >= 5000 )
   {
+    lastUpdate = time;
     if ( !hosts.empty() )
     {
       std::cout << std::endl << "Available Games: " << std::endl;
@@ -148,7 +149,7 @@ GAME_STATE UpdateJoin( bool &entry )
     char key = (char)_getch();
     if ( key >= '1' && key < '1' + (char)hosts.size() )
     {
-      NETWORKING.JoinGame( (int)key );
+      NETWORKING.JoinGame( atoi( &key ) );
       return SESSION;
     }
     else if ( key == VK_ESCAPE )
@@ -167,7 +168,7 @@ GAME_STATE UpdateSession( bool &entry )
 {
   if ( entry )
   {
-    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_SESSION, "Networking not in session!" );
+    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_SESSION, "Networking not in session state!" );
     std::cout << std::endl << "CHAT LOBBY (Esc to exit)" << std::endl;
     entry = false;
   }

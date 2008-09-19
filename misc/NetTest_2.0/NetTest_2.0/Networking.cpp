@@ -685,6 +685,11 @@ void NetworkingEngine::JoinGame( unsigned index )
   PlayerIter player = lsPlayers.begin();
   for ( unsigned i = 0; i < index; ++i )
   {
+    if ( player == lsPlayers.end() )
+    {
+      ReportError( "Invalid index to join" );
+      return;
+    }
     ++player;
   }
 
