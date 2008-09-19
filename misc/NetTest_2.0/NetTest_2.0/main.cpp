@@ -6,11 +6,17 @@
 
 enum GAME_STATE { EXIT, MENU, JOIN, SESSION };
 
+void GetName( char *name, int max );
 GAME_STATE UpdateMenu( bool &entry );
 GAME_STATE UpdateJoin( bool &entry );
 GAME_STATE UpdateSession( bool &entry );
 
+const UINT MAX_NAME_LEN = 20;
+const UINT MAX_TEXT_LEN = 256;
+
 NetworkingEngine NETWORKING;
+char g_name[MAX_NAME_LEN];
+char g_text[MAX_TEXT_LEN];
 
 int main()
 {
@@ -19,6 +25,8 @@ int main()
 
   GAME_STATE state  = MENU;
   bool entry        = true;;
+
+  GetName( g_name, MAX_NAME_LEN );
 
   bool done = false;
 
@@ -39,15 +47,32 @@ int main()
       case SESSION:
         state = UpdateSession( entry );
       break;
+
+      case EXIT:
+        done = true;
+      break;
     }
 
     if ( state != prevState )
       entry = true;
-    else if ( state == EXIT )
-      done = true;
   }
 
   return 0;
+}
+
+// Retrieve player name
+void GetName( char *name, int max )
+{
+  bool done = false;
+  while ( !done )
+  {
+    std::cout << "Name: ";
+    fgets( name, max, stdin );
+    done = ( strlen( name ) > 1 );
+    std::cout << std::endl;
+  }
+
+  name[strlen(name) - 1] = 0;
 }
 
 // Update the menu
@@ -55,8 +80,8 @@ GAME_STATE UpdateMenu( bool &entry )
 {
   if ( entry )
   {
-    std::cout << std::endl;
-    std::cout << "[1]Host Game" << std::endl
+    std::cout << "Welcome to NetTest 2.0, " << g_name << "!" << std::endl
+              << "[1]Host Game" << std::endl
               << "[2]Join Game" << std::endl
               << "[3]Exit"      << std::endl;
 
@@ -93,7 +118,7 @@ GAME_STATE UpdateJoin( bool &entry )
 {
   if ( entry )
   {
-    std::cout << std::endl << "JOIN MENU" << std::endl;
+    std::cout << std::endl << "JOIN MENU (Esc to exit)" << std::endl;
     entry = false;
   }
 
@@ -124,6 +149,7 @@ GAME_STATE UpdateJoin( bool &entry )
     }
     else if ( key == VK_ESCAPE )
     {
+      std::cout << std::endl;
       NETWORKING.Reset();
       return MENU;
     }
@@ -137,7 +163,7 @@ GAME_STATE UpdateSession( bool &entry )
 {
   if ( entry )
   {
-    std::cout << std::endl << "CHAT LOBBY" << std::endl;
+    std::cout << std::endl << "CHAT LOBBY (Esc to exit)" << std::endl;
     entry = false;
   }
 
@@ -150,6 +176,24 @@ GAME_STATE UpdateSession( bool &entry )
   }
 
   // get your shiz somehow...
+  if ( _kbhit() )
+  {
+    char key = (char)_getch();
+    if ( key == VK_ESCAPE )
+    {
+      std::cout << std::endl;
+      return MENU;
+    }
+    else if ( key == VK_RETURN )
+    {
+      std::cout << "> ";
+      fgets( g_text, MAX_TEXT_LEN, stdin );
+      std::stringstream message;
+      message << g_name << ": " << g_text;
+      NETWORKING.PushText( message.str() );
+      std::cout << message.str();
+    }
+  }
 
   return SESSION;
 }
