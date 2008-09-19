@@ -208,7 +208,7 @@ void NetworkingEngine::SetMySA()
 // -----------------------------------------------------------------------------
 // Broadcasts a hosting message periodically
 // -----------------------------------------------------------------------------
-void NetworkingEngine::AdvertiseSession() const
+void NetworkingEngine::AdvertiseSession()
 {
   if ( timeGetTime() - dwAdTimer >= BROADCAST_COOLDOWN )
   {
@@ -221,11 +221,12 @@ void NetworkingEngine::AdvertiseSession() const
     std::string name( entMe.h_name );
     strcpy( (char *)msgHost.data, name.c_str() );
     strcpy( (char *)msgHost.data + name.length() + 1, creationTime.c_str() );
-    msgHost.nSize = (SHORT)name.length() + 1 + (SHORT)creationTime.length() + 1;
+    //msgHost.nSize = (SHORT)name.length() + 1 + (SHORT)creationTime.length() + 1;
 
     // load packet into message
     NetPacket pktHost;
-    pktHost.PushMessage( msgHost );
+    if ( !pktHost.PushMessage( msgHost ) )
+      ReportError( "creating ad packet failed" );
 
     // send broadcast
     err = sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );

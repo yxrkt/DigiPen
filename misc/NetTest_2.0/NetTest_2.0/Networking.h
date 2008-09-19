@@ -189,7 +189,7 @@ class NetworkingEngine
 
       // others
     void AdjustPacketWindow( const NetPacket &pkt, PlayerIter &iPlayer );
-    void AdvertiseSession() const;
+    void AdvertiseSession();
     void BuildPackets();
     void CleanupPlayers();
     bool CopyBufToNames( BYTE *buffer, UINT size );
