@@ -221,6 +221,7 @@ void NetworkingEngine::AdvertiseSession() const
     std::string name( entMe.h_name );
     strcpy( (char *)msgHost.data, name.c_str() );
     strcpy( (char *)msgHost.data + name.length() + 1, creationTime.c_str() );
+    msgHost.nSize = name.length() + 1 + creationTime.length() + 1;
 
     // load packet into message
     NetPacket pktHost;
@@ -692,6 +693,11 @@ void NetworkingEngine::JoinGame( unsigned index )
     ++player;
   }
 
+  if ( player == lsPlayers.end() )
+  {
+    ReportError( "Invalid index to join" );
+    return;
+  }
   JoinGame( PlayerInfo( *player ) );
 }
 

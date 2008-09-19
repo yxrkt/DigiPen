@@ -136,7 +136,7 @@ GAME_STATE UpdateJoin( bool &entry )
     if ( !hosts.empty() )
     {
       std::cout << std::endl << "Available Games: " << std::endl;
-      unsigned index = 1;
+      unsigned index = 0;
       for ( NetworkingEngine::PlayerILIter i = hosts.begin(); i != hosts.end(); ++i )
       {
         std::cout << "[" << index << "]" << i->szName << std::endl;
@@ -147,9 +147,10 @@ GAME_STATE UpdateJoin( bool &entry )
   if ( _kbhit() )
   {
     char key = (char)_getch();
-    if ( key >= '1' && key < '1' + (char)hosts.size() )
+    int iKey = atoi( &key );
+    if ( iKey >= 0 && iKey <= 9 )
     {
-      NETWORKING.JoinGame( atoi( &key ) );
+      NETWORKING.JoinGame( iKey );
       return SESSION;
     }
     else if ( key == VK_ESCAPE )
