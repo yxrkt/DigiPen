@@ -55,6 +55,8 @@ int main()
 
     if ( state != prevState )
       entry = true;
+
+    NETWORKING.Update();
   }
 
   return 0;
