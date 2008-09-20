@@ -178,7 +178,7 @@ GAME_STATE UpdateSession( bool &entry )
   StringQueue &recvd( NETWORKING.GetText() );
   while ( !recvd.empty() )
   {
-    std::cout << recvd.front() << std::endl;
+    std::cout << recvd.front();
     recvd.pop();
   }
 
