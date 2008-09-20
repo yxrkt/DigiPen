@@ -148,7 +148,7 @@ GAME_STATE UpdateJoin( bool &entry )
   {
     char key = (char)_getch();
     int iKey = atoi( &key );
-    if ( iKey >= 0 && iKey <= 9 )
+    if ( key >= '0' && key <= '9' )
     {
       NETWORKING.JoinGame( iKey );
       return SESSION;
