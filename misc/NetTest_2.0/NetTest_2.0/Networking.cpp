@@ -208,7 +208,7 @@ void NetworkingEngine::SetMySA()
 // -----------------------------------------------------------------------------
 // Broadcasts a hosting message periodically
 // -----------------------------------------------------------------------------
-void NetworkingEngine::AdvertiseSession()
+void NetworkingEngine::AdvertiseSession() const
 {
   if ( timeGetTime() - dwAdTimer >= BROADCAST_COOLDOWN )
   {
@@ -221,12 +221,12 @@ void NetworkingEngine::AdvertiseSession()
     std::string name( entMe.h_name );
     strcpy( (char *)msgHost.data, name.c_str() );
     strcpy( (char *)msgHost.data + name.length() + 1, creationTime.c_str() );
-    //msgHost.nSize = (SHORT)name.length() + 1 + (SHORT)creationTime.length() + 1;
+    msgHost.nSize = (SHORT)name.length() + 1 + (SHORT)creationTime.length() + 1;
 
     // load packet into message
     NetPacket pktHost;
-    if ( !pktHost.PushMessage( msgHost ) )
-      ReportError( "creating ad packet failed" );
+    pktHost.nMsgs = 1;
+    pktHost.PushMessage( msgHost );
 
     // send broadcast
     err = sendto( sUDP, (char *)&pktHost, pktHost.Size(), 0, (sockaddr *)&saBroadcast, sizeof( SOCKADDR_IN ) );
@@ -405,7 +405,7 @@ void NetworkingEngine::SendMessages()
         i->dwResendTimer = timeGetTime();
       }
 
-      reliablePktOut.nMsgs = 0;
+      reliablePktOut.Clear();
     }
     
     // unreliable messages
@@ -413,12 +413,12 @@ void NetworkingEngine::SendMessages()
     {
       for ( PlayerIter i = lsPlayers.begin(); i != lsPlayers.end(); ++i )
       {
-        err = sendto( sUDP, (char *)&unreliablePktOut, sizeof( NetPacket ), 
+        err = sendto( sUDP, (char *)&unreliablePktOut, unreliablePktOut.Size(), 
                       0, (sockaddr *)&i->saAddr, sizeof( SOCKADDR_IN ) );
         ErrCheck( err, "Sending unreliable message failed" );
       }
 
-      unreliablePktOut.nMsgs = 0;
+      unreliablePktOut.Clear();
     }
 
   CleanupPlayers();
@@ -661,8 +661,8 @@ void NetworkingEngine::Reset()
   entityIDTable.Clear();
   reliablePktOut.nIndex   = 0;
   reliablePktOut.nLRIndex = 0;
-  reliablePktOut.nMsgs    = 0;
-  unreliablePktOut.nMsgs  = 0;
+  reliablePktOut.Clear();
+  unreliablePktOut.Clear();
   nLSIndex = 255;
   bHost    = false;
   bJoining = false;
@@ -686,19 +686,9 @@ void NetworkingEngine::JoinGame( unsigned index )
   PlayerIter player = lsPlayers.begin();
   for ( unsigned i = 0; i < index; ++i )
   {
-    if ( player == lsPlayers.end() )
-    {
-      ReportError( "Invalid index to join" );
-      return;
-    }
     ++player;
   }
 
-  if ( player == lsPlayers.end() )
-  {
-    ReportError( "Invalid index to join" );
-    return;
-  }
   JoinGame( PlayerInfo( *player ) );
 }
 
@@ -716,7 +706,7 @@ void NetworkingEngine::JoinGame( const PlayerInfo &player )
   NetMessage msgOut;
   msgOut.mType = MSG_JOIN;
   strcpy( (char *)msgOut.data, entMe.h_name ); // TODO: Replace with real name
-  msgOut.nSize = (SHORT)strlen( (char *)msgOut.data );
+  msgOut.nSize = (SHORT)strlen( (char *)msgOut.data ) + 1;
   qMsgsOut.c.clear();
   PushMessage( msgOut );
 
@@ -791,19 +781,22 @@ void NetworkingEngine::BuildPackets()
 {
     // Debug info
   nMaxMsgs = max( nMaxMsgs, qMsgsOut.size() );
+  bool reliableDone = false;
 
   MessageQueueIt i = qMsgsOut.c.begin();
   while ( i != qMsgsOut.c.end() )
   {
-    if ( i->flags & NetMessage::FLAG_RELIABLE && reliablePktOut.nMsgs < MAX_MESSAGES )
+    if ( i->flags & NetMessage::FLAG_RELIABLE && !reliableDone )
     {
-      reliablePktOut.PushMessage( *i );
-      qMsgsOut.c.erase( i++ );
+      if ( reliablePktOut.PushMessage( *i ) )
+        qMsgsOut.c.erase( i++ );
+      else
+        reliableDone = true;
     }
-    else if ( !i->flags & NetMessage::FLAG_RELIABLE && unreliablePktOut.nMsgs < MAX_MESSAGES )
+    else if ( !i->flags & NetMessage::FLAG_RELIABLE )
     {
-      unreliablePktOut.PushMessage( *i );
-      qMsgsOut.c.erase( i++ );
+      if ( unreliablePktOut.PushMessage( *i ) )
+        qMsgsOut.c.erase( i++ );
     }
     else
     {
@@ -1053,6 +1046,25 @@ void NetworkingEngine::UpdateDebug()
   // Title
   debugStrings.push( "Networking Debugger" );
 
+  // Game mode
+  ssDebug << "Update State: ";
+  switch ( gsMode )
+  {
+    case GS_MENU:
+      ssDebug << "Title";
+      break;
+    case GS_JOIN:
+      ssDebug << "Join Menu";
+      break;
+    case GS_SESSION:
+      ssDebug << "Session";
+      break;
+  }
+  debugStrings.push( ssDebug.str() );
+  ssDebug.str("");
+
+  if ( gsMode == GS_MENU ) return;
+
   // Errors
   for ( StringVecIt i = errStrings.begin(); i != errStrings.end(); ++i )
     debugStrings.push( "ERROR: " + *i );
@@ -1060,6 +1072,12 @@ void NetworkingEngine::UpdateDebug()
   // Host or client
   std::string strMyRank = bHost ? "(Host)" : "(Client)";
   debugStrings.push( strMyRank.c_str() );
+
+  // Session state if host
+  if ( bHost )
+  {
+    debugStrings.push( bOpenSession ? "Open Session" : "Closed Session" );
+  }
 
   if ( bHost )
   {
@@ -1079,23 +1097,6 @@ void NetworkingEngine::UpdateDebug()
     debugStrings.push( ssDebug.str() );
     ssDebug.str("");
   }
-
-  // Game mode
-  ssDebug << "Update State: ";
-  switch ( gsMode )
-  {
-    case GS_MENU:
-      ssDebug << "Title";
-      break;
-    case GS_JOIN:
-      ssDebug << "Join Menu";
-      break;
-    case GS_SESSION:
-      ssDebug << "Session";
-      break;
-  }
-  debugStrings.push( ssDebug.str() );
-  ssDebug.str("");
 
   // Player info
   unsigned nPlayer = bHost ? 2 : 1;

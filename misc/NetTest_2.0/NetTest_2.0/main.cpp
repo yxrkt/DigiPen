@@ -169,7 +169,7 @@ GAME_STATE UpdateSession( bool &entry )
 {
   if ( entry )
   {
-    ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_SESSION, "Networking not in session state!" );
+    //ASSERT( NETWORKING.GetMode() == NetworkingEngine::GS_SESSION, "Networking not in session state!" );
     std::cout << std::endl << "CHAT LOBBY (Esc to exit)" << std::endl;
     entry = false;
   }

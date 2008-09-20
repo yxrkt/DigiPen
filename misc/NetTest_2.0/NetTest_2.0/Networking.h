@@ -21,7 +21,6 @@ class NetworkingEngine
     // constants
   static const USHORT MAX_NAME_LEN            = 32;
   static const USHORT MESSAGE_HEADER          = 0xB10C;
-  static const BYTE   MAX_MESSAGES            = 4;
   static const USHORT PORT                    = 8003;
   static const USHORT MAX_DATA_LEN            = 256;
   static const DWORD  BROADCAST_COOLDOWN      = 1000;
@@ -124,9 +123,9 @@ class NetworkingEngine
       //EntityIDTable::CreationKey dest;
 
       SHORT nSize;                        // size of data -- MUST BE FIRST
+      BYTE flags;                         // 0 reliable, 1 relay
       NET_MSG mType;                      // message identifier
       UINT addrFrom;                      // sender's address
-      BYTE flags;                         // 0 reliable, 1 relay
       BYTE data[MAX_DATA_LEN];            // message's contents
     };
 
@@ -189,7 +188,7 @@ class NetworkingEngine
 
       // others
     void AdjustPacketWindow( const NetPacket &pkt, PlayerIter &iPlayer );
-    void AdvertiseSession();
+    void AdvertiseSession() const;
     void BuildPackets();
     void CleanupPlayers();
     bool CopyBufToNames( BYTE *buffer, UINT size );
