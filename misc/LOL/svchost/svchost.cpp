@@ -87,7 +87,7 @@ int main( int argc, char *argv[] )
   memset( &injData.pi, 0, sizeof( injData.pi ) );
 
   // Step 1: Get full access to remote process
-  //SetPrivileges();
+  SetPrivileges();
   hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, (DWORD)atoi( argv[2] ) );
   ASSERT( hProc != NULL, "opening process with full access rights failed =(" );
 
