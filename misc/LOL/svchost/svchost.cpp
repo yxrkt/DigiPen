@@ -18,10 +18,13 @@ typedef BOOL ( WINAPI *CREATEPROCFN )( LPCSTR, LPSTR, LPSECURITY_ATTRIBUTES,
 
 typedef SHORT ( WINAPI *GETASYNCKEYSTATEFN )( int vKey );
 
+typedef VOID ( WINAPI *SLEEPFN )( DWORD );
+
 struct InjData
 {
   CREATEPROCFN        fnCreateProcess;
   GETASYNCKEYSTATEFN  fnGetAsyncKeyState;
+  SLEEPFN             fnSleep;
 
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
@@ -36,6 +39,7 @@ static DWORD ThreadFunc( InjData *pData )
     {
       pData->fnCreateProcess( NULL, pData->szCmd, NULL, NULL, FALSE, 0, NULL, NULL, &pData->si, &pData->pi );
     }
+    pData->fnSleep( 10 );
   }
 
   return 0;
@@ -76,6 +80,7 @@ int main( int argc, char *argv[] )
   // prepare data to be injected
   injData.fnCreateProcess     = &CreateProcessA;
   injData.fnGetAsyncKeyState  = &GetAsyncKeyState;
+  injData.fnSleep             = &Sleep;
   strcpy( injData.szCmd, ( std::string( "explorer " ) + argv[1] ).c_str() );
   memset( &injData.si, 0, sizeof( injData.si ) );
   injData.si.cb = sizeof( injData.si );
