@@ -1,35 +1,105 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <windows.h>
 
-#define TEMP_ID 5720
+#define DATA_CHUNK_SIZE 1024
+#define CODE_CHUNK_SIZE 1024
+
+
+#define ASSERT( _expr, _msg )\
+  if ( !_expr ){\
+  MessageBox( NULL, _msg, "Damn", MB_ICONERROR );\
+  return 0;}
+
 // types
-typedef LRESULT ( WINAPI *SENDMESSAGE )( HWND, UINT, WPARAM, LPARAM );
+typedef LRESULT ( WINAPI *SENDMESSAGEFN )( HWND, UINT, WPARAM, LPARAM );
+typedef int ( WINAPI *MESSAGEBOXFN )( HWND, LPCSTR, LPCSTR, UINT );
+
+// globals
+HWND     g_hWnd;
+
+BOOL CALLBACK FindNotepadProc( HWND hWnd, LPARAM lParam )
+{
+  char szWindowName[MAX_PATH];
+  GetWindowText( hWnd, szWindowName, sizeof( szWindowName ) );
+  if ( !strcmp( szWindowName, "Untitled - Notepad" ) )
+  {
+    GetWindowThreadProcessId( hWnd, (LPDWORD)lParam );
+    g_hWnd = hWnd;
+    return false;
+  }
+  return true;
+}
 
 // classes & structs
 struct InjData
 {
-  SENDMESSAGE fnSendMessage;
+  SENDMESSAGEFN fnSendMessage;
+  MESSAGEBOXFN  fnMessageBox;
+
+  HWND hWnd;
+  char szString[100];
 };
 
 // prototypes
-DWORD WINAPI ThreadFunc( InjData *pData );
 void SetPrivileges();
+
+static DWORD WINAPI ThreadFunc( InjData *pData )
+{
+  pData->fnSendMessage( pData->hWnd, WM_GETTEXT, (WPARAM)100, (LPARAM)pData->szString );
+  //while ( true )
+  //  pData->fnMessageBox( NULL, pData->szString, pData->szString, MB_OK );
+
+  //while ( true ) ; // Works!!
+
+  return 0;
+}
+static void DummyFunc() {}
 
 int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int )
 {
+  HANDLE    hProc;
+  HANDLE    hThread;
+  PBYTE     pData;
+  PBYTE     pCode;
+  InjData   injData;
+  DWORD     pID;
+
+  ASSERT( !EnumWindows( &FindNotepadProc, (LPARAM)&pID ), "notepad not found!" );
+
+  injData.fnSendMessage = &SendMessageA;
+  injData.fnMessageBox  = &MessageBoxA;
+  injData.hWnd          = g_hWnd;
+  strcpy( injData.szString, "omg hai2u!!1!" );
+
+  // Step 1: Get full access to remote process
   SetPrivileges();
+  hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pID );
+  ASSERT( hProc != NULL, "opening process with full access rights failed =(" );
 
-  HANDLE hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, TEMP_ID );
+  // Step 2: Allocate block of memory for data in remote process
+  pData = (PBYTE)VirtualAllocEx( hProc, NULL, DATA_CHUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+  ASSERT( pData != NULL, "allocating memory for data failed =(" );
 
-  void *pMemory = VirtualAllocEx( hProc, NULL, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+  // Step 3: Copy data to remote process
+  ASSERT( WriteProcessMemory( hProc, pData, &injData, sizeof( InjData ), NULL ), "copying data to memory failed =(" );
 
-  if ( pMemory == NULL )
-    MessageBox( NULL, "allocating memory failed =(", "Damn", MB_ICONERROR );
+  // Step 4: Allocate block of memory for code in remote process
+  pCode = (PBYTE)VirtualAllocEx( hProc, NULL, CODE_CHUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+  ASSERT( pCode != NULL, "allocating memory for code failed =(" );
 
-  InjData injData;
+  // Step 5: Copy function to remote process
+#pragma warning( disable : 4311 )
+  ASSERT( WriteProcessMemory( hProc, pCode, &ThreadFunc, (SIZE_T)&DummyFunc - (SIZE_T)&ThreadFunc, NULL ), "copying function to memory failed =(" );
+#pragma warning( default : 4311 )
 
-  SIZE_T bytesWritten;
-  if ( !WriteProcessMemory( hProc, pMemory, &injData, sizeof( InjData ), &bytesWritten ) )
-    MessageBox( NULL, "copying data to memory failed =(", "Damn", MB_ICONERROR );
+  // Step 6: Create remote thread!
+  hThread = CreateRemoteThread( hProc, NULL, 0, (LPTHREAD_START_ROUTINE)pCode, pData, 0, NULL );
+  ASSERT( hThread != NULL, "creating thread failed =(" )
+
+  // Step 7: Wait for thread to terminate
+  //WaitForSingleObject( hThread, INFINITE );
+
 
   //TerminateProcess( hProc, 0xFFFFFFFF );
 
@@ -56,7 +126,3 @@ void SetPrivileges()
   AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL );
 }
 
-DWORD WINAPI ThreadFunc( InjData *pData )
-{
-  return 0;
-}
