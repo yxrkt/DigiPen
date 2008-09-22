@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="svchost"
-	ProjectGUID="{9A1385B4-C39C-4EF6-B794-439643799D15}"
+	Name="hai2u"
+	ProjectGUID="{1F10EF73-C89D-49FB-9400-04DB33AEA696}"
 	RootNamespace="svchost"
 	>
 	<Platforms>
@@ -162,28 +162,10 @@
 	<References>
 	</References>
 	<Files>
-		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+		<File
+			RelativePath=".\hai2u.cpp"
 			>
-			<File
-				RelativePath=".\svchost.cpp"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
-		</Filter>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

