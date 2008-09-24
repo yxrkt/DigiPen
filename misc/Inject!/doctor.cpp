@@ -56,18 +56,16 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
   PBYTE     pData;
   PBYTE     pCode;
   InjData   injData;
-  StageData stageData;
   DWORD     pID;
-  HWND      hWnd;
 
   // prepare data to be injected
-  injData.fnSendMessage = &SendMessageA;
-  stageData.width       = 10;
-  stageData.height      = 10;
+  injData.fnSendMessage     = &SendMessageA;
+  injData.stageData.width   = 10;
+  injData.stageData.height  = 10;
 
   // get pID and handle to window named 'patient'
-  ASSERT( !EnumWindows( &FindPatient, (LPARAM)&hWnd ), "patient not found =(" );
-  GetWindowThreadProcessId( hWnd, &pID );
+  ASSERT( !EnumWindows( &FindPatient, (LPARAM)&injData.hWnd ), "patient not found =(" );
+  GetWindowThreadProcessId( injData.hWnd, &pID );
 
   // Step 1: Get full access to remote process
   hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pID );
