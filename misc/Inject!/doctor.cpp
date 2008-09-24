@@ -3,20 +3,12 @@
 #include <windows.h>
 #include <string>
 
+#include "common.h"
+
 #define DATA_CHUNK_SIZE 1024
 #define CODE_CHUNK_SIZE 1024
 
-#define ASSERT( expr, msg )\
-  if ( !expr ){\
-  MessageBox( NULL, msg, "Damn", MB_ICONERROR );\
-  exit( -1 );}
-
 typedef LRESULT ( WINAPI *SENDMESSAGEFN )( HWND, UINT, WPARAM, LPARAM );
-
-struct StageData
-{
-  int width, height;
-};
 
 struct InjData
 {
@@ -25,8 +17,6 @@ struct InjData
 
   StageData           stageData;
 };
-
-enum MESSAGE_TYPE { DATA_PTR, FUNC_PTR };
 
 static DWORD ThreadFunc( InjData *pData )
 {
