@@ -9,20 +9,32 @@
 #define CODE_CHUNK_SIZE 1024
 
 typedef LRESULT ( WINAPI *SENDMESSAGEFN )( HWND, UINT, WPARAM, LPARAM );
+typedef WINBASEAPI HANDLE ( WINAPI *OPENPROCESSFN )( DWORD, BOOL, DWORD );
+typedef int ( WINAPI *MESSAGEBOXFN )( HWND, LPCSTR, LPCSTR, UINT );
 
 struct InjData
 {
   SENDMESSAGEFN       fnSendMessage;
-  HWND                hWnd;
+  OPENPROCESSFN       fnOpenProcess;
+  MESSAGEBOXFN        fnMessageBox;
 
+  HWND                hWnd;
+  DWORD               docProcId;
   StageData           stageData;
   StageData          *pDocStageData;
+  char                msgBoxStr[50];
 };
 
 static DWORD ThreadFunc( InjData *pData )
 {
+  if ( pData->fnOpenProcess( PROCESS_ALL_ACCESS, FALSE, pData->docProcId ) == NULL )
+  {
+    pData->fnMessageBox( NULL, pData->msgBoxStr, NULL, MB_ICONERROR );
+    return -1;
+  }
+
   pData->fnSendMessage( pData->hWnd, WM_APP, (WPARAM)DATA_PTR, (LPARAM)&pData->stageData );
-  pData->fnSendMessage( pData->hWnd, WM_APP + 1, (WPARAM)DATA_PTR, (LPARAM)pData->pDocStageData );
+  //pData->fnSendMessage( pData->hWnd, WM_APP + 1, (WPARAM)DATA_PTR, (LPARAM)pData->pDocStageData );
 
   return 0;
 }
@@ -58,9 +70,13 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 
   // prepare data to be injected
   injData.fnSendMessage     = &SendMessageA;
+  injData.fnOpenProcess     = &OpenProcess;
+  injData.fnMessageBox      = &MessageBoxA;
   injData.stageData.width   = 10;
   injData.stageData.height  = 10;
   injData.pDocStageData     = pStage;
+  injData.docProcId         = GetProcessId( GetCurrentProcess() );
+  strcpy( injData.msgBoxStr, "Error gaining access to doctor proc" );
 
   // get pID and handle to window named 'patient'
   ASSERT( !EnumWindows( &FindPatient, (LPARAM)&injData.hWnd ), "patient not found =(" );
@@ -89,6 +105,12 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
   // Step 6: Create remote thread!
   hThread = CreateRemoteThread( hProc, NULL, 0, (LPTHREAD_START_ROUTINE)pCode, pData, 0, NULL );
   ASSERT( hThread != NULL, "creating thread failed =(" );
+
+  int pInt = 666;
+  ASSERT( WriteProcessMemory( hProc, pData + 4 + 4 + 4 + 4 + 4, &pInt, sizeof( int ), NULL ), "666 FAILED" );
+  //reinterpret_cast<InjData *>( pData )->stageData.width = 666;
+  //SendMessage( injData.hWnd, WM_APP, (WPARAM)DATA_PTR, (LPARAM)&injData.stageData );
+  //SendMessage( injData.hWnd, WM_APP + 1, (WPARAM)DATA_PTR, (LPARAM)injData.pDocStageData );
 
   while ( !pStage->changed ) ;
 

@@ -36,6 +36,12 @@ int APIENTRY WinMain( HINSTANCE hInst, HINSTANCE, LPSTR, int )
       DispatchMessage( &msg );
     }
     Sleep( 1 );
+
+    if ( g_pStageData )
+    {
+      if ( g_pStageData->width == 666 )
+        MessageBox( NULL, "waesome", "waesome", MB_OK );
+    }
   }
 
   return (int)msg.wParam;
