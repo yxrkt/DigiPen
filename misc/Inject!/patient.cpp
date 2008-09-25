@@ -51,7 +51,15 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
       std::stringstream stageInfo;
       g_pStageData = (StageData *)lParam;
       stageInfo << "width  = " << g_pStageData->width << ", height = " << g_pStageData->height;
-      MessageBox( NULL, stageInfo.str().c_str(), "Success!", MB_ICONINFORMATION );
+      //MessageBox( NULL, stageInfo.str().c_str(), "Success!", MB_ICONINFORMATION );
+    }
+    break;
+
+    case WM_APP + 1:
+    {
+      ( (StageData *)lParam )->width    = 100;
+      ( (StageData *)lParam )->height   = 100;
+      ( (StageData *)lParam )->changed  = true;
     }
     break;
 

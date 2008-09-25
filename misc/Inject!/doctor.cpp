@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
-#include <string>
+#include <sstream>
 
 #include "common.h"
 
@@ -16,11 +16,13 @@ struct InjData
   HWND                hWnd;
 
   StageData           stageData;
+  StageData          *pDocStageData;
 };
 
 static DWORD ThreadFunc( InjData *pData )
 {
   pData->fnSendMessage( pData->hWnd, WM_APP, (WPARAM)DATA_PTR, (LPARAM)&pData->stageData );
+  pData->fnSendMessage( pData->hWnd, WM_APP + 1, (WPARAM)DATA_PTR, (LPARAM)pData->pDocStageData );
 
   return 0;
 }
@@ -47,11 +49,18 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
   PBYTE     pCode;
   InjData   injData;
   DWORD     pID;
+  StageData *pStage = new StageData;
+
+  // for test 2
+  pStage->width   = 10;
+  pStage->height  = 10;
+  pStage->changed = false;
 
   // prepare data to be injected
   injData.fnSendMessage     = &SendMessageA;
   injData.stageData.width   = 10;
   injData.stageData.height  = 10;
+  injData.pDocStageData     = pStage;
 
   // get pID and handle to window named 'patient'
   ASSERT( !EnumWindows( &FindPatient, (LPARAM)&injData.hWnd ), "patient not found =(" );
@@ -79,7 +88,13 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 
   // Step 6: Create remote thread!
   hThread = CreateRemoteThread( hProc, NULL, 0, (LPTHREAD_START_ROUTINE)pCode, pData, 0, NULL );
-  ASSERT( hThread != NULL, "creating thread failed =(" )
+  ASSERT( hThread != NULL, "creating thread failed =(" );
+
+  while ( !pStage->changed ) ;
+
+  std::stringstream ssStage;
+  ssStage << "width = " << pStage->width << ", height = " << pStage->height;
+  MessageBox( NULL, ssStage.str().c_str(), "New Stage Shiz", MB_ICONINFORMATION );
 
   return 0;
 }

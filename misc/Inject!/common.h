@@ -10,4 +10,5 @@ enum MESSAGE_TYPE { DATA_PTR, FUNC_PTR };
 struct StageData
 {
   int width, height;
+  bool changed;
 };
