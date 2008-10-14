@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cs460_1", "cs460_1\cs460_1.vcproj", "{CE64F688-9517-4649-9F29-26E7D5688B76}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CE64F688-9517-4649-9F29-26E7D5688B76}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CE64F688-9517-4649-9F29-26E7D5688B76}.Debug|Win32.Build.0 = Debug|Win32
+		{CE64F688-9517-4649-9F29-26E7D5688B76}.Release|Win32.ActiveCfg = Release|Win32
+		{CE64F688-9517-4649-9F29-26E7D5688B76}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
