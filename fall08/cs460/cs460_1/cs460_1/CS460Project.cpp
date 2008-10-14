@@ -22,10 +22,10 @@ CS460Project::~CS460Project() {}
 void CS460Project::Initialize()
 {
   graphics.Initialize( hWndMain_ );
-  //graphics.LoadStaticMesh( std::string( ASSETS_DIR ) + "tiny_4anim.x" );
+  //graphics.LoadStaticMesh( std::string( ASSETS_DIR ) + "run_inPlace.x" );
+  graphics.LoadAnimatedMesh( std::string( ASSETS_DIR ) + "run_inPlace.x" );
   graphics.MainCam.eye.y = 600.f;
   graphics.MainCam.lookAt.y = 300.f;
-  graphics.LoadStaticMesh( std::string( ASSETS_DIR ) + "run_inPlace.x" );
 }
 
 // =============================================================================

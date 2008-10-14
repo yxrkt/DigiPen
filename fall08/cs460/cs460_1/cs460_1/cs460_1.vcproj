@@ -183,16 +183,24 @@
 				RelativePath=".\ASSERT.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Macros.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Graphics"
 			>
 			<File
-				RelativePath=".\AnimHierarchy.cpp"
+				RelativePath=".\CAllocateHierarchy.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\AnimHierarchy.h"
+				RelativePath=".\CAllocateHierarchy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DerivedStructs.h"
 				>
 			</File>
 			<File
@@ -209,6 +217,10 @@
 			</File>
 			<File
 				RelativePath=".\Mesh.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Vertex.h"
 				>
 			</File>
 		</Filter>

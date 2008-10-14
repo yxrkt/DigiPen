@@ -74,9 +74,9 @@ void Graphics::Update()
   SetupMatrices();
 
     // draw axis
-  DrawBone( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 300.f, 0.f, 0.f ) );
-  DrawBone( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 300.f, 0.f ) );
-  DrawBone( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 0.f, 300.f ) );
+  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 50.f, 0.f, 0.f ) );
+  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 50.f, 0.f ) );
+  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 0.f, 50.f ) );
 
   for ( StaticMeshList::iterator i = staticMeshes.begin(); i != staticMeshes.end(); ++i )
   {
@@ -85,7 +85,8 @@ void Graphics::Update()
 
   for ( AnimatedMeshList::iterator i = animMeshes.begin(); i != animMeshes.end(); ++i )
   {
-    i->Render();
+    //i->Render();
+    i->DrawBones();
   }
 
 
@@ -93,8 +94,7 @@ void Graphics::Update()
   hr = pDevice->EndScene();
   ASSERT( hr == S_OK, "EndScene failed." );
 
-  hr = pDevice->Present( NULL, NULL, NULL, NULL );
-  ASSERT( hr == S_OK, "Present failed." );
+  pDevice->Present( NULL, NULL, NULL, NULL );
 }
 
 // =============================================================================
@@ -125,7 +125,7 @@ void Graphics::SetupMatrices()
   HRESULT hr;
 
   D3DXMATRIXA16 mtxWorld;
-  D3DXMatrixRotationY( &mtxWorld, 0.f );
+  D3DXMatrixIdentity( &mtxWorld );
   hr = pDevice->SetTransform( D3DTS_WORLD, &mtxWorld );
   ASSERT( hr == S_OK, "Setting world transform failed." );
 
@@ -161,8 +161,8 @@ void Graphics::DrawBone( D3DXVECTOR3 p, D3DXVECTOR3 q )
 {
   ColoredVertex line[2] =
   {
-    { p.x, p.y, p.z, D3DCOLOR_XRGB( 0, 255, 0 ) },
-    { q.x, q.y, q.z, D3DCOLOR_XRGB( 0, 255, 0 ) }
+    ColoredVertex( p.x, p.y, p.z, D3DCOLOR_XRGB( 255, 0, 0 ) ),
+    ColoredVertex( q.x, q.y, q.z, D3DCOLOR_XRGB( 255, 0, 0 ) )
   };
 
   LPDIRECT3DVERTEXBUFFER9 pVB;

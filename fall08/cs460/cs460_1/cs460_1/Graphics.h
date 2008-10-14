@@ -6,17 +6,10 @@
 #include <list>
 
 #include "Mesh.h"
+#include "Macros.h"
+#include "Vertex.h"
 
-#define SAFE_RELEASE( p ) if ( p ) p->Release(); p = NULL;
 
-struct ColoredVertex
-{
-  FLOAT x, y, z;
-  DWORD color;
-};
-
-// Our custom FVF, which describes our custom vertex structure
-#define D3DFVF_COLOREDVERTEX (D3DFVF_XYZ|D3DFVF_DIFFUSE)
 
 struct Camera
 {
