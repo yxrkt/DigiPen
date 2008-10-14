@@ -86,8 +86,17 @@ void AnimatedMesh::Load( const std::string &file )
   ASSERT( hr == S_OK, "Loading mesh hierarchy failed." );
 
   AddBones( pFrameRoot, pFrameRoot->TransformationMatrix );
-  //SetupBoneMatrices( (LPFRAME)m_pFrameRoot, NULL );
-  //boneMatrices = new D3DXMATRIX[sizeof( 
+
+  // Read .x file for AnimationSet
+  // for each animation set
+  //   for each animation
+  //     for each animation key
+  //       X; = uses scalars, matrices, vectors, etc. w/e
+  //       Y; = number of key frames
+  //       for each key frame
+  //         ms to hit it at
+  //         no. of floats (16 for matrix)
+  //         matrix floats
 
   hr = D3DXFrameCalculateBoundingSphere( pFrameRoot, &bs.center, &bs.radius );
   ASSERT( hr == S_OK, "Calculating bounding sphere failed." );

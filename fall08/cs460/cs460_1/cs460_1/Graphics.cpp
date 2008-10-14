@@ -115,6 +115,8 @@ void Graphics::LoadAnimatedMesh( const std::string &file )
   AnimatedMesh mesh( pDevice );
   mesh.Load( file );
   animMeshes.push_back( mesh );
+
+  mainCam.lookAt  = mesh.GetBoundingSphere().center;
 }
 
 // =============================================================================
