@@ -1,7 +1,6 @@
-#include <fstream>
-
 #include "Mesh.h"
 #include "ASSERT.h"
+#include "XFileParser.h"
 
 
 // Static Mesh
@@ -108,23 +107,9 @@ void AnimatedMesh::ReadAnimData( const std::string &file )
   //         no. of floats (16 for matrix)
   //         matrix floats
 
-  std::ifstream xFile( file.c_str() );
-  ASSERT( xFile.is_open(), "Failed to open .x file for reading animation data." );
-
-  // for each animation set
-  //std::string strBuf;
-  //while ( !xFile.eof() )
-  //{
-  //  do {  // find animation set
-  //    xFile >> strBuf;
-  //  } while ( strBuf != "AnimationSet" && !xFile.eof() );
-
-  //  if ( xFile.eof() )
-  //    continue;
-
-  //  xFile >> strBuf;
-  //  animSetNames.push_back ( ( strBuf != "{" ) ? strBuf : 
-  //}
+  AnimationSet animSet;
+  XFileParser xFile( file );
+  xFile.GetNextAnimationSet( animSet );
 }
 
 void AnimatedMesh::DrawBones() const

@@ -7,7 +7,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, INT )
 {
   CS460Project app( hInstance );
 
-  app.Run();
+  int result = app.Run();
 
-  return 0;
+  return result;
 }

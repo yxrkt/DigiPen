@@ -1,6 +1,6 @@
 // =============================================================================
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef CS460PROJECT_H
+#define CS460PROJECT_H
 // =============================================================================
 
 #include "WindowBase.h"
@@ -15,15 +15,16 @@ class CS460Project : WindowBase
     CS460Project( HINSTANCE hInstance );
     ~CS460Project();
 
-    void Run();
+    int Run();
 
   private:
     void Initialize();
     void Update();
-    void Exit();
+    void Cleanup();
 
     LRESULT WndProc( UINT msg, WPARAM wParam, LPARAM lParam );
 
+  private:
     Graphics graphics;
 };
 

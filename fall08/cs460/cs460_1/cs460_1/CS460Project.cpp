@@ -43,7 +43,7 @@ void CS460Project::Update()
 // =============================================================================
 // ! Run application.
 // =============================================================================
-void CS460Project::Run()
+int CS460Project::Run()
 {
   MSG msg;
   ZeroMemory( &msg, sizeof( MSG ) );
@@ -61,15 +61,18 @@ void CS460Project::Run()
     }
   }
 
-  Exit();
+  Cleanup();
+
+  return (int)msg.wParam;
 }
 
 // =============================================================================
 // ! Cleanup.
 // =============================================================================
-void CS460Project::Exit()
+void CS460Project::Cleanup()
 {
   UnregisterClass( szClassName, hInstance_ );
+  graphics.Cleanup();
 }
 
 // =============================================================================

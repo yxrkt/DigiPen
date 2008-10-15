@@ -3,6 +3,7 @@
 #include <d3dx9.h>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "CAllocateHierarchy.h"
 #include "Vertex.h"
@@ -13,6 +14,7 @@ typedef std::vector< D3DMATERIAL9 >       MaterialVec;
 typedef std::vector< LPDIRECT3DTEXTURE9 > TextureVec;
 typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
+
 
 class StaticMesh
 {
@@ -66,3 +68,7 @@ class AnimatedMesh
     StringVec           animSetNames;
     VertVec             boneLines;
 };
+
+
+typedef std::list< StaticMesh >           StaticMeshList;
+typedef std::list< AnimatedMesh >         AnimatedMeshList;

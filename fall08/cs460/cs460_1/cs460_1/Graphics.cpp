@@ -159,7 +159,7 @@ void Graphics::Cleanup()
 // =============================================================================
 // ! Draws a line
 // =============================================================================
-void Graphics::DrawBone( D3DXVECTOR3 p, D3DXVECTOR3 q )
+void Graphics::DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q )
 {
   ColoredVertex line[2] =
   {

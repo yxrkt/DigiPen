@@ -2,8 +2,6 @@
 
 #include <d3dx9.h>
 #include <string>
-#include <vector>
-#include <list>
 
 #include "Mesh.h"
 #include "Macros.h"
@@ -21,10 +19,6 @@ struct Camera
 class Graphics
 {
   public:
-    typedef std::list< StaticMesh >   StaticMeshList;
-    typedef std::list< AnimatedMesh > AnimatedMeshList;
-
-  public:
     Graphics();
     ~Graphics();
 
@@ -32,26 +26,26 @@ class Graphics
     void Update();
     void LoadStaticMesh( const std::string &file );
     void LoadAnimatedMesh( const std::string &file );
+    void DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q );
     void SetupMatrices();
     void Cleanup();
 
-    // temp shiz
-    void DrawBone( D3DXVECTOR3 p, D3DXVECTOR3 q );
-
+      // Accessors
     Camera      &MainCam;
     const bool  &Ready;
 
   private:
+      // Class cannot be copied
     Graphics( const Graphics &rhs );
     void operator =( const Graphics &rhs );
 
+      // Data
     LPDIRECT3D9         pD3D;
     LPDIRECT3DDEVICE9   pDevice;
     Camera              mainCam;
     DWORD               bgColor;
     StaticMeshList      staticMeshes;
     AnimatedMeshList    animMeshes;
-
-    HWND hWnd;
-    bool ready;
+    HWND                hWnd;
+    bool                ready;
 };
