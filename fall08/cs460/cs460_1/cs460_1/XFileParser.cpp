@@ -60,40 +60,45 @@ bool XFileParser::GetNextAnimationSet( AnimationSet &animSet )
   GetNextString( strBuf );
   animSet.name = strBuf;
 
-  // make an animation
-  Animation anim;
-  GetNextString( strBuf );
-  ASSERT( strBuf == "Animation", "parser error" );
-  GetNextString( anim.name );
-
-  AnimationKey animKey;
-  FindNext( "AnimationKey" );
-  GetNextString( strBuf );
-  animKey.type = atoi( strBuf.c_str() );
-  GetNextString( strBuf );
-  animKey.keyFrames.reserve( atoi( strBuf.c_str() ) );
-
-  size_t nFrames = animKey.keyFrames.capacity();
-  for ( size_t i = 0; i < nFrames; ++i )
+  // make animations
+  while ( GetNextString( strBuf ) )
   {
-    KeyFrame keyFrame;
+    Animation anim;
+    if ( strBuf != "Animation" )
+      return false;
+    GetNextString( anim.name );
+
+    std::string strKey;
+    GetNextString( strKey );
+
+    AnimationKey &animKey = anim.animKey;
     GetNextString( strBuf );
-    keyFrame.tick = atoi( strBuf.c_str() );
-    GetNextString( strBuf );  // should be 16
-    for ( size_t i = 0; i < 16; ++i )
+    ASSERT( strBuf == "AnimationKey", "parser error" );
+    GetNextString( strBuf );
+    animKey.type = atoi( strBuf.c_str() );
+    GetNextString( strBuf );
+    animKey.keyFrames.reserve( atoi( strBuf.c_str() ) );
+
+    size_t nFrames = animKey.keyFrames.capacity();
+    for ( size_t i = 0; i < nFrames; ++i )
     {
+      KeyFrame keyFrame;
+      xFile >> keyFrame.tick;
       xFile.ignore();
-      xFile >> keyFrame.matrix.m[i / 4][i % 4];
+      int nFloats;
+      xFile >> nFloats;
+      ASSERT( nFloats == 16, "parser error" );
+      for ( size_t i = 0; i < 16; ++i )
+      {
+        xFile.ignore();
+        xFile >> keyFrame.matrix.m[i / 4][i % 4];
+      }
+      xFile.ignore( 3 );
+      animKey.keyFrames.push_back( keyFrame );
     }
-    animKey.keyFrames.push_back( keyFrame );
+    animSet.anims.push_back( anim );
+    animSet.animMap[strKey] = anim;
   }
-
-  //std::string strBuf;
-  //xFile >> strBuf;
-  //animSet.name = ( strBuf != '{' ? strBuf : "" );
-
-
-  //GetNextString( strBuf );
 
   return true;
 }

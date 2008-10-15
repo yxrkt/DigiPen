@@ -1,9 +1,10 @@
 #pragma once
 
+#include <d3dx9.h>
 #include <fstream>
 #include <queue>
 #include <string>
-#include <d3dx9.h>
+#include <map>
 
 #include "ASSERT.h"
 
@@ -30,11 +31,13 @@ struct Animation
 };
 
 typedef std::vector< Animation > AnimationVec;
+typedef std::map< std::string, Animation > AnimationMap;
 
 struct AnimationSet
 {
   std::string   name;
   AnimationVec  anims;
+  AnimationMap  animMap;
 };
 
 class XFileParser

@@ -1,6 +1,5 @@
 #include "Mesh.h"
 #include "ASSERT.h"
-#include "XFileParser.h"
 
 
 // Static Mesh
@@ -70,6 +69,7 @@ void StaticMesh::Render() const
 // Animated Mesh
 AnimatedMesh::AnimatedMesh( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
+, curAnimSet( 0 )
 {
 }
 
@@ -96,20 +96,12 @@ void AnimatedMesh::Load( const std::string &file )
 
 void AnimatedMesh::ReadAnimData( const std::string &file )
 {
-  // Read .x file for AnimationSet
-  // for each animation set
-  //   for each animation
-  //     for each animation key
-  //       X; = uses scalars, matrices, vectors, etc. w/e
-  //       Y; = number of key frames
-  //       for each key frame
-  //         ms to hit it at
-  //         no. of floats (16 for matrix)
-  //         matrix floats
-
   AnimationSet animSet;
   XFileParser xFile( file );
-  xFile.GetNextAnimationSet( animSet );
+  while ( xFile.GetNextAnimationSet( animSet ) )
+  {
+    animSets.push_back( animSet );
+  }
 }
 
 void AnimatedMesh::DrawBones() const
@@ -134,6 +126,7 @@ void AnimatedMesh::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
 {
   if ( pFrame )
   {
+    frameSet.insert( pFrame );
     D3DXVECTOR3 startVert;
     D3DXVec3TransformCoord( &startVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &matrix );
 
@@ -157,14 +150,17 @@ void AnimatedMesh::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
 
 void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 {
+
 }
 
 void AnimatedMesh::Render() const
 {
+  //D3DXVec3TransformCoord( out, boneLines[0].ToLPD3DXVECTOR3(), 
 }
 
 void AnimatedMesh::SetAnimationSet( DWORD index )
 {
+  curAnimSet = min( index, animSets.size() - 1 );
 }
 
 const AnimatedMesh::Sphere &AnimatedMesh::GetBoundingSphere() const

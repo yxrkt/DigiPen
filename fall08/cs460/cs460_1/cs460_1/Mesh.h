@@ -4,16 +4,33 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <set>
 
 #include "CAllocateHierarchy.h"
 #include "Vertex.h"
+#include "XFileParser.h"
 
 #define ASSETS_DIR "../Assets/"
+
+//bool LPFRAMELess( const LPFRAME &lhs, const LPFRAME &rhs )
+//{
+//  return ( lhs->Name < rhs->Name );
+//}
+
+struct LPFRAMELess
+{
+  bool operator ()( const LPFRAME &lhs, const LPFRAME &rhs )
+  {
+    return ( lhs->Name < rhs->Name );
+  }
+};
 
 typedef std::vector< D3DMATERIAL9 >       MaterialVec;
 typedef std::vector< LPDIRECT3DTEXTURE9 > TextureVec;
 typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
+typedef std::vector< AnimationSet >       AnimationSetVec;
+typedef std::set< LPFRAME, LPFRAMELess >  FrameSet;
 
 
 class StaticMesh
@@ -65,8 +82,10 @@ class AnimatedMesh
     LPD3DXMATRIX        boneMatrices;
     Sphere              bs;
 
-    StringVec           animSetNames;
     VertVec             boneLines;
+    AnimationSetVec     animSets;
+    DWORD               curAnimSet;
+    FrameSet            frameSet;
 };
 
 
