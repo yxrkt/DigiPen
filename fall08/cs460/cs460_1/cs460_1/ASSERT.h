@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 #define MESSAGEOK( msg ) MessageBoxA( NULL, msg, "Message", MB_OK );
 
 template<typename T> struct _hackForAssert                    //

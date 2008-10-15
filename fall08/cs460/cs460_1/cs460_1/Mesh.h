@@ -12,6 +12,7 @@
 typedef std::vector< D3DMATERIAL9 >       MaterialVec;
 typedef std::vector< LPDIRECT3DTEXTURE9 > TextureVec;
 typedef std::vector< ColoredVertex >      VertVec;
+typedef std::vector< std::string >        StringVec;
 
 class StaticMesh
 {
@@ -55,10 +56,13 @@ class AnimatedMesh
     //void SetupBoneMatrices( LPFRAME pFrame, LPD3DXMATRIX pParentMatrix )
 
   private:
+    void ReadAnimData( const std::string &file );
+
     LPDIRECT3DDEVICE9   pDevice;
     LPFRAME             pFrameRoot;
     LPD3DXMATRIX        boneMatrices;
     Sphere              bs;
 
+    StringVec           animSetNames;
     VertVec             boneLines;
 };
