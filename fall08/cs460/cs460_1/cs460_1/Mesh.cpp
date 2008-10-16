@@ -214,6 +214,7 @@ void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 
   boneLines.clear();
   SetFrameMatrix( pFrameRoot, curKeyFrame );
+  D3DXMatrixMultiply( &pFrameRoot->TransformationMatrix, &pFrameRoot->TransformationMatrix, &mtxWorld );
   MoveBones( pFrameRoot, pFrameRoot->TransformationMatrix, curKeyFrame );
 }
 

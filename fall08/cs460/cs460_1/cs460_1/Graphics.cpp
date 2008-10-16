@@ -128,9 +128,16 @@ void Graphics::LoadAnimatedMesh( const std::string &file )
   mesh.Load( file );
   animMeshes.push_back( mesh );
 
+  float angle = 2.f * D3DX_PI / 3.f;
+  float dist  = 3.f * mesh.BS.radius;
+
   mainCam.lookAt  = mesh.BS.center;
+  mainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 0.f, dist * sin( angle ) );
 }
 
+// =============================================================================
+// ! Increment or decrement animation speeds
+// =============================================================================
 void Graphics::IncDecAnimSpeed( bool inc )
 {
   std::for_each( animMeshes.begin(), animMeshes.end(), inc ? IncAnimSpeed : DecAnimSpeed );
