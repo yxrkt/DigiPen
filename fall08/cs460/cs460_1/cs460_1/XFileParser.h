@@ -12,7 +12,7 @@ typedef std::queue< std::string > StringQueue;
 
 struct KeyFrame
 {
-  int         tick;
+  DWORD       tick;
   D3DXMATRIX  matrix;
 };
 

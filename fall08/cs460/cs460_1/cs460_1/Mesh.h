@@ -12,25 +12,12 @@
 
 #define ASSETS_DIR "../Assets/"
 
-//bool LPFRAMELess( const LPFRAME &lhs, const LPFRAME &rhs )
-//{
-//  return ( lhs->Name < rhs->Name );
-//}
-
-struct LPFRAMELess
-{
-  bool operator ()( const LPFRAME &lhs, const LPFRAME &rhs )
-  {
-    return ( lhs->Name < rhs->Name );
-  }
-};
 
 typedef std::vector< D3DMATERIAL9 >       MaterialVec;
 typedef std::vector< LPDIRECT3DTEXTURE9 > TextureVec;
 typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
 typedef std::vector< AnimationSet >       AnimationSetVec;
-typedef std::set< LPFRAME, LPFRAMELess >  FrameSet;
 
 
 class StaticMesh
@@ -64,28 +51,32 @@ class AnimatedMesh
     AnimatedMesh( const LPDIRECT3DDEVICE9 _pDevice );
     ~AnimatedMesh();
 
+    void DrawBones() const;
     void Load( const std::string &file );
-    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
     void Render() const;
     void SetAnimationSet( DWORD index );
-    void DrawBones() const;
-    void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
 
-    const Sphere &GetBoundingSphere() const;
-    //void SetupBoneMatrices( LPFRAME pFrame, LPD3DXMATRIX pParentMatrix )
+    const Sphere  &BS;
+    const DWORD   &AnimSet;
+    const size_t  &KeyFrame;
 
   private:
+    void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
+    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
+    void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame, size_t cur = 0 );
     void ReadAnimData( const std::string &file );
+    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame );
+    void SetKeyFrame( DWORD tick );
 
+  private:
     LPDIRECT3DDEVICE9   pDevice;
     LPFRAME             pFrameRoot;
-    LPD3DXMATRIX        boneMatrices;
-    Sphere              bs;
-
     VertVec             boneLines;
     AnimationSetVec     animSets;
+
+    Sphere              bs;
     DWORD               curAnimSet;
-    FrameSet            frameSet;
+    size_t              curKeyFrame;
 };
 
 

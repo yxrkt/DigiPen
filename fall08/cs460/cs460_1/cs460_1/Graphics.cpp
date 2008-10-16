@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "Graphics.h"
 #include "ASSERT.h"
 
@@ -63,6 +65,13 @@ void Graphics::Initialize( HWND hWndApp )
 // =============================================================================
 void Graphics::Update()
 {
+  if ( !animMeshes.empty() )
+  {
+    std::stringstream ss;
+    ss << "key frame = " << animMeshes.front().KeyFrame;
+    SetWindowText( hWnd, ss.str().c_str() );
+  }
+
   HRESULT hr;
 
   hr = pDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, bgColor, 1.f, 0 );
@@ -116,7 +125,7 @@ void Graphics::LoadAnimatedMesh( const std::string &file )
   mesh.Load( file );
   animMeshes.push_back( mesh );
 
-  mainCam.lookAt  = mesh.GetBoundingSphere().center;
+  mainCam.lookAt  = mesh.BS.center;
 }
 
 // =============================================================================
