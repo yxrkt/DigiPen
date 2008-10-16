@@ -231,6 +231,14 @@
 				RelativePath=".\Vertex.h"
 				>
 			</File>
+			<File
+				RelativePath=".\VQS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VQS.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Windows"

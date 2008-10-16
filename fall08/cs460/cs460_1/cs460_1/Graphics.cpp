@@ -65,13 +65,6 @@ void Graphics::Initialize( HWND hWndApp )
 // =============================================================================
 void Graphics::Update()
 {
-  if ( !animMeshes.empty() )
-  {
-    std::stringstream ss;
-    ss << "key frame = " << animMeshes.front().KeyFrame;
-    SetWindowText( hWnd, ss.str().c_str() );
-  }
-
   HRESULT hr;
 
   hr = pDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, bgColor, 1.f, 0 );
@@ -81,11 +74,6 @@ void Graphics::Update()
   ASSERT( hr == S_OK, "BeginScene failed." );
 
   SetupMatrices();
-
-    // draw axis
-  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 50.f, 0.f, 0.f ) );
-  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 50.f, 0.f ) );
-  //DrawLine( D3DXVECTOR3( 0.f, 0.f, 0.f ), D3DXVECTOR3( 0.f, 0.f, 50.f ) );
 
   for ( StaticMeshList::iterator i = staticMeshes.begin(); i != staticMeshes.end(); ++i )
   {

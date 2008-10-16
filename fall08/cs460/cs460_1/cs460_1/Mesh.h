@@ -9,6 +9,7 @@
 #include "CAllocateHierarchy.h"
 #include "Vertex.h"
 #include "XFileParser.h"
+#include "VQS.h"
 
 #define ASSETS_DIR "../Assets/"
 
@@ -67,7 +68,7 @@ class AnimatedMesh
     void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
     void ReadAnimData( const std::string &file );
-    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame );
+    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact = false );
     void SetKeyFrame( DWORD tick );
 
   private:
@@ -79,6 +80,7 @@ class AnimatedMesh
     DWORD               curAnimSet;
     size_t              curKeyFrame;
     float               animSpeed;
+    float               exactFrame;
 };
 
 

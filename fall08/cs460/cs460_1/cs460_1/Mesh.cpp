@@ -87,6 +87,7 @@ AnimatedMesh::AnimatedMesh( const AnimatedMesh &rhs )
 , curAnimSet( rhs.curAnimSet )
 , curKeyFrame( rhs.curKeyFrame )
 , animSpeed( rhs.animSpeed )
+, exactFrame( rhs.exactFrame )
 , BS( bs )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
@@ -196,14 +197,29 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
   }
 }
 
-void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame )
+void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
 {
   if ( pFrame->Name != NULL )
   {
     AnimationMap::iterator animIt = animSets[curAnimSet].animMap.find( pFrame->Name );
     if ( animIt != animSets[curAnimSet].animMap.end() )
     {
-      pFrame->TransformationMatrix = animIt->second.animKey.keyFrames[keyFrame].matrix;
+      if ( !exact )
+      {
+        pFrame->TransformationMatrix = animIt->second.animKey.keyFrames[keyFrame].matrix;
+      }
+      else
+      {
+        D3DXVECTOR3     scale0, scale1;
+        D3DXVECTOR3     trans0, trans1;
+        D3DXQUATERNION  rot0,   rot1;
+
+        D3DXMatrixDecompose( &scale0, &rot0, &trans0, &animIt->second.animKey.keyFrames[(int)floor(exactFrame)].matrix );
+        D3DXMatrixDecompose( &scale1, &rot1, &trans1, &animIt->second.animKey.keyFrames[(int)ceil(exactFrame)].matrix );
+
+        VQS vqs0( trans0, rot0, scale0.x );
+        VQS vqs1( trans1, rot1, scale1.x );
+      }
     }
   }
 }
@@ -221,13 +237,16 @@ void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 void AnimatedMesh::SetKeyFrame( DWORD tick )
 {
   KeyFrameVec &keyFrames0 = animSets[curAnimSet].animMap.begin()->second.animKey.keyFrames;
-  size_t nLastFrame = keyFrames0.size() - 1;
-  tick %= (DWORD)( (float)keyFrames0[nLastFrame].tick / animSpeed );
-  tick = (DWORD)( animSpeed * (float)tick );
+  size_t nKeyFrames = keyFrames0.size(), nLastFrame = nKeyFrames - 1;
+  DWORD modVal = (DWORD)( (float)( keyFrames0[nLastFrame].tick + 1.f ) / animSpeed );
+  tick = (DWORD)( animSpeed * (float)( tick % modVal ) );
   for ( size_t i = nLastFrame; i >= 0; --i )
   {
     if ( tick >= keyFrames0[i].tick )
     {
+      float num   = (float)( tick - keyFrames0[i].tick );
+      float den   = (float)( keyFrames0[(i + 1) % nKeyFrames].tick - keyFrames0[i].tick );
+      exactFrame  = (float)i + num / den;
       curKeyFrame = i;
       break;
     }
