@@ -69,10 +69,28 @@ void StaticMesh::Render() const
 // Animated Mesh
 AnimatedMesh::AnimatedMesh( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
+, curAnimSet( 0 )
+, animSpeed( 1.f )
 , BS( bs )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
-, curAnimSet( 0 )
+, AnimSpeed( animSpeed )
+{
+}
+
+AnimatedMesh::AnimatedMesh( const AnimatedMesh &rhs )
+: pDevice( rhs.pDevice )
+, pFrameRoot( rhs.pFrameRoot )
+, boneLines( rhs.boneLines )
+, animSets( rhs.animSets )
+, bs( rhs.bs )
+, curAnimSet( rhs.curAnimSet )
+, curKeyFrame( rhs.curKeyFrame )
+, animSpeed( rhs.animSpeed )
+, BS( bs )
+, AnimSet( curAnimSet )
+, KeyFrame( curKeyFrame )
+, AnimSpeed( animSpeed )
 {
 }
 
@@ -150,7 +168,7 @@ void AnimatedMesh::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
   }
 }
 
-void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame, size_t cur )
+void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame )
 {
   if ( pFrame )
   {
@@ -169,10 +187,10 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
       D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &concat );
       if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
       { // avoid drawing kickstand
-        boneLines[cur++]  = ColoredVertex( startVert );
-        boneLines[cur++]  = ColoredVertex( childVert );
+        boneLines.push_back( startVert );
+        boneLines.push_back( childVert );
       }
-      MoveBones( pCurChild, concat, keyFrame, cur );
+      MoveBones( pCurChild, concat, keyFrame );
       pCurChild = (LPFRAME)pCurChild->pFrameSibling;
     }
   }
@@ -180,22 +198,31 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
 
 void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame )
 {
-  AnimationMap::iterator animIt = animSets[curAnimSet].animMap.find( pFrame->Name );
-  ASSERT( animIt != animSets[curAnimSet].animMap.end(), "Animation not found." );
-  pFrame->TransformationMatrix = animIt->second.animKey.keyFrames[keyFrame].matrix;
+  if ( pFrame->Name != NULL )
+  {
+    AnimationMap::iterator animIt = animSets[curAnimSet].animMap.find( pFrame->Name );
+    if ( animIt != animSets[curAnimSet].animMap.end() )
+    {
+      pFrame->TransformationMatrix = animIt->second.animKey.keyFrames[keyFrame].matrix;
+    }
+  }
 }
 
 void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 {
-  DWORD tick  = timeGetTime();
-  SetKeyFrame( tick );
+  SetKeyFrame( elapsedTime );
+
+  boneLines.clear();
+  SetFrameMatrix( pFrameRoot, curKeyFrame );
+  MoveBones( pFrameRoot, pFrameRoot->TransformationMatrix, curKeyFrame );
 }
 
 void AnimatedMesh::SetKeyFrame( DWORD tick )
 {
   KeyFrameVec &keyFrames0 = animSets[curAnimSet].animMap.begin()->second.animKey.keyFrames;
   size_t nLastFrame = keyFrames0.size() - 1;
-  tick %= keyFrames0[nLastFrame].tick;
+  tick %= (DWORD)( (float)keyFrames0[nLastFrame].tick / animSpeed );
+  tick = (DWORD)( animSpeed * (float)tick );
   for ( size_t i = nLastFrame; i >= 0; --i )
   {
     if ( tick >= keyFrames0[i].tick )
@@ -208,7 +235,7 @@ void AnimatedMesh::SetKeyFrame( DWORD tick )
 
 void AnimatedMesh::Render() const
 {
-  //D3DXVec3TransformCoord( out, boneLines[0].ToLPD3DXVECTOR3(), 
+  
 }
 
 void AnimatedMesh::SetAnimationSet( DWORD index )

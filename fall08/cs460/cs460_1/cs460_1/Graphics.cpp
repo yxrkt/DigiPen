@@ -94,11 +94,14 @@ void Graphics::Update()
 
   for ( AnimatedMeshList::iterator i = animMeshes.begin(); i != animMeshes.end(); ++i )
   {
-    //i->Render();
+    D3DXMATRIX mtxWorld;
+    pDevice->GetTransform( D3DTS_WORLD, &mtxWorld );
+    i->FrameMove( timeGetTime(), mtxWorld );
+
+    i->Render();
+
     i->DrawBones();
   }
-
-
 
   hr = pDevice->EndScene();
   ASSERT( hr == S_OK, "EndScene failed." );
@@ -126,6 +129,11 @@ void Graphics::LoadAnimatedMesh( const std::string &file )
   animMeshes.push_back( mesh );
 
   mainCam.lookAt  = mesh.BS.center;
+}
+
+void Graphics::IncDecAnimSpeed( bool inc )
+{
+  std::for_each( animMeshes.begin(), animMeshes.end(), inc ? IncAnimSpeed : DecAnimSpeed );
 }
 
 // =============================================================================

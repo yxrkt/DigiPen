@@ -19,16 +19,17 @@ struct Camera
 class Graphics
 {
   public:
-    Graphics();
-    ~Graphics();
+    Graphics( void );
+    ~Graphics( void );
 
     void Initialize( HWND hWndApp );
-    void Update();
+    void Update( void );
     void LoadStaticMesh( const std::string &file );
     void LoadAnimatedMesh( const std::string &file );
+    void IncDecAnimSpeed( bool inc );
     void DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q );
-    void SetupMatrices();
-    void Cleanup();
+    void SetupMatrices( void );
+    void Cleanup( void );
 
       // Accessors
     Camera      &MainCam;
@@ -48,4 +49,14 @@ class Graphics
     AnimatedMeshList    animMeshes;
     HWND                hWnd;
     bool                ready;
+
+  private:
+    static void IncAnimSpeed( const AnimatedMesh &animMesh )
+    {
+      animMesh.AnimSpeed += ( ( animMesh.AnimSpeed >= 1.f ) ? 1.f : animMesh.AnimSpeed );
+    }
+    static void DecAnimSpeed( const AnimatedMesh &animMesh )
+    {
+      ( animMesh.AnimSpeed > 1.f ) ? animMesh.AnimSpeed -= 1.f : animMesh.AnimSpeed /= 2.f;
+    }
 };

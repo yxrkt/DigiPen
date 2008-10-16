@@ -82,6 +82,21 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
 {
   switch ( msg )
   {
+    case WM_KEYDOWN:
+    {
+      switch( wParam )
+      {
+        case VK_ADD:
+          graphics.IncDecAnimSpeed( true );
+          break;
+
+        case VK_SUBTRACT:
+          graphics.IncDecAnimSpeed( false );
+          break;
+      }
+      break;
+    }
+
     case WM_DESTROY:
       PostQuitMessage( 0 );
       break;

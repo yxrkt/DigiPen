@@ -49,9 +49,11 @@ class AnimatedMesh
 
   public:
     AnimatedMesh( const LPDIRECT3DDEVICE9 _pDevice );
+    AnimatedMesh( const AnimatedMesh &rhs );
     ~AnimatedMesh();
 
     void DrawBones() const;
+    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
     void Load( const std::string &file );
     void Render() const;
     void SetAnimationSet( DWORD index );
@@ -59,11 +61,11 @@ class AnimatedMesh
     const Sphere  &BS;
     const DWORD   &AnimSet;
     const size_t  &KeyFrame;
+          float   &AnimSpeed;
 
   private:
     void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
-    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
-    void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame, size_t cur = 0 );
+    void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
     void ReadAnimData( const std::string &file );
     void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame );
     void SetKeyFrame( DWORD tick );
@@ -73,10 +75,10 @@ class AnimatedMesh
     LPFRAME             pFrameRoot;
     VertVec             boneLines;
     AnimationSetVec     animSets;
-
     Sphere              bs;
     DWORD               curAnimSet;
     size_t              curKeyFrame;
+    float               animSpeed;
 };
 
 
