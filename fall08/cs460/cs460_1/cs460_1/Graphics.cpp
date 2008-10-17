@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include "Graphics.h"
 #include "ASSERT.h"
 
@@ -57,6 +55,10 @@ void Graphics::Initialize( HWND hWndApp )
   mainCam.lookAt  = D3DXVECTOR3( 0.f, 0.f, 0.f );
   mainCam.up      = D3DXVECTOR3( 0.f, 1.f, 0.f );
 
+  hr = D3DXCreateFont( pDevice, 16, 0, FW_NORMAL, D3DX_DEFAULT, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                       DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Courier New", &pFont );
+  ASSERT( hr == S_OK, "Creating font failed." );
+
   ready = true;
 }
 
@@ -72,6 +74,8 @@ void Graphics::Update()
 
   hr = pDevice->BeginScene();
   ASSERT( hr == S_OK, "BeginScene failed." );
+
+  DisplayInfo();
 
   SetupMatrices();
 
@@ -165,8 +169,8 @@ void Graphics::Cleanup()
 {
   SAFE_RELEASE( pD3D );
   SAFE_RELEASE( pDevice );
+  SAFE_RELEASE( pFont );
 }
-
 
 // =============================================================================
 // ! Draws a line
@@ -191,4 +195,20 @@ void Graphics::DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q )
   pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
   pDevice->DrawPrimitive( D3DPT_LINELIST, 0, 1 );
   pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
+}
+
+void Graphics::DisplayInfo( void )
+{
+  static DWORD lastTick = 0;
+
+  RECT rcPos = { 10, 10, 0, 0 };
+  std::stringstream info;
+
+  DWORD tick = timeGetTime();
+  info << "FPS: " << 1000.f/ (float)( tick - lastTick ) << std::endl << std::endl;
+  lastTick = tick;
+
+  AddMeshInfo addMeshInfo( &info );
+  std::for_each( animMeshes.begin(), animMeshes.end(), addMeshInfo );
+  pFont->DrawText( NULL, info.str().c_str(), -1, &rcPos, DT_NOCLIP, D3DCOLOR_XRGB( 255, 0, 255 ) );
 }

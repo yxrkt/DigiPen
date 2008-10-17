@@ -2,6 +2,7 @@
 
 #include <d3dx9.h>
 #include <string>
+#include <sstream>
 
 #include "Mesh.h"
 #include "Macros.h"
@@ -29,6 +30,7 @@ class Graphics
     void IncDecAnimSpeed( bool inc );
     void DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q );
     void SetupMatrices( void );
+    void DisplayInfo( void );
     void Cleanup( void );
 
       // Accessors
@@ -43,6 +45,7 @@ class Graphics
       // Data
     LPDIRECT3D9         pD3D;
     LPDIRECT3DDEVICE9   pDevice;
+    LPD3DXFONT          pFont;
     Camera              mainCam;
     DWORD               bgColor;
     StaticMeshList      staticMeshes;
@@ -59,4 +62,16 @@ class Graphics
     {
       ( animMesh.AnimSpeed > 1.f ) ? animMesh.AnimSpeed -= 1.f : animMesh.AnimSpeed /= 2.f;
     }
+    struct AddMeshInfo
+    {
+      AddMeshInfo( std::stringstream *_pInfo ) : pInfo( _pInfo ) {}
+      void operator ()( const AnimatedMesh &mesh )
+      {
+        *pInfo << "Animation Set: " << mesh.AnimSet + 1 << "/" << mesh.AnimSets.size() << std::endl
+               << "Speed:         " << mesh.AnimSpeed << "x" << std::endl;
+        *pInfo << std::endl;
+      }
+
+      std::stringstream *pInfo;
+    };
 };

@@ -59,10 +59,11 @@ class AnimatedMesh
     void Render() const;
     void SetAnimationSet( DWORD index );
 
-    const Sphere  &BS;
-    const DWORD   &AnimSet;
-    const size_t  &KeyFrame;
-          float   &AnimSpeed;
+    const Sphere          &BS;
+    const DWORD           &AnimSet;
+    const size_t          &KeyFrame;
+    const AnimationSetVec &AnimSets;
+          float           &AnimSpeed;
 
   private:
     void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );

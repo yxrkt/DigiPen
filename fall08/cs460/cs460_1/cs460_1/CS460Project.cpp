@@ -32,9 +32,9 @@ void CS460Project::Initialize()
 // =============================================================================
 void CS460Project::Update()
 {
-  //float t = .5f * D3DX_PI * (float)( timeGetTime() % 4000 ) / 1000.f;
-  //graphics.MainCam.eye.x = 1300.f * cos( t );
-  //graphics.MainCam.eye.z = 1300.f * sin( t );
+  float t = .5f * D3DX_PI * (float)( timeGetTime() % 4000 ) / 1000.f;
+  graphics.MainCam.eye.x = 1300.f * cos( t );
+  graphics.MainCam.eye.z = 1300.f * sin( t );
 
   graphics.Update();
 }
@@ -91,6 +91,10 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
 
         case VK_SUBTRACT:
           graphics.IncDecAnimSpeed( false );
+          break;
+
+        case VK_ESCAPE:
+          PostQuitMessage( 0 );
           break;
       }
       break;

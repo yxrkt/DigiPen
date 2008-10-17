@@ -74,6 +74,7 @@ AnimatedMesh::AnimatedMesh( LPDIRECT3DDEVICE9 _pDevice )
 , BS( bs )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
+, AnimSets( animSets )
 , AnimSpeed( animSpeed )
 {
 }
@@ -91,6 +92,7 @@ AnimatedMesh::AnimatedMesh( const AnimatedMesh &rhs )
 , BS( bs )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
+, AnimSets( animSets )
 , AnimSpeed( animSpeed )
 {
 }
@@ -175,6 +177,42 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
   {
     SetFrameMatrix( pFrame, keyFrame );
 
+    //
+    if ( pFrame->pMeshContainer )
+    {
+      HRESULT hr;
+
+      LPD3DXMESHCONTAINER &pMeshContainer = pFrame->pMeshContainer;
+
+      for ( size_t i = 0; i < pMeshContainer->NumMaterials; ++i )
+      {
+        //if ( pMeshContainer->pMaterials )
+        //{
+        //  hr = pDevice->SetMaterial( &pMeshContainer->pMaterials[i].MatD3D );
+        //  ASSERT( hr == S_OK, "Setting material failed." );
+        //}
+
+        ////
+        //textures.push_back( NULL );
+        //if ( materialBuf[i].pTextureFilename != NULL && strlen( materialBuf[i].pTextureFilename ) > 0 )
+        //{
+        //  std::string texFile( std::string( ASSETS_DIR ) + materialBuf[i].pTextureFilename );
+        //  hr = D3DXCreateTextureFromFileA( pDevice, texFile.c_str(), &textures[i] );
+        //  if ( hr != S_OK )
+        //    MESSAGEOK( "Creating texture failed." );
+        //}
+        ////
+
+        //hr = pDevice->SetTexture( 0, textures[i] );
+        //ASSERT( hr == S_OK, "Setting texture failed." );
+
+        
+        //hr = pMeshContainer->MeshData.pMesh->DrawSubset( (DWORD)i );
+        //ASSERT( hr == S_OK, "DrawSubset failed." );
+      }
+    }
+    //
+
     D3DXVECTOR3 startVert;
     D3DXVec3TransformCoord( &startVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &matrix );
 
@@ -191,6 +229,7 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
         boneLines.push_back( startVert );
         boneLines.push_back( childVert );
       }
+
       MoveBones( pCurChild, concat, keyFrame );
       pCurChild = (LPFRAME)pCurChild->pFrameSibling;
     }
@@ -267,7 +306,6 @@ void AnimatedMesh::SetKeyFrame( DWORD tick )
 
 void AnimatedMesh::Render() const
 {
-  
 }
 
 void AnimatedMesh::SetAnimationSet( DWORD index )
