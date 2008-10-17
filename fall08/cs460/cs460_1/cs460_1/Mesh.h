@@ -12,7 +12,6 @@
 #include "VQS.h"
 
 #define ASSETS_DIR      "../Assets/"
-#define FLOAT_EPSILON   0.00001f
 
 
 typedef std::vector< D3DMATERIAL9 >       MaterialVec;

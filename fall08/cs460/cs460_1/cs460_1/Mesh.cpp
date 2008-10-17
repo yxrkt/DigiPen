@@ -224,15 +224,13 @@ void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
         vqs0.GetMatrix( tits );
         pFrame->TransformationMatrix = tits;
 
-        int i = 'fuck';
+        VQS vqs;
+        VQS::Interpolate( vqs, vqs0, vqs1, exactFrame - floor( exactFrame ) );
 
-        //VQS vqsFinal;
-        //VQS::Interpolate( vqsFinal, vqs0, vqs1, exactFrame - floor( exactFrame ) );
+        D3DXMATRIX mtxFinal;
+        vqs.GetMatrix( mtxFinal );
 
-        //D3DXMATRIX mtxFinal;
-        //vqsFinal.GetMatrix( mtxFinal );
-
-        //pFrame->TransformationMatrix = mtxFinal;
+        pFrame->TransformationMatrix = mtxFinal;
       }
     }
   }
