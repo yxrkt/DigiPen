@@ -12,6 +12,8 @@ class VQS
     VQS( const VQS &rhs );
     ~VQS();
 
+    void GetMatrix( D3DXMATRIX &matrix );
+
     D3DXVECTOR3     &V;
     D3DXQUATERNION  &Q;
     float           &S;
