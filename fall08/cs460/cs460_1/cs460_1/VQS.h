@@ -5,6 +5,9 @@
 class VQS
 {
   public:
+    static void Interpolate( VQS &vqsOut, const VQS &vqs0, const VQS &vqs1, float t );
+
+  public:
     VQS( D3DXVECTOR3 _v = D3DXVECTOR3(), D3DXQUATERNION _q = D3DXQUATERNION(), float _s = 0 );
     VQS( const VQS &rhs );
     ~VQS();

@@ -68,7 +68,7 @@ class AnimatedMesh
     void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
     void ReadAnimData( const std::string &file );
-    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact = false );
+    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact = true );
     void SetKeyFrame( DWORD tick );
 
   private:

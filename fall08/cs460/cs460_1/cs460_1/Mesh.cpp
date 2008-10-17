@@ -219,6 +219,28 @@ void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
 
         VQS vqs0( trans0, rot0, scale0.x );
         VQS vqs1( trans1, rot1, scale1.x );
+
+        VQS vqsFinal;
+        VQS::Interpolate( vqsFinal, vqs0, vqs1, exactFrame - floor( exactFrame ) );
+
+        D3DXMATRIX mtxFinal;
+        for ( int r = 0; r < 4; ++r )
+        {
+          for ( int c = 0; c < 4; ++c )
+          {
+            if ( r == c && r != 3 )
+              mtxFinal.m[c][r] = vqsFinal.S;
+            else if ( r == 3 &&  c != 3 )
+              mtxFinal.m[c][r] = vqsFinal.V[c];
+            else
+              mtxFinal.m[c][r] = 0.f;
+          }
+        }
+        mtxFinal.m[3][3] = 1.f;
+        //D3DXMATRIX mtxRot( 1 - 2y2 - 2z2, 2xy - 2wz, 2xz + 2wy, 0,
+        //                   2xy + 2wz, 1 - 2x2 - 2z2, 2yz - 2wx, 0,
+        //                   2xz - 2wy, 2yz + 2wx, 1 - 2x2 - 2y2, 0,
+        //                   0, 0, 0, 1 );
       }
     }
   }
