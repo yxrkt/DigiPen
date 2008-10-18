@@ -33,7 +33,7 @@ void StaticMesh::Load( const std::string &file )
   for ( DWORD i = 0; i < nMaterials; ++i )
   {
     materials.push_back( materialBuf[i].MatD3D );
-    materials[i].Ambient = materials[i].Diffuse;
+    materials[i].Ambient = .5f * materials[i].Diffuse;
 
     textures.push_back( NULL );
     if ( materialBuf[i].pTextureFilename != NULL && strlen( materialBuf[i].pTextureFilename ) > 0 )
@@ -177,41 +177,45 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
   {
     SetFrameMatrix( pFrame, keyFrame );
 
-    //
+    /*
     if ( pFrame->pMeshContainer )
     {
       HRESULT hr;
 
-      LPD3DXMESHCONTAINER &pMeshContainer = pFrame->pMeshContainer;
+      LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
 
-      for ( size_t i = 0; i < pMeshContainer->NumMaterials; ++i )
+      for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
       {
-        //if ( pMeshContainer->pMaterials )
-        //{
-        //  hr = pDevice->SetMaterial( &pMeshContainer->pMaterials[i].MatD3D );
-        //  ASSERT( hr == S_OK, "Setting material failed." );
-        //}
+        hr = pDevice->SetMaterial( &pMesh->pMaterials9[i] );
+        ASSERT( hr == S_OK, "Setting material failed." );
 
-        ////
-        //textures.push_back( NULL );
-        //if ( materialBuf[i].pTextureFilename != NULL && strlen( materialBuf[i].pTextureFilename ) > 0 )
-        //{
-        //  std::string texFile( std::string( ASSETS_DIR ) + materialBuf[i].pTextureFilename );
-        //  hr = D3DXCreateTextureFromFileA( pDevice, texFile.c_str(), &textures[i] );
-        //  if ( hr != S_OK )
-        //    MESSAGEOK( "Creating texture failed." );
-        //}
-        ////
+        hr = pDevice->SetTexture( 0, pMesh->ppTextures[i] );
+        ASSERT( hr == S_OK, "Setting texture failed." );
 
-        //hr = pDevice->SetTexture( 0, textures[i] );
-        //ASSERT( hr == S_OK, "Setting texture failed." );
+        LPD3DXMATRIXSTACK pMatrixStack;
+        D3DXCreateMatrixStack( 0, &pMatrixStack );
+        pMatrixStack->Push();
+        pMatrixStack->LoadIdentity();
 
-        
-        //hr = pMeshContainer->MeshData.pMesh->DrawSubset( (DWORD)i );
-        //ASSERT( hr == S_OK, "DrawSubset failed." );
+        pMatrixStack->Push();
+        //pMatrixStack->LoadMatrix( &pFrame->TransformationMatrix );
+        D3DXMATRIX tits;
+        static float angle = 0.f;
+        angle += D3DX_PI / 150.f;
+        D3DXMatrixRotationY( &tits, angle );
+        pMatrixStack->LoadMatrix( &pFrame->TransformationMatrix );
+        hr = pDevice->SetTransform( D3DTS_WORLD, pMatrixStack->GetTop() );
+        ASSERT( hr == S_OK, "Setting transform failed." );
+        hr = pMesh->MeshData.pMesh->DrawSubset( i );
+        ASSERT( hr == S_OK, "DrawSubset failed." );
+        pMatrixStack->Pop();
+        hr = pDevice->SetTransform( D3DTS_WORLD, pMatrixStack->GetTop() );
+        ASSERT( hr == S_OK, "Setting transform failed." );
+
+        pMatrixStack->Release();
       }
     }
-    //
+    //*/
 
     D3DXVECTOR3 startVert;
     D3DXVec3TransformCoord( &startVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &matrix );
@@ -306,6 +310,17 @@ void AnimatedMesh::SetKeyFrame( DWORD tick )
 
 void AnimatedMesh::Render() const
 {
+  LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrameRoot->pMeshContainer;
+
+  if ( pMesh )
+  {
+    for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
+    {
+      pDevice->SetMaterial( &pMesh->pMaterials9[i] );
+      pDevice->SetTexture( 0, pMesh->ppTextures[i] );
+      pMesh->MeshData.pMesh->DrawSubset( i );
+    }
+  }
 }
 
 void AnimatedMesh::SetAnimationSet( DWORD index )

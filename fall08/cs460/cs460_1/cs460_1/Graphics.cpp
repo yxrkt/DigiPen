@@ -59,6 +59,12 @@ void Graphics::Initialize( HWND hWndApp )
                        DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Courier New", &pFont );
   ASSERT( hr == S_OK, "Creating font failed." );
 
+  CreateSunLight();
+
+  D3DXCreateMatrixStack( 0, &pMatrixStack );
+  pMatrixStack->Push();
+  pMatrixStack->LoadIdentity();
+
   ready = true;
 }
 
@@ -86,12 +92,8 @@ void Graphics::Update()
 
   for ( AnimatedMeshList::iterator i = animMeshes.begin(); i != animMeshes.end(); ++i )
   {
-    D3DXMATRIX mtxWorld;
-    pDevice->GetTransform( D3DTS_WORLD, &mtxWorld );
-    i->FrameMove( timeGetTime(), mtxWorld );
-
+    i->FrameMove( timeGetTime(), *pMatrixStack->GetTop() );
     i->Render();
-
     i->DrawBones();
   }
 
@@ -109,6 +111,12 @@ void Graphics::LoadStaticMesh( const std::string &file )
   StaticMesh mesh( pDevice );
   mesh.Load( file );
   staticMeshes.push_back( mesh );
+
+  float angle = 2.f * D3DX_PI / 3.f;
+  float dist  = 3.f * 400.f;
+
+  mainCam.lookAt  = D3DXVECTOR3( 0.f, 250.f, 0.f );
+  mainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 0.f, dist * sin( angle ) );
 }
 
 // =============================================================================
@@ -170,6 +178,7 @@ void Graphics::Cleanup()
   SAFE_RELEASE( pD3D );
   SAFE_RELEASE( pDevice );
   SAFE_RELEASE( pFont );
+  SAFE_RELEASE( pMatrixStack );
 }
 
 // =============================================================================
@@ -211,4 +220,25 @@ void Graphics::DisplayInfo( void )
   AddMeshInfo addMeshInfo( &info );
   std::for_each( animMeshes.begin(), animMeshes.end(), addMeshInfo );
   pFont->DrawText( NULL, info.str().c_str(), -1, &rcPos, DT_NOCLIP, D3DCOLOR_XRGB( 255, 0, 255 ) );
+}
+
+void Graphics::CreateSunLight( void )
+{
+  D3DLIGHT9 light;
+  ZeroMemory( &light, sizeof( D3DLIGHT9 ) );
+  light.Type       = D3DLIGHT_DIRECTIONAL;
+  light.Diffuse.r  = 0.3f;
+  light.Diffuse.g  = 0.3f;
+  light.Diffuse.b  = 0.3f;
+  light.Diffuse.a  = 1.0f;
+  light.Range      = 100.0f;
+
+  // Create a direction for our light - it must be normalized  
+  D3DXVECTOR3 vecDir;
+  vecDir = D3DXVECTOR3( 0.5f, -0.5f, -0.3f );
+  D3DXVec3Normalize( (D3DXVECTOR3 *)&light.Direction, &vecDir );
+
+  // Tell the device about the light and turn it on
+  pDevice->SetLight( 0, &light );
+  pDevice->LightEnable( 0, TRUE ); 
 }

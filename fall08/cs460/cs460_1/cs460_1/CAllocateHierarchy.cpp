@@ -17,212 +17,175 @@
 #include "CAllocateHierarchy.h"
 
 
-HRESULT CAllocateHierarchy::CreateFrame(LPCTSTR Name, LPD3DXFRAME *ppNewFrame)
-{    
-	// Create a frame
-	// Using my drived struct here
-	LPFRAME pFrame = new FRAME;
-	ZeroMemory(pFrame, sizeof(FRAME));
+HRESULT CAllocateHierarchy::CreateFrame( LPCTSTR Name, LPD3DXFRAME *ppNewFrame )
+{
+  LPFRAME pFrame = new FRAME;
+  ZeroMemory( pFrame, sizeof( FRAME ) );
 
-	// Inicilize the passed in frame
-	*ppNewFrame = NULL;
+  *ppNewFrame = NULL;
 
-	// Put the name in the frame
-	if(Name)
-	{
-		int nNameSize = (int)strlen(Name)+1;
-		pFrame->Name = new char[nNameSize];
-		memcpy(pFrame->Name, Name, nNameSize*sizeof(char));
-	}
-	else
-		pFrame->Name = NULL;
-	
-	// Inicilize the rest of the frame
-	pFrame->pFrameFirstChild = NULL;
-	pFrame->pFrameSibling = NULL;
-	pFrame->pMeshContainer = NULL;
-	D3DXMatrixIdentity(&pFrame->matCombined);
-	D3DXMatrixIdentity(&pFrame->TransformationMatrix);
+  pFrame->Name = NULL;
+  if ( Name )
+  {
+    pFrame->Name = new char[strlen( Name ) + 1];
+    strcpy( pFrame->Name, Name );
+  }
 
-	// Set the output frame to the one that we have
-	*ppNewFrame = (LPD3DXFRAME)pFrame;
+  pFrame->pFrameFirstChild  = NULL;
+  pFrame->pFrameSibling     = NULL;
+  pFrame->pMeshContainer    = NULL;
+  D3DXMatrixIdentity( &pFrame->matCombined );
+  D3DXMatrixIdentity( &pFrame->TransformationMatrix );
 
-	// It no longer points to the frame
-	pFrame = NULL;
+  *ppNewFrame = (LPD3DXFRAME)pFrame;
 
-	// Returns an HRESULT so give it the AOk result
-    return S_OK;
+  return S_OK;
 }
 
-HRESULT CAllocateHierarchy::CreateMeshContainer(THIS_ 
-                                                LPCSTR Name, 
-                                                CONST D3DXMESHDATA *pMeshData, 
-                                                CONST D3DXMATERIAL *pMaterials, 
-                                                CONST D3DXEFFECTINSTANCE *pEffectInstances, 
-                                                DWORD NumMaterials, 
-                                                CONST DWORD *pAdjacency, 
-                                                LPD3DXSKININFO pSkinInfo, 
-                                                LPD3DXMESHCONTAINER *ppNewMeshContainer)
+HRESULT CAllocateHierarchy::CreateMeshContainer(  THIS_ 
+                                                  LPCSTR Name, 
+                                                  CONST D3DXMESHDATA *pMeshData, 
+                                                  CONST D3DXMATERIAL *pMaterials, 
+                                                  CONST D3DXEFFECTINSTANCE *pEffectInstances, 
+                                                  DWORD NumMaterials, 
+                                                  CONST DWORD *pAdjacency, 
+                                                  LPD3DXSKININFO pSkinInfo, 
+                                                  LPD3DXMESHCONTAINER *ppNewMeshContainer )
 {
+  HRESULT hr;
 
-    // Create a Temp mesh contianer
-	// Using my drived struct here
-	LPMESHCONTAINER pMeshContainer = new MESHCONTAINER;
-	ZeroMemory(pMeshContainer, sizeof(MESHCONTAINER));
+  LPMESHCONTAINER pMeshContainer = new MESHCONTAINER;
+  ZeroMemory( pMeshContainer, sizeof( MESHCONTAINER ) );
 
-	// Inicialize passed in Container
-	*ppNewMeshContainer = NULL;
+  *ppNewMeshContainer = NULL;
 
-	if(Name)
-	{
-		// Put in the name
-		int nNameSize = (int)strlen(Name)+1;
-		pMeshContainer->Name = new char[nNameSize];
-		memcpy(pMeshContainer->Name, Name, nNameSize*sizeof(char));
+  pMeshContainer->Name = NULL;
+  if ( Name )
+  {
+    pMeshContainer->Name = new char[strlen( Name ) + 1];
+    strcpy( pMeshContainer->Name, Name );
+  }
+
+  pMeshContainer->MeshData.Type = D3DXMESHTYPE_MESH;
+
+  DWORD dwFaces = pMeshData->pMesh->GetNumFaces();
+
+  pMeshContainer->NumMaterials = NumMaterials;
+
+  pMeshContainer->pMaterials9 = new D3DMATERIAL9[pMeshContainer->NumMaterials];
+  
+  memcpy( pMeshContainer->pMaterials9, &pMaterials->MatD3D, sizeof( pMaterials->MatD3D ) );
+  const D3DCOLORVALUE &ambient = pMaterials->MatD3D.Ambient;
+  if ( ambient.r == 0.f && ambient.g == 0.f && ambient.b == 0.f )
+    pMeshContainer->pMaterials9->Ambient = .5f * pMeshContainer->pMaterials9->Diffuse;
+
+		//if(pMesh->pSkinInfo)
+		//{
+		//	//Create a copy of the mesh
+		//	pMesh->MeshData.pMesh->CloneMeshFVF(D3DXMESH_MANAGED, 
+		//		pMesh->MeshData.pMesh->GetFVF(), m_pd3dDevice, 
+		//		&pMesh->pSkinMesh);
+
+  // Multiply by 3 because there are three adjacent triangles
+  pMeshContainer->pAdjacency = new DWORD[dwFaces * 3];
+  memcpy( pMeshContainer->pAdjacency, pAdjacency, sizeof( DWORD ) * dwFaces * 3 );
+
+  LPDIRECT3DDEVICE9 pd3dDevice = NULL;
+  pMeshData->pMesh->GetDevice( &pd3dDevice );
+
+  pMeshData->pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMeshData->pMesh->GetFVF(),
+                                  pd3dDevice, &pMeshContainer->MeshData.pMesh );
+	
+  pMeshContainer->ppTextures = new LPDIRECT3DTEXTURE9[NumMaterials];
+  for ( DWORD i = 0; i < NumMaterials; ++i )
+  {
+    pMeshContainer->ppTextures [i] = NULL;
+
+    if( pMaterials[i].pTextureFilename && strlen( pMaterials[i].pTextureFilename ) > 0 )
+    {
+      hr = D3DXCreateTextureFromFile( pd3dDevice, pMaterials[i].pTextureFilename, &pMeshContainer->ppTextures[i] );
+      if ( FAILED( hr ) )
+      {
+        pMeshContainer->ppTextures[i] = NULL;
+      }
+    }
+  }
+
+  //Release the device
+  SAFE_RELEASE( pd3dDevice );
+
+  if ( pSkinInfo )
+  {
+    // first save off the SkinInfo and original mesh data
+    pMeshContainer->pSkinInfo = pSkinInfo;
+    pSkinInfo->AddRef();
+
+    // Will need an array of offset matrices to move the vertices from 
+    //	the figure space to the bone's space
+    UINT uBones = pSkinInfo->GetNumBones();
+    pMeshContainer->pBoneOffsets = new D3DXMATRIX[uBones];
+
+    //Create the arrays for the bones and the frame matrices
+    pMeshContainer->ppFrameMatrices = new D3DXMATRIX*[uBones];
+
+    // get each of the bone offset matrices so that we don't need to 
+    //	get them later
+    for ( UINT i = 0; i < uBones; ++i )
+      pMeshContainer->pBoneOffsets[i] = *( pMeshContainer->pSkinInfo->GetBoneOffsetMatrix( i ) );
 	}
 	else
-		pMeshContainer->Name = NULL;
-
-	pMeshContainer->MeshData.Type = D3DXMESHTYPE_MESH;
-	
-	// Get the number of Faces for adjacency
-	DWORD dwFaces = pMeshData->pMesh->GetNumFaces();
-
-	//Get Initcilize all the other data
-	pMeshContainer->NumMaterials = NumMaterials;
-
-	//Create the arrays for the materials and the textures
-	pMeshContainer->pMaterials9 = new D3DMATERIAL9[pMeshContainer->NumMaterials];
-
-	// Multiply by 3 because there are three adjacent triangles
-	pMeshContainer->pAdjacency = new DWORD[dwFaces*3];
-	memcpy(pMeshContainer->pAdjacency, pAdjacency, sizeof(DWORD) * dwFaces*3);
-
-	
-	//Get the device to use
-	LPDIRECT3DDEVICE9 pd3dDevice = NULL;// Direct3D Rendering device
-	pMeshData->pMesh->GetDevice(&pd3dDevice);
-
-	pMeshData->pMesh->CloneMeshFVF(D3DXMESH_MANAGED, 
-		pMeshData->pMesh->GetFVF(), pd3dDevice, 
-		&pMeshContainer->MeshData.pMesh);
-	
-	pMeshContainer->ppTextures  = new LPDIRECT3DTEXTURE9[NumMaterials];
-	for(DWORD dw = 0; dw < NumMaterials; ++dw)
 	{
-		pMeshContainer->ppTextures [dw] = NULL;
-
-		if(pMaterials[dw].pTextureFilename && strlen(pMaterials[dw].pTextureFilename) > 0)
-		{
-			if(FAILED(D3DXCreateTextureFromFile(pd3dDevice, 
-				pMaterials[dw].pTextureFilename, &pMeshContainer->ppTextures[dw])))
-					pMeshContainer->ppTextures [dw] = NULL;
-		}
-	}
-
-	//Release the device
-	SAFE_RELEASE(pd3dDevice);
-
-	if(pSkinInfo)
-	{
-		// first save off the SkinInfo and original mesh data
-	    pMeshContainer->pSkinInfo = pSkinInfo;
-	    pSkinInfo->AddRef();
-
-	    // Will need an array of offset matrices to move the vertices from 
-		//	the figure space to the bone's space
-	    UINT uBones = pSkinInfo->GetNumBones();
-	    pMeshContainer->pBoneOffsets = new D3DXMATRIX[uBones];
-
-		//Create the arrays for the bones and the frame matrices
-		pMeshContainer->ppFrameMatrices = new D3DXMATRIX*[uBones];
-
-	    // get each of the bone offset matrices so that we don't need to 
-		//	get them later
-	    for (UINT i = 0; i < uBones; i++)
-	        pMeshContainer->pBoneOffsets[i] = *(pMeshContainer->pSkinInfo->GetBoneOffsetMatrix(i));
-	}
-	else
-	
-	{
-		pMeshContainer->pSkinInfo = NULL;
-		pMeshContainer->pBoneOffsets = NULL;
-		pMeshContainer->pSkinMesh = NULL;
+		pMeshContainer->pSkinInfo       = NULL;
+		pMeshContainer->pBoneOffsets    = NULL;
+		pMeshContainer->pSkinMesh       = NULL;
 		pMeshContainer->ppFrameMatrices = NULL;
 	}
 
 	pMeshContainer->pMaterials = NULL;
-	pMeshContainer->pEffects = NULL;
+	pMeshContainer->pEffects   = NULL;
 
 	//pMeshContainer->MeshData.pMesh->OptimizeInplace(
 	//	D3DXMESHOPT_VERTEXCACHE|D3DXMESHOPT_COMPACT|D3DXMESHOPT_ATTRSORT,
 	//	pMeshContainer->pAdjacency,NULL,NULL,NULL);
 
 	// Set the output mesh container to the temp one
-	*ppNewMeshContainer = pMeshContainer;
-    pMeshContainer = NULL;
+  *ppNewMeshContainer = pMeshContainer;
+  pMeshContainer      = NULL;
 
 	// Returns an HRESULT so give it the AOk result
-    return S_OK;
+  return S_OK;
 }
 
-HRESULT CAllocateHierarchy::DestroyFrame(LPD3DXFRAME pFrameToFree) 
+HRESULT CAllocateHierarchy::DestroyFrame( LPD3DXFRAME pFrameToFree ) 
 {
-	//Convert the frame
 	LPFRAME pFrame = (LPFRAME)pFrameToFree;
-
-	// Delete the name
-	SAFE_DELETE_ARRAY(pFrame->Name)
-	
-	// Delete the frame
-    SAFE_DELETE(pFrame)
-
-	// Returns an HRESULT so give it the AOk result
-    return S_OK; 
+	SAFE_DELETE_ARRAY( pFrame->Name )
+  SAFE_DELETE( pFrame )
+  return S_OK;
 }
 
-HRESULT CAllocateHierarchy::DestroyMeshContainer(LPD3DXMESHCONTAINER pMeshContainerBase)
+HRESULT CAllocateHierarchy::DestroyMeshContainer( LPD3DXMESHCONTAINER pMeshContainerBase )
 {
-	//Convert to my derived struct type
-    LPMESHCONTAINER pMeshContainer = (LPMESHCONTAINER)pMeshContainerBase;
-	
-	// if there is a name
-	SAFE_DELETE_ARRAY(pMeshContainer->Name)
+  LPMESHCONTAINER pMeshContainer = (LPMESHCONTAINER)pMeshContainerBase;
 
-	//if there are materials
-	SAFE_DELETE_ARRAY(pMeshContainer->pMaterials9)
+  SAFE_DELETE_ARRAY( pMeshContainer->Name );
+  SAFE_DELETE_ARRAY( pMeshContainer->pMaterials9 );
+  SAFE_DELETE_ARRAY( pMeshContainer->ppTextures );
+  SAFE_DELETE_ARRAY( pMeshContainer->pAdjacency );
+  SAFE_DELETE_ARRAY( pMeshContainer->pBoneOffsets );
+  SAFE_DELETE_ARRAY( pMeshContainer->ppFrameMatrices );
+  SAFE_DELETE_ARRAY( pMeshContainer->pAttributeTable );
 
-	//Release the textures
-	if(pMeshContainer->ppTextures)
-		for(UINT i = 0; i < pMeshContainer->NumMaterials; ++i)
-				SAFE_RELEASE(pMeshContainer->ppTextures[i]);
+  SAFE_RELEASE( pMeshContainer->pSkinMesh );
+  SAFE_RELEASE( pMeshContainer->MeshData.pMesh );
+  SAFE_RELEASE( pMeshContainer->pSkinInfo );
+  SAFE_DELETE( pMeshContainer );
 
-	//if there are textures
-	SAFE_DELETE_ARRAY(pMeshContainer->ppTextures)
+  if ( pMeshContainer->ppTextures )
+  {
+    for ( UINT i = 0; i < pMeshContainer->NumMaterials; ++i )
+      SAFE_RELEASE( pMeshContainer->ppTextures[i] );
+  }
 
-	// if there is adjacency data
-	SAFE_DELETE_ARRAY(pMeshContainer->pAdjacency) 
-	
-	// if there are bone parts
-	SAFE_DELETE_ARRAY(pMeshContainer->pBoneOffsets)
-	
-	//if there are frame matrices
-	SAFE_DELETE_ARRAY(pMeshContainer->ppFrameMatrices)
-	
-	SAFE_DELETE_ARRAY(pMeshContainer->pAttributeTable)
-	
-	//if there is a copy of the mesh here
-	SAFE_RELEASE(pMeshContainer->pSkinMesh)
-	
-	//if there is a mesh
-	SAFE_RELEASE(pMeshContainer->MeshData.pMesh)
-	
-	// if there is skin information
-	SAFE_RELEASE(pMeshContainer->pSkinInfo)
-	
-	//Delete the mesh container
-	SAFE_DELETE(pMeshContainer)
-	
-	// Returns an HRESULT so give it the AOk result
-    return S_OK;
+  return S_OK;
 }

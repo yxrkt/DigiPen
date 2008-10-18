@@ -31,6 +31,7 @@ class Graphics
     void DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q );
     void SetupMatrices( void );
     void DisplayInfo( void );
+    void CreateSunLight( void );
     void Cleanup( void );
 
       // Accessors
@@ -46,6 +47,7 @@ class Graphics
     LPDIRECT3D9         pD3D;
     LPDIRECT3DDEVICE9   pDevice;
     LPD3DXFONT          pFont;
+    LPD3DXMATRIXSTACK   pMatrixStack;
     Camera              mainCam;
     DWORD               bgColor;
     StaticMeshList      staticMeshes;
