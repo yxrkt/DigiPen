@@ -56,8 +56,9 @@ class AnimatedMesh
     void DrawBones() const;
     void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
     void Load( const std::string &file );
-    void Render() const;
+    void Render();
     void SetAnimationSet( DWORD index );
+    void QuickDrawFrame( LPFRAME frame );
 
     const Sphere          &BS;
     const DWORD           &AnimSet;

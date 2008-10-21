@@ -23,7 +23,7 @@ void CS460Project::Initialize()
 {
   graphics.Initialize( hWndMain_ );
   //graphics.LoadStaticMesh( std::string( ASSETS_DIR ) + "run_inPlace.x" );
-  graphics.LoadAnimatedMesh( std::string( ASSETS_DIR ) + "walk_inPlace.x" );
+  graphics.LoadAnimatedMesh( std::string( ASSETS_DIR ) + "run_inPlace.x" );
   //graphics.MainCam.eye.y = 600.f;
   //graphics.MainCam.lookAt.y = 300.f;
 }

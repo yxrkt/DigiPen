@@ -308,19 +308,20 @@ void AnimatedMesh::SetKeyFrame( DWORD tick )
   }
 }
 
-void AnimatedMesh::Render() const
+void AnimatedMesh::Render()
 {
-  LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrameRoot->pMeshContainer;
+  //LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrameRoot->pMeshContainer;
 
-  if ( pMesh )
-  {
-    for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
-    {
-      pDevice->SetMaterial( &pMesh->pMaterials9[i] );
-      pDevice->SetTexture( 0, pMesh->ppTextures[i] );
-      pMesh->MeshData.pMesh->DrawSubset( i );
-    }
-  }
+  //if ( pMesh )
+  //{
+  //  for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
+  //  {
+  //    pDevice->SetMaterial( &pMesh->pMaterials9[i] );
+  //    pDevice->SetTexture( 0, pMesh->ppTextures[i] );
+  //    pMesh->MeshData.pMesh->DrawSubset( i );
+  //  }
+  //}
+  QuickDrawFrame( pFrameRoot );
 }
 
 void AnimatedMesh::SetAnimationSet( DWORD index )
@@ -328,3 +329,32 @@ void AnimatedMesh::SetAnimationSet( DWORD index )
   curAnimSet = min( index, animSets.size() - 1 );
 }
 
+void AnimatedMesh::QuickDrawFrame( LPFRAME pFrame )
+{
+  LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
+
+  while ( pMesh )
+  {
+    LPD3DXMESH pD3DMesh = pMesh->MeshData.pMesh;//pMesh->pSkinInfo ? pMesh->pSkinMesh : pMesh->MeshData.pMesh;
+
+    for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
+    {
+      pDevice->SetMaterial( &pMesh->pMaterials9[i] );
+      pDevice->SetTexture( 0, pMesh->ppTextures[i] );
+
+      D3DXMATRIX I;
+      D3DXMatrixIdentity( &I );
+      pDevice->SetTransform( D3DTS_WORLD, &pFrame->TransformationMatrix );
+      pD3DMesh->DrawSubset( i );
+      pDevice->SetTransform( D3DTS_WORLD, &I );
+    }
+
+    pMesh = (LPMESHCONTAINER)pMesh->pNextMeshContainer;
+  }
+
+  if ( pFrame->pFrameSibling )
+    QuickDrawFrame( (LPFRAME)pFrame->pFrameSibling );
+
+  if ( pFrame->pFrameFirstChild )
+    QuickDrawFrame( (LPFRAME)pFrame->pFrameFirstChild );
+}
