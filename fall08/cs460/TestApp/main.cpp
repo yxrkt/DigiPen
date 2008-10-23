@@ -16,7 +16,7 @@
 //		to work with my model class
 /////////////////////////////////////////////////
 #pragma comment(lib, "d3d9")
-#pragma comment(lib, "d3dx9dt")
+//#pragma comment(lib, "d3dx9dt")
 #include <afxwin.h>
 #include <afxdlgs.h>
 #include <d3d9.h>

@@ -224,7 +224,7 @@ void CModel::Update(double dElapsedTime)
 {
 	//Set the time for animation
 	if(m_pAnimController && m_dwCurrentAnimation != -1)
-		m_pAnimController->SetTime(m_pAnimController->GetTime()+dElapsedTime);
+		m_pAnimController->AdvanceTime(dElapsedTime, NULL);
 
 	//Update the frame hierarchy
 	if(m_pFrameRoot)

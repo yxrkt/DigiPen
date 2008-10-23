@@ -53,10 +53,15 @@ HRESULT CAllocateHierarchy::CreateFrame(LPCTSTR Name, LPD3DXFRAME *ppNewFrame)
     return S_OK;
 }
 
-HRESULT CAllocateHierarchy::CreateMeshContainer(LPCTSTR Name, 
-	LPD3DXMESHDATA pMeshData, LPD3DXMATERIAL pMaterials, 
-	LPD3DXEFFECTINSTANCE pEffectInstances, DWORD NumMaterials, 
-	DWORD *pAdjacency, LPD3DXSKININFO pSkinInfo, LPD3DXMESHCONTAINER *ppNewMeshContainer) 
+HRESULT CAllocateHierarchy::CreateMeshContainer(THIS_ 
+            LPCSTR Name, 
+            CONST D3DXMESHDATA *pMeshData, 
+            CONST D3DXMATERIAL *pMaterials, 
+            CONST D3DXEFFECTINSTANCE *pEffectInstances, 
+            DWORD NumMaterials, 
+            CONST DWORD *pAdjacency, 
+            LPD3DXSKININFO pSkinInfo, 
+            LPD3DXMESHCONTAINER *ppNewMeshContainer) 
 {
 
     // Create a Temp mesh contianer

@@ -39,10 +39,15 @@ public:
 	//6. the adjacency array for the mesh
 	//7. the skin information for the mesh
 	//8. the output mesh container
-	STDMETHOD(CreateMeshContainer)(THIS_ LPCTSTR Name, 
-		LPD3DXMESHDATA pMeshData, LPD3DXMATERIAL pMaterials, 
-		LPD3DXEFFECTINSTANCE pEffectInstances, DWORD NumMaterials, 
-		DWORD *pAdjacency, LPD3DXSKININFO pSkinInfo, LPD3DXMESHCONTAINER *ppNewMeshContainer);
+	STDMETHOD(CreateMeshContainer)(THIS_ 
+            LPCSTR Name, 
+            CONST D3DXMESHDATA *pMeshData, 
+            CONST D3DXMATERIAL *pMaterials, 
+            CONST D3DXEFFECTINSTANCE *pEffectInstances, 
+            DWORD NumMaterials, 
+            CONST DWORD *pAdjacency, 
+            LPD3DXSKININFO pSkinInfo, 
+            LPD3DXMESHCONTAINER *ppNewMeshContainer);
     
 	// Destroy a frame
 	//1. The frame to delete
