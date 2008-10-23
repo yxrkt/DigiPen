@@ -210,7 +210,7 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
             ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
           }
 
-          /*
+          //*
           void *srcPtr, *destPtr;
           pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
           pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
