@@ -177,55 +177,15 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
   {
     SetFrameMatrix( pFrame, keyFrame );
 
-    /*
-    if ( pFrame->pMeshContainer )
-    {
-      HRESULT hr;
-
-      LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
-
-      for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
-      {
-        hr = pDevice->SetMaterial( &pMesh->pMaterials9[i] );
-        ASSERT( hr == S_OK, "Setting material failed." );
-
-        hr = pDevice->SetTexture( 0, pMesh->ppTextures[i] );
-        ASSERT( hr == S_OK, "Setting texture failed." );
-
-        LPD3DXMATRIXSTACK pMatrixStack;
-        D3DXCreateMatrixStack( 0, &pMatrixStack );
-        pMatrixStack->Push();
-        pMatrixStack->LoadIdentity();
-
-        pMatrixStack->Push();
-        //pMatrixStack->LoadMatrix( &pFrame->TransformationMatrix );
-        D3DXMATRIX tits;
-        static float angle = 0.f;
-        angle += D3DX_PI / 150.f;
-        D3DXMatrixRotationY( &tits, angle );
-        pMatrixStack->LoadMatrix( &pFrame->TransformationMatrix );
-        hr = pDevice->SetTransform( D3DTS_WORLD, pMatrixStack->GetTop() );
-        ASSERT( hr == S_OK, "Setting transform failed." );
-        hr = pMesh->MeshData.pMesh->DrawSubset( i );
-        ASSERT( hr == S_OK, "DrawSubset failed." );
-        pMatrixStack->Pop();
-        hr = pDevice->SetTransform( D3DTS_WORLD, pMatrixStack->GetTop() );
-        ASSERT( hr == S_OK, "Setting transform failed." );
-
-        pMatrixStack->Release();
-      }
-    }
-    //*/
-
     D3DXVECTOR3 startVert;
     D3DXVec3TransformCoord( &startVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &matrix );
 
-    LPFRAME pCurChild = (LPFRAME)pFrame->pFrameFirstChild;
-    while ( pCurChild )
+    LPFRAME pCurFrame = (LPFRAME)pFrame->pFrameFirstChild;
+    while ( pCurFrame )
     {
-      SetFrameMatrix( pCurChild, keyFrame );
+      SetFrameMatrix( pCurFrame, keyFrame );
       D3DXMATRIX concat;
-      D3DXMatrixMultiply( &concat, &pCurChild->TransformationMatrix, &matrix );
+      D3DXMatrixMultiply( &concat, &pCurFrame->TransformationMatrix, &matrix );
       D3DXVECTOR3 childVert;
       D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &concat );
       if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
@@ -234,8 +194,52 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
         boneLines.push_back( childVert );
       }
 
-      MoveBones( pCurChild, concat, keyFrame );
-      pCurChild = (LPFRAME)pCurChild->pFrameSibling;
+      MoveBones( pCurFrame, concat, keyFrame );
+
+      //*
+      LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pCurFrame->pMeshContainer;
+      if ( pMesh && pCurFrame->Name && strlen( pCurFrame->Name ) )
+      {
+        if ( pMesh->pSkinInfo )
+        {
+          if ( !pMesh->pSkinMesh )
+          {
+            HRESULT hr;
+            hr = pMesh->MeshData.pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMesh->MeshData.pMesh->GetFVF(), 
+                                                      pDevice, &pMesh->pSkinMesh );
+            ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
+          }
+
+          /*
+          void *srcPtr, *destPtr;
+          pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
+          pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
+
+          DWORD nBones = pMesh->pSkinInfo->GetNumBones();
+          std::vector< D3DXMATRIX > boneMatrices( nBones );
+          std::vector< D3DXMATRIX > concats( nBones );
+          for ( DWORD i = 0; i < nBones; ++i )
+          {
+            D3DXMATRIX out;
+
+            //LPFRAME pTempFrame = (LPFRAME)D3DXFrameFind( pFrameRoot, pMesh->pSkinInfo->GetBoneName( i ) );
+
+            pMesh->ppFrameMatrices[i] = &concat;//&pTempFrame->matCombined;
+
+            D3DXMatrixMultiply( &out, &pMesh->pBoneOffsets[i], pMesh->ppFrameMatrices[i] );
+            boneMatrices.push_back( out );
+          }
+
+          pMesh->pSkinInfo->UpdateSkinnedMesh( &boneMatrices[0], NULL, srcPtr, destPtr );
+
+          pMesh->MeshData.pMesh->UnlockVertexBuffer();
+          pMesh->pSkinMesh->UnlockVertexBuffer();
+          //*/
+        }
+      }
+      //*/
+
+      pCurFrame = (LPFRAME)pCurFrame->pFrameSibling;
     }
   }
 }
@@ -335,18 +339,18 @@ void AnimatedMesh::QuickDrawFrame( LPFRAME pFrame )
 
   while ( pMesh )
   {
-    LPD3DXMESH pD3DMesh = pMesh->MeshData.pMesh;//pMesh->pSkinInfo ? pMesh->pSkinMesh : pMesh->MeshData.pMesh;
+    LPD3DXMESH pD3DMesh = pMesh->pSkinInfo ? pMesh->pSkinMesh : pMesh->MeshData.pMesh;
 
     for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
     {
       pDevice->SetMaterial( &pMesh->pMaterials9[i] );
       pDevice->SetTexture( 0, pMesh->ppTextures[i] );
 
-      D3DXMATRIX I;
-      D3DXMatrixIdentity( &I );
-      pDevice->SetTransform( D3DTS_WORLD, &pFrame->TransformationMatrix );
+      //D3DXMATRIX I;
+      //D3DXMatrixIdentity( &I );
+      //pDevice->SetTransform( D3DTS_WORLD, &pFrame->TransformationMatrix );
       pD3DMesh->DrawSubset( i );
-      pDevice->SetTransform( D3DTS_WORLD, &I );
+      //pDevice->SetTransform( D3DTS_WORLD, &I );
     }
 
     pMesh = (LPMESHCONTAINER)pMesh->pNextMeshContainer;
