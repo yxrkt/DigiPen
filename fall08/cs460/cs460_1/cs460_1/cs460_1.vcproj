@@ -220,11 +220,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Mesh.cpp"
+				RelativePath=".\Model.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Mesh.h"
+				RelativePath=".\Model.h"
 				>
 			</File>
 			<File

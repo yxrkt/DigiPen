@@ -30,13 +30,11 @@ struct Animation
   AnimationKey  animKey;
 };
 
-typedef std::vector< Animation > AnimationVec;
 typedef std::map< std::string, Animation > AnimationMap;
 
 struct AnimationSet
 {
   std::string   name;
-  AnimationVec  anims;
   AnimationMap  animMap;
 };
 

@@ -85,12 +85,12 @@ void Graphics::Update()
 
   SetupMatrices();
 
-  for ( StaticMeshList::iterator i = staticMeshes.begin(); i != staticMeshes.end(); ++i )
+  for ( StaticModelList::iterator i = staticModels.begin(); i != staticModels.end(); ++i )
   {
     i->Render();
   }
 
-  for ( AnimatedMeshList::iterator i = animMeshes.begin(); i != animMeshes.end(); ++i )
+  for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
     i->FrameMove( timeGetTime(), *pMatrixStack->GetTop() );
     i->Render();
@@ -105,11 +105,11 @@ void Graphics::Update()
 // =============================================================================
 // ! Loads a non-animating mesh from a .x file
 // =============================================================================
-void Graphics::LoadStaticMesh( const std::string &file )
+void Graphics::LoadStaticModel( const std::string &file )
 {
-  StaticMesh mesh( pDevice );
+  StaticModel mesh( pDevice );
   mesh.Load( file );
-  staticMeshes.push_back( mesh );
+  staticModels.push_back( mesh );
 
   float angle = 2.f * D3DX_PI / 3.f;
   float dist  = 3.f * 400.f;
@@ -121,11 +121,11 @@ void Graphics::LoadStaticMesh( const std::string &file )
 // =============================================================================
 // ! Loads a bone-animated mesh from a .x file
 // =============================================================================
-void Graphics::LoadAnimatedMesh( const std::string &file )
+void Graphics::LoadAnimatedModel( const std::string &file )
 {
   AnimatedModel mesh( pDevice );
   mesh.Load( file );
-  animMeshes.push_back( mesh );
+  animModels.push_back( mesh );
 
   float angle = 2.f * D3DX_PI / 3.f;
   float dist  = 3.f * mesh.BS.radius;
@@ -139,7 +139,7 @@ void Graphics::LoadAnimatedMesh( const std::string &file )
 // =============================================================================
 void Graphics::IncDecAnimSpeed( bool inc )
 {
-  std::for_each( animMeshes.begin(), animMeshes.end(), inc ? IncAnimSpeed : DecAnimSpeed );
+  std::for_each( animModels.begin(), animModels.end(), inc ? IncAnimSpeed : DecAnimSpeed );
 }
 
 // =============================================================================
@@ -216,8 +216,8 @@ void Graphics::DisplayInfo( void )
   info << "FPS: " << 1000.f/ (float)( tick - lastTick ) << std::endl << std::endl;
   lastTick = tick;
 
-  AddMeshInfo addMeshInfo( &info );
-  std::for_each( animMeshes.begin(), animMeshes.end(), addMeshInfo );
+  AddModelInfo addMeshInfo( &info );
+  std::for_each( animModels.begin(), animModels.end(), addMeshInfo );
   pFont->DrawText( NULL, info.str().c_str(), -1, &rcPos, DT_NOCLIP, D3DCOLOR_XRGB( 255, 0, 255 ) );
 }
 

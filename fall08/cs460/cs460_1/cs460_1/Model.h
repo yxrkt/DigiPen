@@ -21,11 +21,11 @@ typedef std::vector< std::string >        StringVec;
 typedef std::vector< AnimationSet >       AnimationSetVec;
 
 
-class StaticMesh
+class StaticModel
 {
   public:
-    StaticMesh( const LPDIRECT3DDEVICE9 _pDevice );
-    ~StaticMesh();
+    StaticModel( const LPDIRECT3DDEVICE9 _pDevice );
+    ~StaticModel();
 
     void Load( const std::string &file );
     void Render() const;
@@ -89,5 +89,5 @@ class AnimatedModel
 };
 
 
-typedef std::list< StaticMesh >           StaticMeshList;
-typedef std::list< AnimatedModel >         AnimatedMeshList;
+typedef std::list< StaticModel >    StaticModelList;
+typedef std::list< AnimatedModel >  AnimatedModelList;

@@ -1,20 +1,20 @@
-#include "Mesh.h"
+#include "Model.h"
 #include "ASSERT.h"
 
 
-// Static Mesh
-StaticMesh::StaticMesh( LPDIRECT3DDEVICE9 _pDevice )
+// Static Model
+StaticModel::StaticModel( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
 , pData( NULL )
 , Data( pData )
 {
 }
 
-StaticMesh::~StaticMesh()
+StaticModel::~StaticModel()
 {
 }
 
-void StaticMesh::Load( const std::string &file )
+void StaticModel::Load( const std::string &file )
 {
   HRESULT hr;
 
@@ -48,7 +48,7 @@ void StaticMesh::Load( const std::string &file )
   pMtrlBuffer->Release();
 }
 
-void StaticMesh::Render() const
+void StaticModel::Render() const
 {
   HRESULT hr;
 
@@ -66,7 +66,7 @@ void StaticMesh::Render() const
   }
 }
 
-// Animated Mesh
+// Animated Model
 AnimatedModel::AnimatedModel( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
 , curAnimSet( 0 )

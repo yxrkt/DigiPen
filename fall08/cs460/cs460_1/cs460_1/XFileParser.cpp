@@ -96,7 +96,6 @@ bool XFileParser::GetNextAnimationSet( AnimationSet &animSet )
       xFile.ignore( 3 );
       animKey.keyFrames.push_back( keyFrame );
     }
-    animSet.anims.push_back( anim );
     animSet.animMap[strKey] = anim;
   }
 

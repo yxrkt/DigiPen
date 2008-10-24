@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 
-#include "Mesh.h"
+#include "Model.h"
 #include "Macros.h"
 #include "Vertex.h"
 
@@ -25,8 +25,8 @@ class Graphics
 
     void Initialize( HWND hWndApp );
     void Update( void );
-    void LoadStaticMesh( const std::string &file );
-    void LoadAnimatedMesh( const std::string &file );
+    void LoadStaticModel( const std::string &file );
+    void LoadAnimatedModel( const std::string &file );
     void IncDecAnimSpeed( bool inc );
     void DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q );
     void SetupMatrices( void );
@@ -50,27 +50,27 @@ class Graphics
     LPD3DXMATRIXSTACK   pMatrixStack;
     Camera              mainCam;
     DWORD               bgColor;
-    StaticMeshList      staticMeshes;
-    AnimatedMeshList    animMeshes;
+    StaticModelList     staticModels;
+    AnimatedModelList   animModels;
     HWND                hWnd;
     bool                ready;
 
   private:
-    static void IncAnimSpeed( const AnimatedModel &animMesh )
+    static void IncAnimSpeed( const AnimatedModel &animModel )
     {
-      animMesh.AnimSpeed += ( ( animMesh.AnimSpeed >= 1.f ) ? 1.f : animMesh.AnimSpeed );
+      animModel.AnimSpeed += ( ( animModel.AnimSpeed >= 1.f ) ? 1.f : animModel.AnimSpeed );
     }
-    static void DecAnimSpeed( const AnimatedModel &animMesh )
+    static void DecAnimSpeed( const AnimatedModel &animModel )
     {
-      ( animMesh.AnimSpeed > 1.f ) ? animMesh.AnimSpeed -= 1.f : animMesh.AnimSpeed /= 2.f;
+      ( animModel.AnimSpeed > 1.f ) ? animModel.AnimSpeed -= 1.f : animModel.AnimSpeed /= 2.f;
     }
-    struct AddMeshInfo
+    struct AddModelInfo
     {
-      AddMeshInfo( std::stringstream *_pInfo ) : pInfo( _pInfo ) {}
-      void operator ()( const AnimatedModel &mesh )
+      AddModelInfo( std::stringstream *_pInfo ) : pInfo( _pInfo ) {}
+      void operator ()( const AnimatedModel &model )
       {
-        *pInfo << "Animation Set: " << mesh.AnimSet + 1 << "/" << mesh.AnimSets.size() << std::endl
-               << "Speed:         " << mesh.AnimSpeed << "x" << std::endl;
+        *pInfo << "Animation Set: " << model.AnimSet + 1 << "/" << model.AnimSets.size() << std::endl
+               << "Speed:         " << model.AnimSpeed << "x" << std::endl;
         *pInfo << std::endl;
       }
 
