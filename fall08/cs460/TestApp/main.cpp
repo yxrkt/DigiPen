@@ -383,5 +383,5 @@ INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, I
 	g_pDI->DeleteInstance();
 	
     UnregisterClass( "TestApp", wc.hInstance );
-    return 0;
+    return (int)msg.wParam;
 }
