@@ -67,7 +67,7 @@ void StaticMesh::Render() const
 }
 
 // Animated Mesh
-AnimatedMesh::AnimatedMesh( LPDIRECT3DDEVICE9 _pDevice )
+AnimatedModel::AnimatedModel( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
 , curAnimSet( 0 )
 , animSpeed( 1.f )
@@ -79,7 +79,7 @@ AnimatedMesh::AnimatedMesh( LPDIRECT3DDEVICE9 _pDevice )
 {
 }
 
-AnimatedMesh::AnimatedMesh( const AnimatedMesh &rhs )
+AnimatedModel::AnimatedModel( const AnimatedModel &rhs )
 : pDevice( rhs.pDevice )
 , pFrameRoot( rhs.pFrameRoot )
 , boneLines( rhs.boneLines )
@@ -97,11 +97,11 @@ AnimatedMesh::AnimatedMesh( const AnimatedMesh &rhs )
 {
 }
 
-AnimatedMesh::~AnimatedMesh()
+AnimatedModel::~AnimatedModel()
 {
 }
 
-void AnimatedMesh::Load( const std::string &file )
+void AnimatedModel::Load( const std::string &file )
 {
   HRESULT hr;
 
@@ -118,7 +118,7 @@ void AnimatedMesh::Load( const std::string &file )
   ASSERT( hr == S_OK, "Calculating bounding sphere failed." );
 }
 
-void AnimatedMesh::ReadAnimData( const std::string &file )
+void AnimatedModel::ReadAnimData( const std::string &file )
 {
   AnimationSet animSet;
   XFileParser xFile( file );
@@ -128,7 +128,7 @@ void AnimatedMesh::ReadAnimData( const std::string &file )
   }
 }
 
-void AnimatedMesh::DrawBones() const
+void AnimatedModel::DrawBones() const
 {
   HRESULT hr;
 
@@ -146,7 +146,7 @@ void AnimatedMesh::DrawBones() const
   ASSERT( hr == S_OK, "Turning on lighting failed." );
 }
 
-void AnimatedMesh::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
+void AnimatedModel::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
 {
   if ( pFrame )
   {
@@ -171,7 +171,7 @@ void AnimatedMesh::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
   }
 }
 
-void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame )
+void AnimatedModel::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame )
 {
   if ( pFrame )
   {
@@ -184,67 +184,72 @@ void AnimatedMesh::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, si
     while ( pCurFrame )
     {
       SetFrameMatrix( pCurFrame, keyFrame );
-      D3DXMATRIX concat;
-      D3DXMatrixMultiply( &concat, &pCurFrame->TransformationMatrix, &matrix );
+      pCurFrame->matCombined;
+      D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->TransformationMatrix, &matrix );
       D3DXVECTOR3 childVert;
-      D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &concat );
+      D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &pCurFrame->matCombined );
       if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
       { // avoid drawing kickstand
         boneLines.push_back( startVert );
         boneLines.push_back( childVert );
       }
 
-      MoveBones( pCurFrame, concat, keyFrame );
-
-      //*
-      LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pCurFrame->pMeshContainer;
-      if ( pMesh && pCurFrame->Name && strlen( pCurFrame->Name ) )
-      {
-        if ( pMesh->pSkinInfo )
-        {
-          if ( !pMesh->pSkinMesh )
-          {
-            HRESULT hr;
-            hr = pMesh->MeshData.pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMesh->MeshData.pMesh->GetFVF(), 
-                                                      pDevice, &pMesh->pSkinMesh );
-            ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
-          }
-
-          //*
-          void *srcPtr, *destPtr;
-          pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
-          pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
-
-          DWORD nBones = pMesh->pSkinInfo->GetNumBones();
-          std::vector< D3DXMATRIX > boneMatrices( nBones );
-          std::vector< D3DXMATRIX > concats( nBones );
-          for ( DWORD i = 0; i < nBones; ++i )
-          {
-            D3DXMATRIX out;
-
-            //LPFRAME pTempFrame = (LPFRAME)D3DXFrameFind( pFrameRoot, pMesh->pSkinInfo->GetBoneName( i ) );
-
-            pMesh->ppFrameMatrices[i] = &concat;//&pTempFrame->matCombined;
-
-            D3DXMatrixMultiply( &out, &pMesh->pBoneOffsets[i], pMesh->ppFrameMatrices[i] );
-            boneMatrices.push_back( out );
-          }
-
-          pMesh->pSkinInfo->UpdateSkinnedMesh( &boneMatrices[0], NULL, srcPtr, destPtr );
-
-          pMesh->MeshData.pMesh->UnlockVertexBuffer();
-          pMesh->pSkinMesh->UnlockVertexBuffer();
-          //*/
-        }
-      }
-      //*/
+      MoveBones( pCurFrame, pCurFrame->matCombined, keyFrame );
 
       pCurFrame = (LPFRAME)pCurFrame->pFrameSibling;
     }
   }
 }
 
-void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
+void AnimatedModel::MoveMeshes( const LPFRAME pFrame )
+{
+  if ( pFrame )
+  {
+    LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
+    if ( pMesh )
+    {
+      if ( pMesh->pSkinInfo )
+      {
+        if ( !pMesh->pSkinMesh )
+        {
+          HRESULT hr;
+          hr = pMesh->MeshData.pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMesh->MeshData.pMesh->GetFVF(), 
+                                                    pDevice, &pMesh->pSkinMesh );
+          ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
+        }
+
+        //*
+        void *srcPtr, *destPtr;
+        pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
+        pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
+
+        DWORD nBones = pMesh->pSkinInfo->GetNumBones();
+        std::vector< D3DXMATRIX > boneMatrices( nBones );
+        for ( DWORD i = 0; i < nBones; ++i )
+        {
+          D3DXMATRIX out;
+
+          LPFRAME pTempFrame = (LPFRAME)D3DXFrameFind( pFrameRoot, pMesh->pSkinInfo->GetBoneName( i ) );
+          pMesh->ppFrameMatrices[i] = &pTempFrame->matCombined;
+
+          D3DXMatrixMultiply( &out, &pMesh->pBoneOffsets[i], pMesh->ppFrameMatrices[i] );
+          boneMatrices[i] = out;
+        }
+
+        pMesh->pSkinInfo->UpdateSkinnedMesh( &boneMatrices[0], NULL, srcPtr, destPtr );
+
+        pMesh->MeshData.pMesh->UnlockVertexBuffer();
+        pMesh->pSkinMesh->UnlockVertexBuffer();
+        //*/
+      }
+    }
+
+    MoveMeshes( (LPFRAME)pFrame->pFrameSibling );
+    MoveMeshes( (LPFRAME)pFrame->pFrameFirstChild );
+  }
+}
+
+void AnimatedModel::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
 {
   if ( pFrame->Name != NULL )
   {
@@ -283,7 +288,7 @@ void AnimatedMesh::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact )
   }
 }
 
-void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
+void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 {
   SetKeyFrame( elapsedTime );
 
@@ -291,9 +296,10 @@ void AnimatedMesh::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
   SetFrameMatrix( pFrameRoot, curKeyFrame );
   D3DXMatrixMultiply( &pFrameRoot->TransformationMatrix, &pFrameRoot->TransformationMatrix, &mtxWorld );
   MoveBones( pFrameRoot, pFrameRoot->TransformationMatrix, curKeyFrame );
+  MoveMeshes( pFrameRoot );
 }
 
-void AnimatedMesh::SetKeyFrame( DWORD tick )
+void AnimatedModel::SetKeyFrame( DWORD tick )
 {
   KeyFrameVec &keyFrames0 = animSets[curAnimSet].animMap.begin()->second.animKey.keyFrames;
   size_t nKeyFrames = keyFrames0.size(), nLastFrame = nKeyFrames - 1;
@@ -312,28 +318,20 @@ void AnimatedMesh::SetKeyFrame( DWORD tick )
   }
 }
 
-void AnimatedMesh::Render()
+void AnimatedModel::Render( RENDER_FLAG flag )
 {
-  //LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrameRoot->pMeshContainer;
-
-  //if ( pMesh )
-  //{
-  //  for ( DWORD i = 0; i < pMesh->NumMaterials; ++i )
-  //  {
-  //    pDevice->SetMaterial( &pMesh->pMaterials9[i] );
-  //    pDevice->SetTexture( 0, pMesh->ppTextures[i] );
-  //    pMesh->MeshData.pMesh->DrawSubset( i );
-  //  }
-  //}
-  QuickDrawFrame( pFrameRoot );
+  if ( flag == RENDER_BONES  || flag == RENDER_ALL )
+    DrawBones();
+  if ( flag == RENDER_MESHES || flag == RENDER_ALL )
+    DrawFrameMeshes( pFrameRoot );
 }
 
-void AnimatedMesh::SetAnimationSet( DWORD index )
+void AnimatedModel::SetAnimationSet( DWORD index )
 {
   curAnimSet = min( index, animSets.size() - 1 );
 }
 
-void AnimatedMesh::QuickDrawFrame( LPFRAME pFrame )
+void AnimatedModel::DrawFrameMeshes( LPFRAME pFrame )
 {
   LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
 
@@ -345,20 +343,15 @@ void AnimatedMesh::QuickDrawFrame( LPFRAME pFrame )
     {
       pDevice->SetMaterial( &pMesh->pMaterials9[i] );
       pDevice->SetTexture( 0, pMesh->ppTextures[i] );
-
-      //D3DXMATRIX I;
-      //D3DXMatrixIdentity( &I );
-      //pDevice->SetTransform( D3DTS_WORLD, &pFrame->TransformationMatrix );
       pD3DMesh->DrawSubset( i );
-      //pDevice->SetTransform( D3DTS_WORLD, &I );
     }
 
     pMesh = (LPMESHCONTAINER)pMesh->pNextMeshContainer;
   }
 
   if ( pFrame->pFrameSibling )
-    QuickDrawFrame( (LPFRAME)pFrame->pFrameSibling );
+    DrawFrameMeshes( (LPFRAME)pFrame->pFrameSibling );
 
   if ( pFrame->pFrameFirstChild )
-    QuickDrawFrame( (LPFRAME)pFrame->pFrameFirstChild );
+    DrawFrameMeshes( (LPFRAME)pFrame->pFrameFirstChild );
 }

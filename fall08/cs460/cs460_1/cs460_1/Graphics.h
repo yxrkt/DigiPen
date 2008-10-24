@@ -56,18 +56,18 @@ class Graphics
     bool                ready;
 
   private:
-    static void IncAnimSpeed( const AnimatedMesh &animMesh )
+    static void IncAnimSpeed( const AnimatedModel &animMesh )
     {
       animMesh.AnimSpeed += ( ( animMesh.AnimSpeed >= 1.f ) ? 1.f : animMesh.AnimSpeed );
     }
-    static void DecAnimSpeed( const AnimatedMesh &animMesh )
+    static void DecAnimSpeed( const AnimatedModel &animMesh )
     {
       ( animMesh.AnimSpeed > 1.f ) ? animMesh.AnimSpeed -= 1.f : animMesh.AnimSpeed /= 2.f;
     }
     struct AddMeshInfo
     {
       AddMeshInfo( std::stringstream *_pInfo ) : pInfo( _pInfo ) {}
-      void operator ()( const AnimatedMesh &mesh )
+      void operator ()( const AnimatedModel &mesh )
       {
         *pInfo << "Animation Set: " << mesh.AnimSet + 1 << "/" << mesh.AnimSets.size() << std::endl
                << "Speed:         " << mesh.AnimSpeed << "x" << std::endl;

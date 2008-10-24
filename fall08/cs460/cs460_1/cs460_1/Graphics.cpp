@@ -94,7 +94,6 @@ void Graphics::Update()
   {
     i->FrameMove( timeGetTime(), *pMatrixStack->GetTop() );
     i->Render();
-    i->DrawBones();
   }
 
   hr = pDevice->EndScene();
@@ -124,7 +123,7 @@ void Graphics::LoadStaticMesh( const std::string &file )
 // =============================================================================
 void Graphics::LoadAnimatedMesh( const std::string &file )
 {
-  AnimatedMesh mesh( pDevice );
+  AnimatedModel mesh( pDevice );
   mesh.Load( file );
   animMeshes.push_back( mesh );
 

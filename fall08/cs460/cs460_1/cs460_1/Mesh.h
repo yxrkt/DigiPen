@@ -39,9 +39,11 @@ class StaticMesh
     TextureVec          textures;
 };
 
-class AnimatedMesh
+class AnimatedModel
 {
   public:
+    enum RENDER_FLAG { RENDER_BONES, RENDER_MESHES, RENDER_ALL };
+
     struct Sphere
     {
       float       radius;
@@ -49,16 +51,16 @@ class AnimatedMesh
     };
 
   public:
-    AnimatedMesh( const LPDIRECT3DDEVICE9 _pDevice );
-    AnimatedMesh( const AnimatedMesh &rhs );
-    ~AnimatedMesh();
+    AnimatedModel( const LPDIRECT3DDEVICE9 _pDevice );
+    AnimatedModel( const AnimatedModel &rhs );
+    ~AnimatedModel();
 
     void DrawBones() const;
     void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
     void Load( const std::string &file );
-    void Render();
+    void Render( RENDER_FLAG flag = RENDER_MESHES );
     void SetAnimationSet( DWORD index );
-    void QuickDrawFrame( LPFRAME frame );
+    void DrawFrameMeshes( LPFRAME frame );
 
     const Sphere          &BS;
     const DWORD           &AnimSet;
@@ -69,6 +71,7 @@ class AnimatedMesh
   private:
     void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
+    void MoveMeshes( const LPFRAME pFrame );
     void ReadAnimData( const std::string &file );
     void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact = true );
     void SetKeyFrame( DWORD tick );
@@ -87,4 +90,4 @@ class AnimatedMesh
 
 
 typedef std::list< StaticMesh >           StaticMeshList;
-typedef std::list< AnimatedMesh >         AnimatedMeshList;
+typedef std::list< AnimatedModel >         AnimatedMeshList;
