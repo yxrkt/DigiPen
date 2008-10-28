@@ -110,7 +110,7 @@ void AnimatedModel::Load( const std::string &file )
                                    (LPD3DXFRAME *)&pFrameRoot, NULL );
   ASSERT( hr == S_OK, "Loading mesh hierarchy failed." );
 
-  AddBones( pFrameRoot, pFrameRoot->TransformationMatrix );
+  //AddBones( pFrameRoot, pFrameRoot->TransformationMatrix );
 
   ReadAnimData( file );
 
@@ -175,6 +175,11 @@ void AnimatedModel::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, s
 {
   if ( pFrame )
   {
+    if ( pFrame == pFrameRoot )
+    {
+      boneLines.clear();
+    }
+
     SetFrameMatrix( pFrame, keyFrame );
 
     D3DXVECTOR3 startVert;
@@ -185,14 +190,22 @@ void AnimatedModel::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, s
     {
       SetFrameMatrix( pCurFrame, keyFrame );
       pCurFrame->matCombined;
+      /*
+      D3DXMATRIX scale;
+      D3DXMatrixScaling( &scale, .5f, .5f, .5f );
+      D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->TransformationMatrix, &scale );
+      D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->matCombined, &matrix );
+      /*/
       D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->TransformationMatrix, &matrix );
+      //*/
+
       D3DXVECTOR3 childVert;
       D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &pCurFrame->matCombined );
-      if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
-      { // avoid drawing kickstand
+      //if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
+      //{ // avoid drawing kickstand
         boneLines.push_back( startVert );
         boneLines.push_back( childVert );
-      }
+      //}
 
       MoveBones( pCurFrame, pCurFrame->matCombined, keyFrame );
 
@@ -218,7 +231,6 @@ void AnimatedModel::MoveMeshes( const LPFRAME pFrame )
           ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
         }
 
-        //*
         void *srcPtr, *destPtr;
         pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
         pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
@@ -240,7 +252,6 @@ void AnimatedModel::MoveMeshes( const LPFRAME pFrame )
 
         pMesh->MeshData.pMesh->UnlockVertexBuffer();
         pMesh->pSkinMesh->UnlockVertexBuffer();
-        //*/
       }
     }
 
@@ -272,10 +283,6 @@ void AnimatedModel::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact 
         VQS vqs0( trans0, rot0, scale0.x );
         VQS vqs1( trans1, rot1, scale1.x );
 
-        D3DXMATRIX tits;
-        vqs0.GetMatrix( tits );
-        pFrame->TransformationMatrix = tits;
-
         VQS vqs;
         VQS::Interpolate( vqs, vqs0, vqs1, exactFrame - floor( exactFrame ) );
 
@@ -291,11 +298,12 @@ void AnimatedModel::SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact 
 void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 {
   SetKeyFrame( elapsedTime );
+  
+  D3DXMATRIX mtxRootWorld;
 
-  boneLines.clear();
   SetFrameMatrix( pFrameRoot, curKeyFrame );
-  D3DXMatrixMultiply( &pFrameRoot->TransformationMatrix, &pFrameRoot->TransformationMatrix, &mtxWorld );
-  MoveBones( pFrameRoot, pFrameRoot->TransformationMatrix, curKeyFrame );
+  D3DXMatrixMultiply( &mtxRootWorld, &pFrameRoot->TransformationMatrix, &mtxWorld );
+  MoveBones( pFrameRoot, mtxRootWorld, curKeyFrame );
   MoveMeshes( pFrameRoot );
 }
 

@@ -22,7 +22,9 @@ CS460Project::~CS460Project() {}
 void CS460Project::Initialize()
 {
   graphics.Initialize( hWndMain_ );
-  graphics.LoadAnimatedModel( std::string( ASSETS_DIR ) + "run_inPlace.x" );
+  //graphics.LoadStaticModel( std::string( ASSETS_DIR ) + "IceModel_Rough.X" );
+  //graphics.LoadAnimatedModel( std::string( ASSETS_DIR ) + "run_inPlace.x" );
+  graphics.LoadAnimatedModel( std::string( ASSETS_DIR ) + "fiend_Walk.x" );
   //graphics.MainCam.eye.y = 600.f;
   //graphics.MainCam.lookAt.y = 300.f;
 }
@@ -32,9 +34,9 @@ void CS460Project::Initialize()
 // =============================================================================
 void CS460Project::Update()
 {
-  float t = .25f * D3DX_PI * (float)( timeGetTime() % 8000 ) / 1000.f;
-  graphics.MainCam.eye.x = 1300.f * cos( t );
-  graphics.MainCam.eye.z = 1300.f * sin( t );
+  //float t = .25f * D3DX_PI * (float)( timeGetTime() % 8000 ) / 1000.f;
+  //graphics.MainCam.eye.x = 1300.f * cos( t );
+  //graphics.MainCam.eye.z = 1300.f * sin( t );
 
   graphics.Update();
 }

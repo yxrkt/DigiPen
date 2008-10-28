@@ -92,8 +92,17 @@ void Graphics::Update()
 
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
-    i->FrameMove( timeGetTime(), *pMatrixStack->GetTop() );
-    i->Render();
+    D3DXMATRIX world;/*, scale, rot, trans;
+    D3DXMatrixIdentity( &world );
+    D3DXMatrixScaling( &scale, .5f, .5f, .5f );
+    D3DXMatrixRotationX( &rot, D3DX_PI / 4.f );
+    D3DXMatrixTranslation( &trans, 300.f, 0.f, 100.f );
+    D3DXMatrixMultiply( &world, &world, &scale );
+    D3DXMatrixMultiply( &world, &world, &rot );
+    D3DXMatrixMultiply( &world, &world, &trans );*/
+    D3DXMatrixIdentity( &world );
+    i->FrameMove( timeGetTime(), world );
+    i->Render( AnimatedModel::RENDER_ALL );
   }
 
   hr = pDevice->EndScene();
