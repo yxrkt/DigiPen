@@ -20,8 +20,7 @@ char g_text[MAX_TEXT_LEN];
 
 int main()
 {
-  NETWORKING.AddVLANAddr( "192.168.1.110" );
-  NETWORKING.AddVLANAddr( "192.168.1.107" );
+  //NETWORKING.AddVLANAddr( "192.168.1.110" );
   NETWORKING.AddVLANAddr( "192.168.1.108" );
 
   GAME_STATE state  = MENU;
