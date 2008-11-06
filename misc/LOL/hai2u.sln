@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hai2u", "..\Inject!\sample.vcproj", "{1F10EF73-C89D-49FB-9400-04DB33AEA696}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hai2u", "hai2u\hai2u.vcproj", "{1F10EF73-C89D-49FB-9400-04DB33AEA696}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
@@ -10,14 +10,11 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
-		NewDebug|Win32 = NewDebug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.Debug|Win32.ActiveCfg = Debug|Win32
 		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.Debug|Win32.Build.0 = Debug|Win32
-		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.NewDebug|Win32.ActiveCfg = NewDebug|Win32
-		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.NewDebug|Win32.Build.0 = NewDebug|Win32
 		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.Release|Win32.ActiveCfg = Release|Win32
 		{1F10EF73-C89D-49FB-9400-04DB33AEA696}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
