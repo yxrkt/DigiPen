@@ -43,6 +43,8 @@ static DWORD ThreadFunc( InjData *pData )
   {
     if ( pData->fnGetAsyncKeyState( VK_RETURN ) & 0x8000 )
       pData->fnCreateProcess( NULL, pData->szCmd, NULL, NULL, FALSE, 0, NULL, NULL, &pData->si, &pData->pi );
+
+    pData->fnSleep( 10 );
   }
 
   return 0;
