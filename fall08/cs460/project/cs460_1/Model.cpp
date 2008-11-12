@@ -71,12 +71,19 @@ AnimatedModel::AnimatedModel( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
 , curAnimSet( 0 )
 , animSpeed( 1.f )
-, BS( bs )
+, exactFrame( 0.f )
+, curKeyFrame( 0 )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
 , AnimSets( animSets )
 , AnimSpeed( animSpeed )
+, MatScale( matScale )
+, MatRot( matRot )
+, MatTrans( matTrans )
 {
+  D3DXMatrixIdentity( &matScale );
+  D3DXMatrixIdentity( &matRot   );
+  D3DXMatrixIdentity( &matTrans );
 }
 
 AnimatedModel::AnimatedModel( const AnimatedModel &rhs )
@@ -89,12 +96,17 @@ AnimatedModel::AnimatedModel( const AnimatedModel &rhs )
 , curKeyFrame( rhs.curKeyFrame )
 , animSpeed( rhs.animSpeed )
 , exactFrame( rhs.exactFrame )
-, BS( bs )
 , AnimSet( curAnimSet )
 , KeyFrame( curKeyFrame )
 , AnimSets( animSets )
 , AnimSpeed( animSpeed )
+, MatScale( matScale )
+, MatRot( matRot )
+, MatTrans( matTrans )
 {
+  D3DXMatrixIdentity( &matScale );
+  D3DXMatrixIdentity( &matRot   );
+  D3DXMatrixIdentity( &matTrans );
 }
 
 AnimatedModel::~AnimatedModel()
@@ -109,8 +121,6 @@ void AnimatedModel::Load( const std::string &file )
   hr = D3DXLoadMeshHierarchyFromX( file.c_str(), 0, pDevice, &allocHierarchy, NULL, 
                                    (LPD3DXFRAME *)&pFrameRoot, NULL );
   ASSERT( hr == S_OK, "Loading mesh hierarchy failed." );
-
-  //AddBones( pFrameRoot, pFrameRoot->TransformationMatrix );
 
   ReadAnimData( file );
 
@@ -130,45 +140,11 @@ void AnimatedModel::ReadAnimData( const std::string &file )
 
 void AnimatedModel::DrawBones() const
 {
-  HRESULT hr;
-
-  hr = pDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
-  ASSERT( hr == S_OK, "Turning off lighting failed." );
-
-  hr = pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
-  ASSERT( hr == S_OK, "Setting FVF failed." );
-
-  hr = pDevice->DrawPrimitiveUP( D3DPT_LINELIST, (UINT)boneLines.size() / 2,
-                                 &boneLines[0], sizeof( ColoredVertex ) );
-  ASSERT( hr == S_OK, "Drawing mesh bones failed." );
-
-  hr = pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
-  ASSERT( hr == S_OK, "Turning on lighting failed." );
-}
-
-void AnimatedModel::AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix )
-{
-  if ( pFrame )
-  {
-    D3DXVECTOR3 startVert;
-    D3DXVec3TransformCoord( &startVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &matrix );
-
-    LPFRAME pCurChild = (LPFRAME)pFrame->pFrameFirstChild;
-    while ( pCurChild )
-    {
-      D3DXMATRIX concat;
-      D3DXMatrixMultiply( &concat, &pCurChild->TransformationMatrix, &matrix );
-      D3DXVECTOR3 childVert;
-      D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &concat );
-      if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
-      { // avoid drawing kickstand
-        boneLines.push_back( startVert );
-        boneLines.push_back( childVert );
-      }
-      AddBones( pCurChild, concat );
-      pCurChild = (LPFRAME)pCurChild->pFrameSibling;
-    }
-  }
+  pDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
+  pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
+  pDevice->DrawPrimitiveUP( D3DPT_LINELIST, (UINT)boneLines.size() / 2,
+                            &boneLines[0], sizeof( ColoredVertex ) );
+  pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
 }
 
 void AnimatedModel::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame )
@@ -190,22 +166,12 @@ void AnimatedModel::MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, s
     {
       SetFrameMatrix( pCurFrame, keyFrame );
       pCurFrame->matCombined;
-      /*
-      D3DXMATRIX scale;
-      D3DXMatrixScaling( &scale, .5f, .5f, .5f );
-      D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->TransformationMatrix, &scale );
-      D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->matCombined, &matrix );
-      /*/
       D3DXMatrixMultiply( &pCurFrame->matCombined, &pCurFrame->TransformationMatrix, &matrix );
-      //*/
 
       D3DXVECTOR3 childVert;
       D3DXVec3TransformCoord( &childVert, &D3DXVECTOR3( 0.f, 0.f, 0.f ), &pCurFrame->matCombined );
-      //if ( startVert.x != 0 || startVert.y != 0 || startVert.z != 0 )
-      //{ // avoid drawing kickstand
-        boneLines.push_back( startVert );
-        boneLines.push_back( childVert );
-      //}
+      boneLines.push_back( startVert );
+      boneLines.push_back( childVert );
 
       MoveBones( pCurFrame, pCurFrame->matCombined, keyFrame );
 
@@ -309,21 +275,30 @@ void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
 
 void AnimatedModel::SetKeyFrame( DWORD tick )
 {
+  if ( animSpeed == 0.f ) return;
+
   KeyFrameVec &keyFrames0 = animSets[curAnimSet].animMap.begin()->second.animKey.keyFrames;
   size_t nKeyFrames = keyFrames0.size(), nLastFrame = nKeyFrames - 1;
-  DWORD modVal = (DWORD)( (float)( keyFrames0[nLastFrame].tick + 1.f ) / animSpeed );
-  tick = (DWORD)( animSpeed * (float)( tick % modVal ) );
+
+  static DWORD realTick = 0;
+  static DWORD lastTick = tick;
+  DWORD tickDif = (DWORD)( animSpeed * (float)( tick - lastTick ) );
+  realTick += tickDif;
+  DWORD curTick = ( realTick % keyFrames0[nLastFrame].tick );
+
   for ( size_t i = nLastFrame; i >= 0; --i )
   {
-    if ( tick >= keyFrames0[i].tick )
+    if ( curTick >= keyFrames0[i].tick )
     {
-      float num   = (float)( tick - keyFrames0[i].tick );
+      float num   = (float)( curTick - keyFrames0[i].tick );
       float den   = (float)( keyFrames0[(i + 1) % nKeyFrames].tick - keyFrames0[i].tick );
       exactFrame  = (float)i + num / den;
       curKeyFrame = i;
       break;
     }
   }
+
+  lastTick = tick;
 }
 
 void AnimatedModel::Render( RENDER_FLAG flag )
@@ -362,4 +337,20 @@ void AnimatedModel::DrawFrameMeshes( LPFRAME pFrame )
 
   if ( pFrame->pFrameFirstChild )
     DrawFrameMeshes( (LPFRAME)pFrame->pFrameFirstChild );
+}
+
+AnimatedModel::Sphere AnimatedModel::GetBS( void ) const
+{
+  Sphere curBS = bs;
+  D3DXVec3TransformCoord( &curBS.center, &bs.center, &GetWorldTrans() );
+  curBS.radius *= MatScale._11; // assumes uniform scale
+  return curBS;
+}
+
+D3DXMATRIX AnimatedModel::GetWorldTrans( void ) const
+{
+  D3DXMATRIX world;
+  D3DXMatrixMultiply( &world, &matScale, &matRot   );
+  D3DXMatrixMultiply( &world, &world,    &matTrans );
+  return world;
 }

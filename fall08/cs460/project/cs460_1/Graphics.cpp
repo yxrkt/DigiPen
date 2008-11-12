@@ -7,6 +7,8 @@
 Graphics::Graphics()
 : MainCam( mainCam )
 , Ready( ready )
+, StaticModels( staticModels )
+, AnimatedModels( animModels )
 , ready( false )
 {
 }
@@ -92,18 +94,41 @@ void Graphics::Update()
 
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
-    D3DXMATRIX world;/*, scale, rot, trans;
-    D3DXMatrixIdentity( &world );
-    D3DXMatrixScaling( &scale, .5f, .5f, .5f );
-    D3DXMatrixRotationX( &rot, D3DX_PI / 4.f );
-    D3DXMatrixTranslation( &trans, 300.f, 0.f, 100.f );
-    D3DXMatrixMultiply( &world, &world, &scale );
-    D3DXMatrixMultiply( &world, &world, &rot );
-    D3DXMatrixMultiply( &world, &world, &trans );*/
-    D3DXMatrixIdentity( &world );
-    i->FrameMove( timeGetTime(), world );
+    i->FrameMove( timeGetTime(), i->GetWorldTrans() );
     i->Render( AnimatedModel::RENDER_ALL );
   }
+
+  DrawControlPoints();
+
+  pDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
+  pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
+
+  if ( !quadPrimitives.empty() )
+  {
+    //pDevice->SetTexture( 0, pFloorTex );
+    pDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
+
+    pDevice->DrawPrimitiveUP( D3DPT_TRIANGLELIST, (UINT)quadPrimitives.size() / 3, 
+                              &quadPrimitives[0], sizeof( ColoredVertex ) );
+    quadPrimitives.clear();
+    pDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
+  }
+
+  if ( !linePrimitives.empty() )
+  {
+    pDevice->DrawPrimitiveUP( D3DPT_LINELIST, (UINT)linePrimitives.size() / 2, 
+                              &linePrimitives[0], sizeof( ColoredVertex ) );
+    linePrimitives.clear();
+  }
+
+  if ( !polylinePrimitives.empty() )
+  {
+    pDevice->DrawPrimitiveUP( D3DPT_LINESTRIP, (UINT)polylinePrimitives.size() - 1, 
+                              &polylinePrimitives[0], sizeof( ColoredVertex ) );
+    polylinePrimitives.clear();
+  }
+
+  pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
 
   hr = pDevice->EndScene();
   ASSERT( hr == S_OK, "EndScene failed." );
@@ -135,12 +160,6 @@ void Graphics::LoadAnimatedModel( const std::string &file )
   AnimatedModel mesh( pDevice );
   mesh.Load( file );
   animModels.push_back( mesh );
-
-  float angle = 2.f * D3DX_PI / 3.f;
-  float dist  = 3.f * mesh.BS.radius;
-
-  mainCam.lookAt  = mesh.BS.center;
-  mainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 0.f, dist * sin( angle ) );
 }
 
 // =============================================================================
@@ -189,29 +208,12 @@ void Graphics::Cleanup()
   SAFE_RELEASE( pMatrixStack );
 }
 
-// =============================================================================
-// ! Draws a line
-// =============================================================================
-void Graphics::DrawLine( D3DXVECTOR3 p, D3DXVECTOR3 q )
+void Graphics::AddQuad( const ColoredVertex *verts )
 {
-  ColoredVertex line[2] =
-  {
-    ColoredVertex( p.x, p.y, p.z, D3DCOLOR_XRGB( 255, 0, 0 ) ),
-    ColoredVertex( q.x, q.y, q.z, D3DCOLOR_XRGB( 255, 0, 0 ) )
-  };
-
-  LPDIRECT3DVERTEXBUFFER9 pVB;
-  LPDIRECT3DVERTEXBUFFER9 pVertexBuffer;
-  pDevice->CreateVertexBuffer( sizeof( line ), 0, D3DFVF_COLOREDVERTEX, D3DPOOL_DEFAULT, &pVB, NULL );
-  pVB->Lock( 0, 2 * sizeof( line ), (void **)&pVertexBuffer, 0 );
-  memcpy( pVertexBuffer, line, sizeof( line ) );
-  pVB->Unlock();
-
-  pDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
-  pDevice->SetStreamSource( 0, pVB, 0, sizeof( ColoredVertex ) );
-  pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
-  pDevice->DrawPrimitive( D3DPT_LINELIST, 0, 1 );
-  pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
+  for ( size_t i = 0; i < 3; ++i )
+    quadPrimitives.push_back( verts[i] );
+  for ( size_t i = 2; i < 5; ++i )
+    quadPrimitives.push_back( verts[i == 4 ? 0 : i] );
 }
 
 void Graphics::DisplayInfo( void )
@@ -249,4 +251,79 @@ void Graphics::CreateSunLight( void )
   // Tell the device about the light and turn it on
   pDevice->SetLight( 0, &light );
   pDevice->LightEnable( 0, TRUE ); 
+}
+
+LPDIRECT3DDEVICE9 Graphics::GetDevice( void ) const
+{
+  return pDevice;
+}
+
+D3DXVECTOR3 Graphics::IsectGroundPlane( int x, int y )
+{
+  D3DVIEWPORT9 viewPort;
+  pDevice->GetViewport( &viewPort );
+  D3DXMATRIX matProj, matView, matWorld;
+  pDevice->GetTransform( D3DTS_PROJECTION, &matProj );
+  pDevice->GetTransform( D3DTS_VIEW, &matView );
+  pDevice->GetTransform( D3DTS_WORLD, &matWorld );
+  D3DXVECTOR3 nearPt, screen( (float)x, (float)y, 0.f );
+  D3DXVec3Unproject( &nearPt, &screen, &viewPort, &matProj, &matView, &matWorld );
+
+  D3DXVECTOR3 isect;
+  D3DXPLANE groundPlane( 0.f, 1.f, 0.f, 0.f );
+  D3DXPlaneIntersectLine( &isect, &groundPlane, &mainCam.eye, &nearPt );
+
+  return isect;
+}
+
+void Graphics::DrawControlPoints( void )
+{
+  ColoredVertex lineVerts[2];
+  for ( VertVec::iterator i = controlPoints.begin(); i != controlPoints.end(); ++i )
+  {
+    // the box
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    AddLine( lineVerts );
+    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    AddLine( lineVerts );
+    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    AddLine( lineVerts );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    AddLine( lineVerts );
+    // the x
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    AddLine( lineVerts );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    AddLine( lineVerts );
+  }
+}
+
+void Graphics::AddLine( const ColoredVertex *verts )
+{
+  linePrimitives.push_back( verts[0] );
+  linePrimitives.push_back( verts[1] );
+}
+
+void Graphics::AddLine( const ColoredVertex &begin, const ColoredVertex &end )
+{
+  linePrimitives.push_back( begin );
+  linePrimitives.push_back( end );
+}
+
+void Graphics::AddPolyline( const ColoredVertex *verts, size_t nVerts, bool closed )
+{
+  for ( size_t i = 0; i < nVerts; ++i )
+  {
+    polylinePrimitives.push_back( verts[i] );
+  }
+  if ( closed )
+  {
+    polylinePrimitives.push_back( verts[0] );
+  }
 }

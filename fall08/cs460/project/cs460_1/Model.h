@@ -61,15 +61,16 @@ class AnimatedModel
     void Render( RENDER_FLAG flag = RENDER_MESHES );
     void SetAnimationSet( DWORD index );
     void DrawFrameMeshes( LPFRAME frame );
+    Sphere GetBS( void ) const;
+    D3DXMATRIX GetWorldTrans( void ) const;
 
-    const Sphere          &BS;
     const DWORD           &AnimSet;
     const size_t          &KeyFrame;
     const AnimationSetVec &AnimSets;
           float           &AnimSpeed;
+          D3DXMATRIX      &MatScale, &MatRot, &MatTrans;
 
   private:
-    void AddBones( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
     void MoveMeshes( const LPFRAME pFrame );
     void ReadAnimData( const std::string &file );
@@ -86,6 +87,7 @@ class AnimatedModel
     size_t              curKeyFrame;
     float               animSpeed;
     float               exactFrame;
+    D3DXMATRIX          matScale, matRot, matTrans;
 };
 
 
