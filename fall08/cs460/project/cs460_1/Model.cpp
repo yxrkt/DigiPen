@@ -354,3 +354,8 @@ D3DXMATRIX AnimatedModel::GetWorldTrans( void ) const
   D3DXMatrixMultiply( &world, &world,    &matTrans );
   return world;
 }
+
+LPFRAME AnimatedModel::GetFrameRoot( void )
+{
+  return pFrameRoot;
+}

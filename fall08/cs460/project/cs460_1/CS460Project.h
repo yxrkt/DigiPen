@@ -43,6 +43,7 @@ class CS460Project : WindowBase
     struct { int x, y; } clickPos;
     D3DXVECTOR3     startEyePos;
     D3DXVECTOR3     startLookatPos;
+    LPFRAME         pFrameShoulder;
 };
 
 #endif

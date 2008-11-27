@@ -63,6 +63,7 @@ class AnimatedModel
     void DrawFrameMeshes( LPFRAME frame );
     Sphere GetBS( void ) const;
     D3DXMATRIX GetWorldTrans( void ) const;
+    LPFRAME GetFrameRoot( void );
 
     const DWORD           &AnimSet;
     const size_t          &KeyFrame;

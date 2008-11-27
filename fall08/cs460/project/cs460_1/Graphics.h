@@ -3,6 +3,7 @@
 #include <d3dx9.h>
 #include <string>
 #include <sstream>
+#include <float.h>
 
 #include "Model.h"
 #include "Macros.h"
@@ -11,6 +12,12 @@
 
 #define CP_RADIUS 5.f
 #define CP_HEIGHT .5f
+
+#define CCD_FAIL      1.f
+#define CCD_SUCCESS   10.f
+
+typedef std::vector< LPFRAME >  PFrameVec;
+typedef std::vector< float >    FloatVec;
 
 
 struct Camera
@@ -42,6 +49,8 @@ class Graphics
     void AddLine( const ColoredVertex *verts );
     void AddLine( const ColoredVertex &begin, const ColoredVertex &end );
     void AddPolyline( const ColoredVertex *verts, size_t nVerts, bool closed = true );
+    bool CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn, 
+              const D3DXVECTOR3 &dest, const FloatVec *pFloats ) const;
 
     Camera              &MainCam;
     const bool          &Ready;

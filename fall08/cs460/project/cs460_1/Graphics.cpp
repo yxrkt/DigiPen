@@ -327,3 +327,52 @@ void Graphics::AddPolyline( const ColoredVertex *verts, size_t nVerts, bool clos
     polylinePrimitives.push_back( verts[0] );
   }
 }
+
+bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn, 
+                    const D3DXVECTOR3 &dest, const FloatVec *pWeights ) const
+{
+  pWeights;
+
+  D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
+  size_t nJoints = pFramesIn->size(), nLast = nJoints - 1;
+  std::vector< D3DXVECTOR3 > joints( nJoints );
+  for ( size_t i = 0; i < nJoints; ++i )
+    D3DXVec3TransformCoord( &joints[i], &origin, &( ( *pFramesIn )[i]->matCombined ) );
+
+  float lastDist = FLT_MAX;
+
+  while ( lastDist > CCD_SUCCESS )
+  {
+    for ( size_t i = nLast - 1; i >= 0; --i )
+    {
+      // find vectors
+      D3DXVECTOR3 l1( joints[nLast] - joints[i] );
+      D3DXVECTOR3 l2( dest - joints[i] );
+
+      // find angle of rotation
+      float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
+
+      // find axis of rotation
+      // reverse this if necessary
+      D3DXVECTOR3 axis;
+      D3DXVec3Cross( &axis, &l1, &l2 );
+      D3DXVec3Normalize( &axis, &axis );
+
+      // rotate
+      D3DXMATRIX matRot;
+      D3DXMatrixRotationAxis( &matRot, &axis, angle );
+      for ( size_t j = i + 1; j < nJoints; ++j )
+        D3DXVec3TransformCoord( &joints[j], &joints[j], &matRot );
+    }
+
+    D3DXVECTOR3 difVec( dest - joints[nLast] );
+    float dist = D3DXVec3Length( &difVec );
+
+    if ( dist > CCD_SUCCESS && ( dist - lastDist ) < CCD_FAIL )
+      return false;
+    else
+      lastDist = dist;
+  }
+
+  return true;
+}
