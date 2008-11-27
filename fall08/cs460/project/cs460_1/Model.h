@@ -20,6 +20,8 @@ typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
 typedef std::vector< AnimationSet >       AnimationSetVec;
 
+typedef void ( *CHANGEFRAMEFN )( LPFRAME );
+
 
 class StaticModel
 {
@@ -65,6 +67,9 @@ class AnimatedModel
     D3DXMATRIX GetWorldTrans( void ) const;
     LPFRAME GetFrameRoot( void );
 
+    static void ForEachFrame( LPFRAME pRoot, CHANGEFRAMEFN fn );
+    static void DrawLinesToChildren( LPFRAME pFrame );
+
     const DWORD           &AnimSet;
     const size_t          &KeyFrame;
     const AnimationSetVec &AnimSets;
@@ -72,16 +77,16 @@ class AnimatedModel
           D3DXMATRIX      &MatScale, &MatRot, &MatTrans;
 
   private:
-    void MoveBones( const LPFRAME pFrame, const D3DXMATRIX &matrix, size_t keyFrame );
+    void MoveFrame( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveMeshes( const LPFRAME pFrame );
     void ReadAnimData( const std::string &file );
-    void SetFrameMatrix( LPFRAME pFrame, size_t keyFrame, bool exact = true );
+    void SetFrameMatrix( LPFRAME pFrame );
     void SetKeyFrame( DWORD tick );
+    bool CreateSkeleton( void ) const;
 
   private:
     LPDIRECT3DDEVICE9   pDevice;
     LPFRAME             pFrameRoot;
-    VertVec             boneLines;
     AnimationSetVec     animSets;
     Sphere              bs;
     DWORD               curAnimSet;
@@ -89,6 +94,10 @@ class AnimatedModel
     float               animSpeed;
     float               exactFrame;
     D3DXMATRIX          matScale, matRot, matTrans;
+
+    mutable VertVec     boneLines;
+
+    static AnimatedModel *s_pCurAnimModel;
 };
 
 

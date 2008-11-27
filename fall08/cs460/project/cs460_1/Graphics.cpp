@@ -95,7 +95,7 @@ void Graphics::Update()
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
     i->FrameMove( timeGetTime(), i->GetWorldTrans() );
-    i->Render( AnimatedModel::RENDER_ALL );
+    i->Render( AnimatedModel::RENDER_BONES );
   }
 
   DrawControlPoints();

@@ -34,7 +34,7 @@ void CS460Project::Initialize()
   //                                "Floor.jpg" ).c_str(), &graphics.pFloorTex );
   //ASSERT( SUCCEEDED( hr ), "Texture not found" );
   graphics.LoadAnimatedModel( std::string( ASSETS_DIR ) + "run_inPlace.x" );
-  pFrameShoulder = (LPFRAME)D3DXFrameFind( graphics.AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
+  LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( graphics.AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
 
   AnimatedModel &model = *graphics.AnimatedModels.begin();
   D3DXMatrixScaling( &model.MatScale, .15f, .15f, .15f );
