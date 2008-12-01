@@ -18,8 +18,9 @@
 #define CCD_FAIL      1.f
 #define CCD_SUCCESS   10.f
 
-typedef std::vector< LPFRAME >  PFrameVec;
-typedef std::vector< float >    FloatVec;
+typedef std::vector< LPFRAME >    PFrameVec;
+typedef std::vector< float >      FloatVec;
+typedef std::vector< D3DXMATRIX > MatrixVec;
 
 
 struct Camera
@@ -57,7 +58,7 @@ class Graphics
     void AddLine( const ColoredVertex *verts );
     void AddLine( const ColoredVertex &begin, const ColoredVertex &end );
     void AddPolyline( const ColoredVertex *verts, size_t nVerts, bool closed = true );
-    bool CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn, 
+    bool CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn, 
               const D3DXVECTOR3 &dest, const FloatVec *pFloats ) const;
     void PauseAnims( void );
     void PlayAnims( void );

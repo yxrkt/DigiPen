@@ -275,9 +275,9 @@ void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, AN
   SetKeyFrame( elapsedTime );
   
   ForEachFrame( pFrameRoot, &AnimatedModel::SetFrameMatrix );
-  MoveFrames( pFrameRoot, matWorld );
   if ( callback )
     callback();
+  MoveFrames( pFrameRoot, matWorld );
   MoveMeshes( pFrameRoot );
 }
 

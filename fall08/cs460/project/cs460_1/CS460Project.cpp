@@ -42,7 +42,7 @@ void CS460Project::Initialize()
   Gfx->LoadAnimatedModel( "run_inPlace.x" );
   LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( Gfx->AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
   AddNamedFrames( pFrameCur );
-  Gfx->LoadStaticModel( "IceChar_RunAnimation.X", D3DXVECTOR3( 200.f, 40.f, -200.f ), .50f );
+  Gfx->LoadStaticModel( "IceChar_RunAnimation.X", D3DXVECTOR3( 0.f, 60.f, -30.f ), .50f );
 
   AnimatedModel &model = Gfx->AnimatedModels.front();
   D3DXMatrixScaling( &model.MatScale, .15f, .15f, .15f );
@@ -386,6 +386,8 @@ void CS460Project::AddNamedFrames( const LPFRAME pRoot )
 
 void CS460Project::AnimCallback( void )
 {
+  /*
+
   int nFrames = (int)CS460Proj->armFrames.size();
   for ( int i = 0; i < nFrames; ++i )
   {
@@ -396,12 +398,33 @@ void CS460Project::AnimCallback( void )
     D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
     D3DXMatrixRotationQuaternion( &matRot, &quatRot );
     D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
+
+    D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &matScale, &matRot );
+    D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &CS460Proj->armFrames[i]->TransformationMatrix, &matTrans );
   }
   
-  //PFrameVec pFramesOut;
-  //if ( Gfx->CCD( &pFramesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL ) )
-  //{
-  //  Gfx->PauseAnims();
-  //  GlobalTime::Pause();
-  //}
+  /*/
+  static bool       showSolution = false;
+  static MatrixVec  matricesOut;
+
+  if ( !showSolution )
+  {
+    if ( Gfx->CCD( &matricesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL ) )
+    {
+      Gfx->PauseAnims();
+      GlobalTime::Pause();
+      showSolution = true;
+    }
+  }
+
+  if ( showSolution )
+  {
+    int nFrames = (int)CS460Proj->armFrames.size();
+    for ( int i = 0; i < nFrames; ++i )
+    {
+      CS460Proj->armFrames[i]->TransformationMatrix = matricesOut[i];
+    }
+  }
+
+  //*/
 }

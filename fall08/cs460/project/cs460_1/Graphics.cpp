@@ -339,12 +339,10 @@ void Graphics::AddPolyline( const ColoredVertex *verts, size_t nVerts, bool clos
   }
 }
 
-bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn, 
+bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn, 
                     const D3DXVECTOR3 &dest, const FloatVec *pWeights ) const
 {
   pWeights;
-
-  if ( pFramesIn->empty() ) return false;
 
   D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
   int nJoints = (int)pFramesIn->size(), nLast = nJoints - 1;
@@ -352,7 +350,10 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
   for ( int i = 0; i < nJoints; ++i )
     D3DXVec3TransformCoord( &joints[i], &origin, &( ( *pFramesIn )[i]->matCombined ) );
 
-  // draw arm in red (before ccd)
+  pMatricesOut->clear();
+  pMatricesOut->reserve( nLast );
+
+  /* draw arm in red (before ccd)
   D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
   for ( int i = 1; i < nJoints; ++i )
   {
@@ -361,6 +362,7 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
     ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, red );
     ( (Graphics *)this )->AddLine( p0, p1 );
   }
+  //*/
 
   float lastDist = FLT_MAX;
 
@@ -376,10 +378,11 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
       float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
 
       // find axis of rotation
-      // reverse this if necessary
       D3DXVECTOR3 axis;
       D3DXVec3Cross( &axis, &l1, &l2 );
       D3DXVec3Normalize( &axis, &axis );
+
+      //( *pMatricesOut )[i]
 
       // rotate
       D3DXMATRIX matRot;
@@ -427,6 +430,7 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
       //*/
     }
 
+    /*
     // draw arm in blue (after ccd)
     D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
     for ( int i = 1; i < nJoints; ++i )
@@ -436,6 +440,7 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
       ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, blue );
       ( (Graphics *)this )->AddLine( p0, p1 );
     }
+    //*/
 
     D3DXVECTOR3 difVec( dest - joints[nLast] );
     float dist = D3DXVec3Length( &difVec );
