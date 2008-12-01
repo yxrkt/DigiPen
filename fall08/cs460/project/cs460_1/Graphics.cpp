@@ -1,5 +1,12 @@
 #include "Graphics.h"
 #include "ASSERT.h"
+#include "GlobalTime.h"
+
+Graphics *Graphics::Instance()
+{
+  static Graphics graphics;
+  return &graphics;
+}
 
 // =============================================================================
 // ! Graphics constructor
@@ -10,6 +17,8 @@ Graphics::Graphics()
 , StaticModels( staticModels )
 , AnimatedModels( animModels )
 , ready( false )
+, paused( false )
+, animCallback( NULL )
 {
 }
 
@@ -31,7 +40,7 @@ void Graphics::Initialize( HWND hWndApp )
   bgColor = D3DCOLOR_XRGB( 0, 0, 0 );
 
   pD3D = Direct3DCreate9( D3D_SDK_VERSION );
-  ASSERT( pDevice, "Initializing Direct3D failed." );
+  ASSERT( pD3D, "Initializing Direct3D failed." );
 
   D3DPRESENT_PARAMETERS params;
   ZeroMemory( &params, sizeof( params ) );
@@ -77,6 +86,12 @@ void Graphics::Update()
 {
   HRESULT hr;
 
+  DWORD curTick = timeGetTime();
+  static DWORD lastTick = curTick;
+  if ( !paused )
+    curTime += ( curTick - lastTick );
+  lastTick = curTick;
+
   hr = pDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, bgColor, 1.f, 0 );
   ASSERT( hr == S_OK, "Clearing the device failed." );
 
@@ -94,7 +109,7 @@ void Graphics::Update()
 
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
-    i->FrameMove( timeGetTime(), i->GetWorldTrans() );
+    i->FrameMove( curTime, i->GetWorldTrans(), animCallback );
     i->Render( AnimatedModel::RENDER_BONES );
   }
 
@@ -139,17 +154,13 @@ void Graphics::Update()
 // =============================================================================
 // ! Loads a non-animating mesh from a .x file
 // =============================================================================
-void Graphics::LoadStaticModel( const std::string &file )
+void Graphics::LoadStaticModel( const std::string &file, const D3DXVECTOR3 &pos, float scale )
 {
   StaticModel mesh( pDevice );
-  mesh.Load( file );
+  mesh.Load( std::string( ASSETS_DIR ) + file );
+  mesh.Pos    = pos;
+  mesh.Scale  = scale;
   staticModels.push_back( mesh );
-
-  float angle = 2.f * D3DX_PI / 3.f;
-  float dist  = 3.f * 400.f;
-
-  mainCam.lookAt  = D3DXVECTOR3( 0.f, 250.f, 0.f );
-  mainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 0.f, dist * sin( angle ) );
 }
 
 // =============================================================================
@@ -177,23 +188,23 @@ void Graphics::SetupMatrices()
 {
   HRESULT hr;
 
-  D3DXMATRIXA16 mtxWorld;
-  D3DXMatrixIdentity( &mtxWorld );
-  hr = pDevice->SetTransform( D3DTS_WORLD, &mtxWorld );
+  D3DXMATRIXA16 matWorld;
+  D3DXMatrixIdentity( &matWorld );
+  hr = pDevice->SetTransform( D3DTS_WORLD, &matWorld );
   ASSERT( hr == S_OK, "Setting world transform failed." );
 
-  D3DXMATRIXA16 mtxView;
-  D3DXMatrixLookAtLH( &mtxView, &mainCam.eye, &mainCam.lookAt, &mainCam.up );
-  hr = pDevice->SetTransform( D3DTS_VIEW, &mtxView );
+  D3DXMATRIXA16 matView;
+  D3DXMatrixLookAtLH( &matView, &mainCam.eye, &mainCam.lookAt, &mainCam.up );
+  hr = pDevice->SetTransform( D3DTS_VIEW, &matView );
   ASSERT( hr == S_OK, "Setting view transform failed." );
 
   RECT rcWnd;
   GetClientRect( hWnd, &rcWnd );
   float aspect = fabs( (float)( rcWnd.left - rcWnd.right ) / (float)( rcWnd.bottom - rcWnd.top ) );
 
-  D3DXMATRIXA16 mtxProj;
-  D3DXMatrixPerspectiveFovLH( &mtxProj, D3DX_PI / 4.f, aspect, 1.f, 5000.f );
-  hr = pDevice->SetTransform( D3DTS_PROJECTION, &mtxProj );
+  D3DXMATRIXA16 matProj;
+  D3DXMatrixPerspectiveFovLH( &matProj, D3DX_PI / 4.f, aspect, 1.f, 5000.f );
+  hr = pDevice->SetTransform( D3DTS_PROJECTION, &matProj );
   ASSERT( hr == S_OK, "Setting perspective transform failed." );
 }
 
@@ -282,24 +293,24 @@ void Graphics::DrawControlPoints( void )
   for ( VertVec::iterator i = controlPoints.begin(); i != controlPoints.end(); ++i )
   {
     // the box
-    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
     AddLine( lineVerts );
-    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
     AddLine( lineVerts );
-    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
     AddLine( lineVerts );
-    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
     AddLine( lineVerts );
     // the x
-    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
     AddLine( lineVerts );
-    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS );
-    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS );
+    lineVerts[0] = ColoredVertex( i->x - CP_RADIUS, i->y + CP_HEIGHT, i->z + CP_RADIUS, i->color );
+    lineVerts[1] = ColoredVertex( i->x + CP_RADIUS, i->y + CP_HEIGHT, i->z - CP_RADIUS, i->color );
     AddLine( lineVerts );
   }
 }
@@ -333,17 +344,29 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
 {
   pWeights;
 
+  if ( pFramesIn->empty() ) return false;
+
   D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
-  size_t nJoints = pFramesIn->size(), nLast = nJoints - 1;
+  int nJoints = (int)pFramesIn->size(), nLast = nJoints - 1;
   std::vector< D3DXVECTOR3 > joints( nJoints );
-  for ( size_t i = 0; i < nJoints; ++i )
+  for ( int i = 0; i < nJoints; ++i )
     D3DXVec3TransformCoord( &joints[i], &origin, &( ( *pFramesIn )[i]->matCombined ) );
+
+  // draw arm in red (before ccd)
+  D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
+  for ( int i = 1; i < nJoints; ++i )
+  {
+    int j = i - 1;
+    ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, red );
+    ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, red );
+    ( (Graphics *)this )->AddLine( p0, p1 );
+  }
 
   float lastDist = FLT_MAX;
 
   while ( lastDist > CCD_SUCCESS )
   {
-    for ( size_t i = nLast - 1; i >= 0; --i )
+    for ( int i = nLast - 1; i >= 0; --i )
     {
       // find vectors
       D3DXVECTOR3 l1( joints[nLast] - joints[i] );
@@ -361,8 +384,57 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
       // rotate
       D3DXMATRIX matRot;
       D3DXMatrixRotationAxis( &matRot, &axis, angle );
-      for ( size_t j = i + 1; j < nJoints; ++j )
+      for ( int j = i + 1; j < nJoints; ++j )
+      {
+        joints[j] -= joints[i];
         D3DXVec3TransformCoord( &joints[j], &joints[j], &matRot );
+        joints[j] += joints[i];
+      }
+
+      /*/ -- compare rotated vec's alignment
+      D3DXVECTOR3 l2n, newl1( joints[nLast] - joints[i] );
+      D3DXVec3Normalize( &l2n, &l2 );
+      D3DXVec3Normalize( &newl1, &newl1 );
+      //*/
+
+      /*/ -- Step By Step, shizMax no higher than 3
+      static VertVec firstCCD( 5 );
+      static int shizMax = 3;
+      static int shizCur = 0;
+      if ( shizCur++ <= shizMax )
+      {
+        std::copy( joints.begin(), joints.end(), firstCCD.begin() );
+      }
+      D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
+      for ( int i = 1; i < nJoints; ++i )
+      {
+        int j = i - 1;
+        ColoredVertex p0( firstCCD[j].x, firstCCD[j].y, firstCCD[j].z, blue );
+        ColoredVertex p1( firstCCD[i].x, firstCCD[i].y, firstCCD[i].z, blue );
+        ( (Graphics *)this )->AddLine( p0, p1 );
+      }
+      int fi = 3 - shizMax;
+      D3DCOLOR yellow = D3DCOLOR_XRGB( 255, 255, 0 );
+      ColoredVertex q0( firstCCD[fi].x, firstCCD[fi].y, firstCCD[fi].z, yellow );
+      D3DXVECTOR3 temp( *firstCCD[nLast].ToLPD3DXVECTOR3() - *firstCCD[fi].ToLPD3DXVECTOR3() );
+      temp *= 10.f;
+      ColoredVertex q1( *firstCCD[fi].ToLPD3DXVECTOR3() + temp );
+      q1.color = yellow;
+      ( (Graphics *)this )->AddLine( q0, q1 );
+
+      D3DXVECTOR3 goodDir( staticModels.front().Pos - *q0.ToLPD3DXVECTOR3() );
+      ( (Graphics *)this )->AddLine( q0, *q0.ToLPD3DXVECTOR3() + goodDir );
+      //*/
+    }
+
+    // draw arm in blue (after ccd)
+    D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
+    for ( int i = 1; i < nJoints; ++i )
+    {
+      int j = i - 1;
+      ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, blue );
+      ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, blue );
+      ( (Graphics *)this )->AddLine( p0, p1 );
     }
 
     D3DXVECTOR3 difVec( dest - joints[nLast] );
@@ -375,4 +447,19 @@ bool Graphics::CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn,
   }
 
   return true;
+}
+
+void Graphics::PauseAnims( void )
+{
+  paused = true;
+}
+
+void Graphics::PlayAnims( void )
+{
+  paused = false;
+}
+
+bool Graphics::IsPaused( void ) const
+{
+  return paused;
 }

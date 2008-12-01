@@ -20,19 +20,25 @@ typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
 typedef std::vector< AnimationSet >       AnimationSetVec;
 
-typedef void ( *CHANGEFRAMEFN )( LPFRAME );
+class AnimatedModel;
 
+typedef void ( *CHANGEFRAMEFN )( LPFRAME );
+typedef void ( AnimatedModel::*MCHANGEFRAMEFN )( LPFRAME );
+typedef void ( *ANIMCALLBACKFN )( void );
 
 class StaticModel
 {
   public:
     StaticModel( const LPDIRECT3DDEVICE9 _pDevice );
-    ~StaticModel();
+    ~StaticModel( void );
 
     void Load( const std::string &file );
-    void Render() const;
+    void Render( void ) const;
 
     LPD3DXMESH  &Data;
+
+    float       Scale;
+    D3DXVECTOR3 Pos;
 
   private:
     LPDIRECT3DDEVICE9   pDevice;
@@ -55,10 +61,10 @@ class AnimatedModel
   public:
     AnimatedModel( const LPDIRECT3DDEVICE9 _pDevice );
     AnimatedModel( const AnimatedModel &rhs );
-    ~AnimatedModel();
+    ~AnimatedModel( void );
 
-    void DrawBones() const;
-    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld );
+    void DrawBones( void ) const;
+    void FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, ANIMCALLBACKFN callback = NULL );
     void Load( const std::string &file );
     void Render( RENDER_FLAG flag = RENDER_MESHES );
     void SetAnimationSet( DWORD index );
@@ -66,6 +72,8 @@ class AnimatedModel
     Sphere GetBS( void ) const;
     D3DXMATRIX GetWorldTrans( void ) const;
     LPFRAME GetFrameRoot( void );
+    D3DXVECTOR3 GetOrientVec( void ) const;
+    void ForEachFrame( LPFRAME pRoot, MCHANGEFRAMEFN fn );
 
     static void ForEachFrame( LPFRAME pRoot, CHANGEFRAMEFN fn );
     static void DrawLinesToChildren( LPFRAME pFrame );
@@ -77,7 +85,7 @@ class AnimatedModel
           D3DXMATRIX      &MatScale, &MatRot, &MatTrans;
 
   private:
-    void MoveFrame( const LPFRAME pFrame, const D3DXMATRIX &matrix );
+    void MoveFrames( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveMeshes( const LPFRAME pFrame );
     void ReadAnimData( const std::string &file );
     void SetFrameMatrix( LPFRAME pFrame );

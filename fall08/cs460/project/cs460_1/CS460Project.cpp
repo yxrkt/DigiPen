@@ -1,9 +1,12 @@
 #include "CS460Project.h"
 #include "Spline.h"
+#include "GlobalTime.h"
 
 #define CURVE_PRECISION 20
 #define ANIM_RATIO      .01f
 #define EASE_IN_OUT_PCT .166f
+
+CS460Project *CS460Project::CS460Proj = NULL;
 
 // =============================================================================
 // ! Constructor.
@@ -13,8 +16,10 @@ CS460Project::CS460Project( HINSTANCE hInstance )
 , modelSpeed( 0.f )
 , maxSpeed( 100.f )
 {
+  SAFE_DELETE( CS460Proj );
   hInstance_ = hInstance;
   CreateMainWindow( "CS460 Project 1", 800, 600 );
+  CS460Proj = this;
 }
 
 // =============================================================================
@@ -29,14 +34,17 @@ void CS460Project::Initialize()
 {
   //HRESULT hr;
 
-  graphics.Initialize( hWndMain_ );
-  //hr = D3DXCreateTextureFromFile( graphics.GetDevice(), ( std::string( ASSETS_DIR ) + 
-  //                                "Floor.jpg" ).c_str(), &graphics.pFloorTex );
+  Gfx->Initialize( hWndMain_ );
+  Gfx->animCallback = AnimCallback;
+  //hr = D3DXCreateTextureFromFile( Gfx->GetDevice(), ( std::string( ASSETS_DIR ) + 
+  //                                "Floor.jpg" ).c_str(), &Gfx->pFloorTex );
   //ASSERT( SUCCEEDED( hr ), "Texture not found" );
-  graphics.LoadAnimatedModel( std::string( ASSETS_DIR ) + "run_inPlace.x" );
-  LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( graphics.AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
+  Gfx->LoadAnimatedModel( "run_inPlace.x" );
+  LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( Gfx->AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
+  AddNamedFrames( pFrameCur );
+  Gfx->LoadStaticModel( "IceChar_RunAnimation.X", D3DXVECTOR3( 200.f, 40.f, -200.f ), .50f );
 
-  AnimatedModel &model = *graphics.AnimatedModels.begin();
+  AnimatedModel &model = Gfx->AnimatedModels.front();
   D3DXMatrixScaling( &model.MatScale, .15f, .15f, .15f );
 
   AnimatedModel::Sphere bs = model.GetBS();
@@ -44,8 +52,8 @@ void CS460Project::Initialize()
   float angle = D3DX_PI + .125f * D3DX_PI;
   float dist  = 10.f * bs.radius;
 
-  graphics.MainCam.lookAt  = bs.center;
-  graphics.MainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 4.f * bs.radius, dist * sin( angle ) );
+  Gfx->MainCam.lookAt  = bs.center;
+  Gfx->MainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 4.f * bs.radius, dist * sin( angle ) );
 }
 
 // =============================================================================
@@ -53,6 +61,8 @@ void CS460Project::Initialize()
 // =============================================================================
 void CS460Project::Update()
 {
+  GlobalTime::Update();
+
   // Draw Floor
   D3DCOLOR floorColor = D3DCOLOR_XRGB( 100, 50, 35 );
   ColoredVertex floorQuad[] = 
@@ -62,17 +72,17 @@ void CS460Project::Update()
     ColoredVertex(  250.f, 0.f,  250.f, floorColor ),// 1.f, 1.f ),
     ColoredVertex( -250.f, 0.f,  250.f, floorColor )//, 0.f, 1.f )
   };
-  //graphics.AddQuad( floorQuad );
-  graphics.AddPolyline( floorQuad, 4 );
+  //Gfx->AddQuad( floorQuad );
+  Gfx->AddPolyline( floorQuad, 4 );
 
   // Update Spline
-  if ( graphics.controlPoints.size() > 2 )
+  if ( Gfx->controlPoints.size() > 2 )
   {
     UpdateSpline();
     UpdateModel();
   }
 
-  graphics.Update();
+  Gfx->Update();
 }
 
 // =============================================================================
@@ -107,7 +117,7 @@ int CS460Project::Run()
 void CS460Project::Cleanup()
 {
   UnregisterClass( szClassName, hInstance_ );
-  graphics.Cleanup();
+  Gfx->Cleanup();
 }
 
 // =============================================================================
@@ -123,16 +133,29 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       {
         case VK_ADD:
           maxSpeed += 25.f;
-          //graphics.IncDecAnimSpeed( true );
+          //Gfx->IncDecAnimSpeed( true );
           break;
 
         case VK_SUBTRACT:
           maxSpeed = max( maxSpeed - 25.f, 0.f );
-          //graphics.IncDecAnimSpeed( false );
+          //Gfx->IncDecAnimSpeed( false );
           break;
 
         case 'C':
-          graphics.controlPoints.clear();
+          //Gfx->controlPoints.clear();
+          break;
+
+        case 'P':
+          if ( !Gfx->IsPaused() )
+          { 
+            GlobalTime::Pause();
+            Gfx->PauseAnims();
+          }
+          else
+          {
+            GlobalTime::Unpause();
+            Gfx->PlayAnims();
+          }
           break;
 
         case VK_ESCAPE:
@@ -144,15 +167,20 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_LBUTTONDOWN:
     {
-      D3DXVECTOR3 isectD3D = graphics.IsectGroundPlane( (int)(short)LOWORD( lParam ), 
-                                                        (int)(short)HIWORD( lParam ) );
-      ColoredVertex isect( isectD3D );
-      isect.color = D3DCOLOR_XRGB( 0, 255, 0 );
-      VertVec &points = graphics.controlPoints;
-      if ( std::find( points.begin(), points.end(), isect ) == points.end() )
-      {
-        points.push_back( isect );
-      }
+      D3DXVECTOR3 isectD3D = Gfx->IsectGroundPlane( (int)(short)LOWORD( lParam ), 
+                                                    (int)(short)HIWORD( lParam ) );
+      Gfx->StaticModels.front().Pos = isectD3D;
+      Gfx->StaticModels.front().Pos.y = 45.f;
+      GeneratePath( D3DXVECTOR3( 0.f, 0.f, 0.f ), isectD3D );
+      Gfx->PlayAnims();
+      GlobalTime::Unpause();
+      //ColoredVertex isect( isectD3D );
+      //isect.color = D3DCOLOR_XRGB( 0, 255, 0 );
+      //VertVec &points = Gfx->controlPoints;
+      //if ( std::find( points.begin(), points.end(), isect ) == points.end() )
+      //{
+      //  points.push_back( isect );
+      //}
       break;
     }
 
@@ -161,8 +189,8 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       SetCapture( hWndMain_ );
       clickPos.x      = (int)(short)LOWORD( lParam );
       clickPos.y      = (int)(short)HIWORD( lParam );
-      startEyePos     = graphics.MainCam.eye;
-      startLookatPos  = graphics.MainCam.lookAt;
+      startEyePos     = Gfx->MainCam.eye;
+      startLookatPos  = Gfx->MainCam.lookAt;
       break;
     }
 
@@ -171,7 +199,7 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       int x = (int)(short)LOWORD( lParam );
       int y = (int)(short)HIWORD( lParam );
 
-      Camera &cam = graphics.MainCam;
+      Camera &cam = Gfx->MainCam;
 
       if ( wParam & MK_MBUTTON )
       {
@@ -181,8 +209,8 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
         }
         else
         {
-          D3DXVECTOR3 newPos      = graphics.IsectGroundPlane( x, y );
-          D3DXVECTOR3 clickIsect  = graphics.IsectGroundPlane( clickPos.x, clickPos.y );
+          D3DXVECTOR3 newPos      = Gfx->IsectGroundPlane( x, y );
+          D3DXVECTOR3 clickIsect  = Gfx->IsectGroundPlane( clickPos.x, clickPos.y );
           D3DXVECTOR3 panTrans    = clickIsect - newPos;
           cam.eye                 = startEyePos + panTrans;
           cam.lookAt              = startLookatPos + panTrans;
@@ -202,8 +230,8 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       break;
 
     case WM_SIZE:
-      if ( graphics.Ready )
-        graphics.Update();
+      if ( Gfx->Ready )
+        Gfx->Update();
       break;
 
     default:
@@ -215,12 +243,47 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
 
 // --
 
+void CS460Project::GeneratePath( const D3DXVECTOR3 &begin, const D3DXVECTOR3 &end )
+{
+  AnimatedModel &dude = Gfx->AnimatedModels.front();
+
+  VertVec &points = Gfx->controlPoints;
+  points.clear();
+
+  points.push_back( begin );
+
+  // get look vector
+  D3DXVECTOR3 vecOrient = D3DXVECTOR3( 0.f, 0.f, -1.f );
+
+  D3DXVECTOR3 dir( end - begin );
+  float dist = D3DXVec3Length( &dir );
+  D3DXVec3Normalize( &dir, &dir );
+
+  points.push_back( begin + ( vecOrient * dist ) );
+
+  D3DXMATRIX matRot;
+  D3DXVECTOR3 thirdPtOffset, crossOut;
+  D3DXVec3Cross( &crossOut, points[1].ToLPD3DXVECTOR3(), &dir );
+  float angle = .5f * acos( D3DXVec3Dot( &vecOrient, &dir ) );
+  if ( crossOut.y < 0.f )
+    angle = -angle;
+  D3DXMatrixRotationY( &matRot, angle );
+  D3DXVec3TransformCoord( &thirdPtOffset, points.back().ToLPD3DXVECTOR3(), &matRot );
+
+  points.push_back( thirdPtOffset );
+
+  points.push_back( end );
+
+  points[1].color = D3DCOLOR_XRGB( 255, 0, 0 );
+  points[2].color = D3DCOLOR_XRGB( 0, 0, 255 );
+}
+
 void CS460Project::UpdateSpline()
 {
   distToTime.clear();
 
   curveLen = 0.f;
-  VertVec &points = graphics.controlPoints;
+  VertVec &points = Gfx->controlPoints;
   ColoredVertex vertBegin = points.front();
   D3DXVECTOR3 vertEnd;
   distToTime[0.f] = 0.f;
@@ -228,25 +291,25 @@ void CS460Project::UpdateSpline()
   for ( float t = fStep; t < 1.f; t += fStep )
   {
     GetSplinePoint( vertEnd, points, t );
-    graphics.AddLine( vertBegin, vertEnd );
+    Gfx->AddLine( vertBegin, vertEnd );
     curveLen += Dist( vertBegin, vertEnd );
     distToTime[curveLen] = t;
     vertBegin = vertEnd;
   }
-  graphics.AddLine( vertBegin, points.back() );
+  Gfx->AddLine( vertBegin, points.back() );
   curveLen += Dist( vertBegin, vertEnd );
   distToTime[curveLen] = 1.f;
 }
 
 void CS460Project::UpdateModel()
 {
-  static DWORD lastTick = timeGetTime();
-  VertVec &points = graphics.controlPoints;
+  //if ( Gfx->IsPaused() ) return;
+
+  VertVec &points = Gfx->controlPoints;
 
   float easeTime = ( curveLen * EASE_IN_OUT_PCT ) / ( maxSpeed / 2.f );
   float accel = maxSpeed / easeTime;
-  float tick  = (float)( timeGetTime() - lastTick ) / 1000.f;
-  lastTick    = timeGetTime();
+  float tick  = (float)( GlobalTime::GetStep() ) / 1000.f;
 
   float easeInDist  = curveLen * EASE_IN_OUT_PCT;
   float easeOutDist = curveLen - easeInDist;
@@ -289,7 +352,7 @@ void CS460Project::UpdateModel()
   // move the model
   D3DXVECTOR3 pos;
   GetSplinePoint( pos, points, t );
-  D3DXMatrixTranslation( &graphics.AnimatedModels.front().MatTrans, pos.x, pos.y, pos.z );
+  D3DXMatrixTranslation( &Gfx->AnimatedModels.front().MatTrans, pos.x, pos.y, pos.z );
   
   // orient him forward
   D3DXVECTOR3 orient;
@@ -299,8 +362,46 @@ void CS460Project::UpdateModel()
   float angle = acos( D3DXVec3Dot( &aligned, &orient ) );
   D3DXVec3Cross( &axis, &aligned, &orient );
   D3DXVec3Normalize( &axis, &axis );
-  D3DXMatrixRotationAxis( &graphics.AnimatedModels.front().MatRot, &axis, angle );
+  D3DXMatrixRotationAxis( &Gfx->AnimatedModels.front().MatRot, &axis, angle );
 
   // set his animation speed
-  graphics.AnimatedModels.front().AnimSpeed = modelSpeed * ANIM_RATIO;
+  Gfx->AnimatedModels.front().AnimSpeed = modelSpeed * ANIM_RATIO;
+}
+
+void CS460Project::AddNamedFrames( const LPFRAME pRoot )
+{
+  armFrames.push_back( pRoot );
+
+  LPFRAME pCurChild = (LPFRAME)pRoot->pFrameFirstChild;
+  while ( pCurChild )
+  {
+    if ( pCurChild->Name && strlen( pCurChild->Name ) )
+    {
+      AddNamedFrames( pCurChild );
+      break;
+    }
+    pCurChild = (LPFRAME)pCurChild->pFrameSibling;
+  }
+}
+
+void CS460Project::AnimCallback( void )
+{
+  int nFrames = (int)CS460Proj->armFrames.size();
+  for ( int i = 0; i < nFrames; ++i )
+  {
+    D3DXVECTOR3 vecScale, vecTrans;
+    D3DXQUATERNION quatRot;
+    D3DXMATRIX matTrans, matRot, matScale;
+    D3DXMatrixDecompose( &vecScale, &quatRot, &vecTrans, &CS460Proj->armFrames[i]->TransformationMatrix );
+    D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
+    D3DXMatrixRotationQuaternion( &matRot, &quatRot );
+    D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
+  }
+  
+  //PFrameVec pFramesOut;
+  //if ( Gfx->CCD( &pFramesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL ) )
+  //{
+  //  Gfx->PauseAnims();
+  //  GlobalTime::Pause();
+  //}
 }

@@ -9,6 +9,8 @@
 #include "Macros.h"
 #include "Vertex.h"
 
+#define Gfx Graphics::Instance()
+
 
 #define CP_RADIUS 5.f
 #define CP_HEIGHT .5f
@@ -29,13 +31,19 @@ struct Camera
 
 class Graphics
 {
-  public:
+  private:
     Graphics( void );
     ~Graphics( void );
+    Graphics( const Graphics &rhs );
+    void operator =( const Graphics &rhs );
+
+  public:
+    static Graphics *Instance();
 
     void Initialize( HWND hWndApp );
     void Update( void );
-    void LoadStaticModel( const std::string &file );
+    void LoadStaticModel( const std::string &file, const D3DXVECTOR3 &pos = D3DXVECTOR3( 1.f, 1.f, 1.f ), 
+                                                   float scale = 1.f );
     void LoadAnimatedModel( const std::string &file );
     void IncDecAnimSpeed( bool inc );
     void SetupMatrices( void );
@@ -51,6 +59,9 @@ class Graphics
     void AddPolyline( const ColoredVertex *verts, size_t nVerts, bool closed = true );
     bool CCD( PFrameVec *pFramesOut, const PFrameVec *pFramesIn, 
               const D3DXVECTOR3 &dest, const FloatVec *pFloats ) const;
+    void PauseAnims( void );
+    void PlayAnims( void );
+    bool IsPaused( void ) const;
 
     Camera              &MainCam;
     const bool          &Ready;
@@ -62,11 +73,9 @@ class Graphics
 
     LPD3DXFONT          pFont;
 
-  private:
-      // Class cannot be copied
-    Graphics( const Graphics &rhs );
-    void operator =( const Graphics &rhs );
+    ANIMCALLBACKFN      animCallback;
 
+  private:
     LPDIRECT3D9         pD3D;
     LPDIRECT3DDEVICE9   pDevice;
     LPD3DXMATRIXSTACK   pMatrixStack;
@@ -76,9 +85,11 @@ class Graphics
     AnimatedModelList   animModels;
     HWND                hWnd;
     bool                ready;
+    bool                paused;
     VertVec             quadPrimitives;
     VertVec             linePrimitives;
     VertVec             polylinePrimitives;
+    DWORD               curTime;
 
   private:
     static void IncAnimSpeed( const AnimatedModel &animModel )

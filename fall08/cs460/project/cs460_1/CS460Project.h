@@ -16,24 +16,29 @@ typedef std::map< float, float > FloatFloatMap;
 // =============================================================================
 class CS460Project : WindowBase
 {
+  static CS460Project *CS460Proj;
+
   public:
     CS460Project( HINSTANCE hInstance );
-    ~CS460Project();
+    ~CS460Project( void );
 
-    int Run();
+    int Run( void );
 
   private:
-    void Initialize();
-    void Update();
-    void Cleanup();
+    void Initialize( void );
+    void Update( void );
+    void Cleanup( void );
 
-    void UpdateSpline();
-    void UpdateModel();
+    void UpdateSpline( void );
+    void UpdateModel( void );
+    void GeneratePath( const D3DXVECTOR3 &begin, const D3DXVECTOR3 &end );
+    void AddNamedFrames( const LPFRAME pRoot );
+
+    static void AnimCallback( void );
 
     LRESULT WndProc( UINT msg, WPARAM wParam, LPARAM lParam );
 
   private:
-    Graphics        graphics;
     FloatFloatMap   distToTime;
     float           modelPos;
     float           modelSpeed;

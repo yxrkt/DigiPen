@@ -184,6 +184,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GlobalTime.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GlobalTime.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Macros.h"
 				>
 			</File>

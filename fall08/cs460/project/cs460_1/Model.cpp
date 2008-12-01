@@ -50,23 +50,25 @@ void StaticModel::Load( const std::string &file )
   }
 
   pMtrlBuffer->Release();
+
+  Scale = 1.f;
+  Pos   = D3DXVECTOR3( 1.f, 1.f, 1.f );
 }
 
 void StaticModel::Render() const
 {
-  HRESULT hr;
-
   size_t nMaterials = materials.size();
   for ( size_t i = 0; i < nMaterials; ++i )
   {
-    hr = pDevice->SetMaterial( &materials[i] );
-    ASSERT( hr == S_OK, "Setting material failed." );
+    pDevice->SetMaterial( &materials[i] );
+    pDevice->SetTexture( 0, textures[i] );
 
-    hr = pDevice->SetTexture( 0, textures[i] );
-    ASSERT( hr == S_OK, "Setting texture failed." );
-
-    hr = pData->DrawSubset( (DWORD)i );
-    ASSERT( hr == S_OK, "DrawSubset failed." );
+    D3DXVECTOR3 vecScale( Scale, Scale, Scale );
+    D3DXMATRIX matWorld;
+    D3DXMatrixTransformation( &matWorld, NULL, NULL, &vecScale, NULL, NULL, &Pos );
+    pDevice->SetTransform( D3DTS_WORLD, &matWorld );
+    pData->DrawSubset( (DWORD)i );
+    pDevice->SetTransform( D3DTS_WORLD, D3DXMatrixIdentity( &matWorld ) );
   }
 }
 
@@ -132,7 +134,7 @@ AnimatedModel::AnimatedModel( const AnimatedModel &rhs )
   D3DXMatrixIdentity( &matTrans );
 }
 
-AnimatedModel::~AnimatedModel()
+AnimatedModel::~AnimatedModel( void )
 {
 }
 
@@ -140,12 +142,14 @@ void AnimatedModel::Load( const std::string &file )
 {
   HRESULT hr;
 
+  std::string filePath = std::string( ASSETS_DIR ) + file;
+
   CAllocateHierarchy allocHierarchy;
-  hr = D3DXLoadMeshHierarchyFromX( file.c_str(), 0, pDevice, &allocHierarchy, NULL, 
-                                   (LPD3DXFRAME *)&pFrameRoot, NULL );
+  hr = D3DXLoadMeshHierarchyFromX( filePath.c_str(), 0, pDevice, &allocHierarchy, 
+                                   NULL, (LPD3DXFRAME *)&pFrameRoot, NULL );
   ASSERT( hr == S_OK, "Loading mesh hierarchy failed." );
 
-  ReadAnimData( file );
+  ReadAnimData( filePath );
 
   hr = D3DXFrameCalculateBoundingSphere( pFrameRoot, &bs.center, &bs.radius );
   ASSERT( hr == S_OK, "Calculating bounding sphere failed." );
@@ -161,7 +165,7 @@ void AnimatedModel::ReadAnimData( const std::string &file )
   }
 }
 
-void AnimatedModel::DrawBones() const
+void AnimatedModel::DrawBones( void ) const
 {
   if ( !CreateSkeleton() ) return;
 
@@ -180,18 +184,15 @@ bool AnimatedModel::CreateSkeleton( void ) const
   return !boneLines.empty();
 }
 
-
-
-void AnimatedModel::MoveFrame( const LPFRAME pFrame, const D3DXMATRIX &matrix )
+void AnimatedModel::MoveFrames( const LPFRAME pFrame, const D3DXMATRIX &matrix )
 {
-  SetFrameMatrix( pFrame );
   D3DXMatrixMultiply( &pFrame->matCombined, &pFrame->TransformationMatrix, &matrix );
 
   if ( pFrame->pFrameSibling )
-    MoveFrame( (LPFRAME)pFrame->pFrameSibling, matrix );
+    MoveFrames( (LPFRAME)pFrame->pFrameSibling, matrix );
 
   if ( pFrame->pFrameFirstChild )
-    MoveFrame( (LPFRAME)pFrame->pFrameFirstChild, pFrame->matCombined );
+    MoveFrames( (LPFRAME)pFrame->pFrameFirstChild, pFrame->matCombined );
 }
 
 void AnimatedModel::MoveMeshes( const LPFRAME pFrame )
@@ -261,20 +262,22 @@ void AnimatedModel::SetFrameMatrix( LPFRAME pFrame )
       VQS vqs;
       VQS::Interpolate( vqs, vqs0, vqs1, exactFrame - floor( exactFrame ) );
 
-      D3DXMATRIX mtxFinal;
-      vqs.GetMatrix( mtxFinal );
+      D3DXMATRIX matFinal;
+      vqs.GetMatrix( matFinal );
 
-      pFrame->TransformationMatrix = mtxFinal;
+      pFrame->TransformationMatrix = matFinal;
     }
   }
 }
 
-void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &mtxWorld )
+void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, ANIMCALLBACKFN callback )
 {
   SetKeyFrame( elapsedTime );
   
-  MoveFrame( pFrameRoot, mtxWorld );
-  //ForEachFrame( pFrameRoot, RotateToZero );
+  ForEachFrame( pFrameRoot, &AnimatedModel::SetFrameMatrix );
+  MoveFrames( pFrameRoot, matWorld );
+  if ( callback )
+    callback();
   MoveMeshes( pFrameRoot );
 }
 
@@ -363,6 +366,22 @@ D3DXMATRIX AnimatedModel::GetWorldTrans( void ) const
 LPFRAME AnimatedModel::GetFrameRoot( void )
 {
   return pFrameRoot;
+}
+
+D3DXVECTOR3 AnimatedModel::GetOrientVec( void ) const
+{
+  return D3DXVECTOR3( -matRot._31, -matRot._32, -matRot._33 );
+}
+
+void AnimatedModel::ForEachFrame( LPFRAME pRoot, MCHANGEFRAMEFN fn )
+{
+  ( this->*fn )( pRoot );
+
+  if ( pRoot->pFrameSibling )
+    ForEachFrame( (LPFRAME)pRoot->pFrameSibling, fn );
+
+  if ( pRoot->pFrameFirstChild )
+    ForEachFrame( (LPFRAME)pRoot->pFrameFirstChild, fn );
 }
 
 void AnimatedModel::ForEachFrame( LPFRAME pRoot, CHANGEFRAMEFN fn )
