@@ -25,12 +25,12 @@ CS460Project::CS460Project( HINSTANCE hInstance )
 // =============================================================================
 // ! Destructor.
 // =============================================================================
-CS460Project::~CS460Project() {}
+CS460Project::~CS460Project( void ) {}
 
 // =============================================================================
 // ! Initialize.
 // =============================================================================
-void CS460Project::Initialize()
+void CS460Project::Initialize( void )
 {
   //HRESULT hr;
 
@@ -49,7 +49,7 @@ void CS460Project::Initialize()
 
   AnimatedModel::Sphere bs = model.GetBS();
 
-  float angle = D3DX_PI + .125f * D3DX_PI;
+  float angle = 1.75f * D3DX_PI + .125f * D3DX_PI;
   float dist  = 10.f * bs.radius;
 
   Gfx->MainCam.lookAt  = bs.center;
@@ -59,7 +59,7 @@ void CS460Project::Initialize()
 // =============================================================================
 // ! Updates modules.
 // =============================================================================
-void CS460Project::Update()
+void CS460Project::Update( void )
 {
   GlobalTime::Update();
 
@@ -88,7 +88,7 @@ void CS460Project::Update()
 // =============================================================================
 // ! Run application.
 // =============================================================================
-int CS460Project::Run()
+int CS460Project::Run( void )
 {
   MSG msg;
   ZeroMemory( &msg, sizeof( MSG ) );
@@ -114,7 +114,7 @@ int CS460Project::Run()
 // =============================================================================
 // ! Cleanup.
 // =============================================================================
-void CS460Project::Cleanup()
+void CS460Project::Cleanup( void )
 {
   UnregisterClass( szClassName, hInstance_ );
   Gfx->Cleanup();
@@ -278,7 +278,7 @@ void CS460Project::GeneratePath( const D3DXVECTOR3 &begin, const D3DXVECTOR3 &en
   points[2].color = D3DCOLOR_XRGB( 0, 0, 255 );
 }
 
-void CS460Project::UpdateSpline()
+void CS460Project::UpdateSpline( void )
 {
   distToTime.clear();
 
@@ -301,7 +301,7 @@ void CS460Project::UpdateSpline()
   distToTime[curveLen] = 1.f;
 }
 
-void CS460Project::UpdateModel()
+void CS460Project::UpdateModel( void )
 {
   //if ( Gfx->IsPaused() ) return;
 
@@ -399,6 +399,11 @@ void CS460Project::AnimCallback( void )
     D3DXMatrixRotationQuaternion( &matRot, &quatRot );
     D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
 
+    D3DXVECTOR3 vecAxis;
+    float       angle;
+    D3DXQuaternionToAxisAngle( &quatRot, &vecAxis, &angle );
+    D3DXMatrixRotationAxis( &matRot, &vecAxis, 1.0f * angle );
+
     D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &matScale, &matRot );
     D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &CS460Proj->armFrames[i]->TransformationMatrix, &matTrans );
   }
@@ -419,11 +424,27 @@ void CS460Project::AnimCallback( void )
 
   if ( showSolution )
   {
+    MatrixVec shiz;
+    Gfx->CCD( &shiz, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL );
+/*
     int nFrames = (int)CS460Proj->armFrames.size();
-    for ( int i = 0; i < nFrames; ++i )
+    int j = nFrames - 2;
+    for ( int i = 1; i < nFrames; ++i )
     {
-      CS460Proj->armFrames[i]->TransformationMatrix = matricesOut[i];
-    }
+      D3DXMATRIX matScale, matRot, matTrans, matFinal;
+      D3DXVECTOR3 vecScale, vecTrans;
+      D3DXQUATERNION quatRot;
+      D3DXMatrixDecompose( &vecScale, &quatRot, &vecTrans, &CS460Proj->armFrames[i]->TransformationMatrix );
+      D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
+      D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
+      D3DXMatrixRotationQuaternion( &matRot, &quatRot );
+      D3DXMatrixMultiply( &matFinal, &matScale, &matRot );
+      D3DXMatrixMultiply( &matFinal, &matFinal, &matricesOut[j--] );
+      D3DXMatrixMultiply( &matFinal, &matFinal, &matTrans );
+      CS460Proj->armFrames[i]->TransformationMatrix = matFinal;
+      //D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, 
+      //                    &CS460Proj->armFrames[i]->TransformationMatrix, &matricesOut[j--] );
+    }*/
   }
 
   //*/

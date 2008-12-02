@@ -16,7 +16,7 @@
 #define CP_HEIGHT .5f
 
 #define CCD_FAIL      1.f
-#define CCD_SUCCESS   10.f
+#define CCD_SUCCESS   5.f
 
 typedef std::vector< LPFRAME >    PFrameVec;
 typedef std::vector< float >      FloatVec;

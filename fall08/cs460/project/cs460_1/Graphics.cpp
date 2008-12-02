@@ -2,7 +2,7 @@
 #include "ASSERT.h"
 #include "GlobalTime.h"
 
-Graphics *Graphics::Instance()
+Graphics *Graphics::Instance( void )
 {
   static Graphics graphics;
   return &graphics;
@@ -11,7 +11,7 @@ Graphics *Graphics::Instance()
 // =============================================================================
 // ! Graphics constructor
 // =============================================================================
-Graphics::Graphics()
+Graphics::Graphics( void )
 : MainCam( mainCam )
 , Ready( ready )
 , StaticModels( staticModels )
@@ -25,7 +25,7 @@ Graphics::Graphics()
 // =============================================================================
 // ! Graphics destructor
 // =============================================================================
-Graphics::~Graphics()
+Graphics::~Graphics( void )
 {
 }
 
@@ -82,7 +82,7 @@ void Graphics::Initialize( HWND hWndApp )
 // =============================================================================
 // ! Updates graphics
 // =============================================================================
-void Graphics::Update()
+void Graphics::Update( void )
 {
   HRESULT hr;
 
@@ -184,7 +184,7 @@ void Graphics::IncDecAnimSpeed( bool inc )
 // =============================================================================
 // ! Prepares the world, view, and projection matrices
 // =============================================================================
-void Graphics::SetupMatrices()
+void Graphics::SetupMatrices( void )
 {
   HRESULT hr;
 
@@ -211,7 +211,7 @@ void Graphics::SetupMatrices()
 // =============================================================================
 // ! Releases Direct3D objects
 // =============================================================================
-void Graphics::Cleanup()
+void Graphics::Cleanup( void )
 {
   SAFE_RELEASE( pD3D );
   SAFE_RELEASE( pDevice );
@@ -366,6 +366,7 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
 
   float lastDist = FLT_MAX;
 
+  int nTries = 0;
   while ( lastDist > CCD_SUCCESS )
   {
     for ( int i = nLast - 1; i >= 0; --i )
@@ -382,11 +383,10 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       D3DXVec3Cross( &axis, &l1, &l2 );
       D3DXVec3Normalize( &axis, &axis );
 
-      //( *pMatricesOut )[i]
-
       // rotate
       D3DXMATRIX matRot;
       D3DXMatrixRotationAxis( &matRot, &axis, angle );
+      pMatricesOut->push_back( matRot );
       for ( int j = i + 1; j < nJoints; ++j )
       {
         joints[j] -= joints[i];
@@ -394,13 +394,13 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
         joints[j] += joints[i];
       }
 
-      /*/ -- compare rotated vec's alignment
+      /* -- compare rotated vec's alignment
       D3DXVECTOR3 l2n, newl1( joints[nLast] - joints[i] );
       D3DXVec3Normalize( &l2n, &l2 );
       D3DXVec3Normalize( &newl1, &newl1 );
       //*/
 
-      /*/ -- Step By Step, shizMax no higher than 3
+      /* -- Step By Step, shizMax no higher than 3
       static VertVec firstCCD( 5 );
       static int shizMax = 3;
       static int shizCur = 0;
@@ -430,7 +430,7 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       //*/
     }
 
-    /*
+    //*
     // draw arm in blue (after ccd)
     D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
     for ( int i = 1; i < nJoints; ++i )
@@ -445,10 +445,11 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
     D3DXVECTOR3 difVec( dest - joints[nLast] );
     float dist = D3DXVec3Length( &difVec );
 
-    if ( dist > CCD_SUCCESS && ( dist - lastDist ) < CCD_FAIL )
+    //if ( dist > CCD_SUCCESS && ( dist - lastDist ) < CCD_FAIL )
+    if ( ++nTries > 100 )
       return false;
-    else
-      lastDist = dist;
+
+    lastDist = dist;
   }
 
   return true;
