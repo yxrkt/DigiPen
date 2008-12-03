@@ -355,9 +355,6 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
   for ( int i = 0; i < nJoints; ++i )
     D3DXVec3TransformCoord( &jointsL[i], &origin, &( ( *pFramesIn )[i]->TransformationMatrix ) );
 
-  pMatricesOut->clear();
-  pMatricesOut->reserve( nLast );
-
   /* draw arm in red (before ccd)
   D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
   for ( int i = 1; i < nJoints; ++i )
@@ -369,8 +366,17 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
   }
   //*/
 
+  pMatricesOut->reserve( nLast );
+  for ( int i = 0; i < nLast; ++i )
+  {
+    D3DXMATRIX matIdentity;
+    D3DXMatrixIdentity( &matIdentity );
+    pMatricesOut->push_back( matIdentity );
+  }
+
   float lastDist = FLT_MAX;
 
+  int cockBalls = 0;
   int nTries = 0;
   while ( lastDist > CCD_SUCCESS )
   {
@@ -393,7 +399,6 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       // rotate
       D3DXMATRIX matRot;
       D3DXMatrixRotationAxis( &matRot, &axis, angle );
-      //pMatricesOut->push_back( matRot );
       for ( int j = i + 1; j < nJoints; ++j )
       {
         joints[j] -= joints[i];
@@ -401,57 +406,30 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
         joints[j] += joints[i];
       }
 
+      // get rotation matrix for frame
+      int nCurFrame = i + 1 - 1;
+
+      D3DXMATRIX &matCombined = ( *pFramesIn )[nCurFrame]->matCombined;
+
       float det;
       D3DXMATRIX matWorldInverse;
-      D3DXMatrixInverse( &matWorldInverse, &det, &( ( *pFramesIn )[i]->matCombined ) );
+      D3DXMatrixInverse( &matWorldInverse, &det, &matCombined );
 
-      D3DXVECTOR3 v0, v1, axisLocal;
+      D3DXVECTOR3 v0, v1;
       D3DXVec3TransformCoord( &v0, &origin, &matWorldInverse );
       D3DXVec3TransformCoord( &v1, &axis, &matWorldInverse );
-      axisLocal = v1 - v0;
+      D3DXVECTOR3 axisLocal( v1 - v0 );
       D3DXVec3Normalize( &axisLocal, &axisLocal );
 
       D3DXMATRIX matRotLocal;
       D3DXMatrixRotationAxis( &matRotLocal, &axisLocal, angle );
 
-      pMatricesOut->push_back( matRotLocal );
+      D3DXVec3TransformCoord( &v0, &origin, &matCombined );
+      D3DXVec3TransformCoord( &v1, &axisLocal, &matCombined );
+      D3DXVECTOR3 axisWorld( v1 - v0 );
+      D3DXVec3Normalize( &axisWorld, &axisWorld );
 
-      // ------------------------
-
-      /* -- compare rotated vec's alignment
-      D3DXVECTOR3 l2n, newl1( joints[nLast] - joints[i] );
-      D3DXVec3Normalize( &l2n, &l2 );
-      D3DXVec3Normalize( &newl1, &newl1 );
-      //*/
-
-      /* -- Step By Step, shizMax no higher than 3
-      static VertVec firstCCD( 5 );
-      static int shizMax = 3;
-      static int shizCur = 0;
-      if ( shizCur++ <= shizMax )
-      {
-        std::copy( joints.begin(), joints.end(), firstCCD.begin() );
-      }
-      D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
-      for ( int i = 1; i < nJoints; ++i )
-      {
-        int j = i - 1;
-        ColoredVertex p0( firstCCD[j].x, firstCCD[j].y, firstCCD[j].z, blue );
-        ColoredVertex p1( firstCCD[i].x, firstCCD[i].y, firstCCD[i].z, blue );
-        ( (Graphics *)this )->AddLine( p0, p1 );
-      }
-      int fi = 3 - shizMax;
-      D3DCOLOR yellow = D3DCOLOR_XRGB( 255, 255, 0 );
-      ColoredVertex q0( firstCCD[fi].x, firstCCD[fi].y, firstCCD[fi].z, yellow );
-      D3DXVECTOR3 temp( *firstCCD[nLast].ToLPD3DXVECTOR3() - *firstCCD[fi].ToLPD3DXVECTOR3() );
-      temp *= 10.f;
-      ColoredVertex q1( *firstCCD[fi].ToLPD3DXVECTOR3() + temp );
-      q1.color = yellow;
-      ( (Graphics *)this )->AddLine( q0, q1 );
-
-      D3DXVECTOR3 goodDir( staticModels.front().Pos - *q0.ToLPD3DXVECTOR3() );
-      ( (Graphics *)this )->AddLine( q0, *q0.ToLPD3DXVECTOR3() + goodDir );
-      //*/
+      D3DXMatrixMultiply( &( *pMatricesOut )[i], &( *pMatricesOut )[i], &matRotLocal );
     }
 
     //for ( int i = nLast - 1; i >= 0; --i )
@@ -501,6 +479,7 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
     //  // ------------------------
     //}
 
+    /* draw red line
     float       determinant;
     D3DXMATRIX  matWorldInverse;
     D3DXVECTOR3 destL;
@@ -513,15 +492,25 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
     D3DXVec3TransformCoord( &p1L, &destL, &( *pFramesIn )[0]->matCombined );
     ( (Graphics *)this )->AddLine( ColoredVertex( p0L.x, p0L.y, p0L.z, red ), 
                                    ColoredVertex( p1L.x, p1L.y, p1L.z, red ) );
+    //*/
 
     //*
-    // draw arm in blue (after ccd)
-    D3DCOLOR blue = D3DCOLOR_XRGB( 0, 0, 255 );
+    D3DXMATRIX matParent( pFramesIn->front()->matCombined );
+    for ( int i = 1; i < nJoints; ++i )
+    {
+      D3DXMatrixMultiply( &( *pFramesIn )[i]->matCombined, &( *pFramesIn )[i]->TransformationMatrix, &( *pMatricesOut )[i - 1] );
+      D3DXMatrixMultiply( &( *pFramesIn )[i]->matCombined, &( *pFramesIn )[i]->matCombined, &matParent );
+      matParent = ( *pFramesIn )[i]->matCombined;
+    }
+    //*/
+
+    /* draw arm in yellow (after full ccd)
+    D3DCOLOR yellow = D3DCOLOR_XRGB( 255, 255, 0 );
     for ( int i = 1; i < nJoints; ++i )
     {
       int j = i - 1;
-      ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, blue );
-      ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, blue );
+      ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, yellow );
+      ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, yellow );
       ( (Graphics *)this )->AddLine( p0, p1 );
     }
     //*/
@@ -535,6 +524,17 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
 
     lastDist = dist;
   }
+
+  //* draw arm in red (after ccd)
+  D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
+  for ( int i = 1; i < nJoints; ++i )
+  {
+    int j = i - 1;
+    ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, red );
+    ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, red );
+    ( (Graphics *)this )->AddLine( p0, p1 );
+  }
+  //*/
 
   return true;
 }
@@ -553,3 +553,4 @@ bool Graphics::IsPaused( void ) const
 {
   return paused;
 }
+

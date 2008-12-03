@@ -2,6 +2,7 @@
 #include "Spline.h"
 #include "GlobalTime.h"
 
+
 #define CURVE_PRECISION 20
 #define ANIM_RATIO      .01f
 #define EASE_IN_OUT_PCT .166f
@@ -15,6 +16,7 @@ CS460Project::CS460Project( HINSTANCE hInstance )
 : modelPos( 0.f )
 , modelSpeed( 0.f )
 , maxSpeed( 100.f )
+, tempSwitch( true )
 {
   SAFE_DELETE( CS460Proj );
   hInstance_ = hInstance;
@@ -132,13 +134,11 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       switch( wParam )
       {
         case VK_ADD:
-          maxSpeed += 25.f;
-          //Gfx->IncDecAnimSpeed( true );
+          Gfx->IncDecAnimSpeed( true );
           break;
 
         case VK_SUBTRACT:
           maxSpeed = max( maxSpeed - 25.f, 0.f );
-          //Gfx->IncDecAnimSpeed( false );
           break;
 
         case 'C':
@@ -156,6 +156,10 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
             GlobalTime::Unpause();
             Gfx->PlayAnims();
           }
+          break;
+
+        case VK_RETURN:
+          tempSwitch = !tempSwitch;
           break;
 
         case VK_ESCAPE:
@@ -426,15 +430,16 @@ void CS460Project::AnimCallback( void )
   {
     MatrixVec shiz;
     Gfx->CCD( &shiz, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL );
-    
-    int nFrames = (int)CS460Proj->armFrames.size(), nLast = nFrames - 1;
 
-    D3DXMATRIX matParent;
-    D3DXMatrixIdentity( &matParent );
-    for ( int i = 0; i < nFrames; ++i )
+    if ( CS460Proj->tempSwitch )
     {
-      D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ), 
-                          &( CS460Proj->armFrames[i]->TransformationMatrix ), &matricesOut[nLast - i] );
+      int nFrames = (int)CS460Proj->armFrames.size(), nMatrices = nFrames - 1;
+
+      for ( int i = 1; i < nFrames; ++i )
+      {
+        D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ), 
+                            &( CS460Proj->armFrames[i]->TransformationMatrix ), &matricesOut[i - 1] );
+      }
     }
 /*
     int nFrames = (int)CS460Proj->armFrames.size();

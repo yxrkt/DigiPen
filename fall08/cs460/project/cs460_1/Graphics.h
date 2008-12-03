@@ -114,3 +114,4 @@ class Graphics
       std::stringstream *pInfo;
     };
 };
+
