@@ -426,6 +426,14 @@ void CS460Project::AnimCallback( void )
   {
     MatrixVec shiz;
     Gfx->CCD( &shiz, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL );
+    
+    int nFrames = (int)CS460Proj->armFrames.size(), nLast = nFrames - 1;
+
+    for ( int i = 0; i < nFrames; ++i )
+    {
+      D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ), 
+                          &( CS460Proj->armFrames[i]->TransformationMatrix ), &matricesOut[nLast - i] );
+    }
 /*
     int nFrames = (int)CS460Proj->armFrames.size();
     int j = nFrames - 2;
