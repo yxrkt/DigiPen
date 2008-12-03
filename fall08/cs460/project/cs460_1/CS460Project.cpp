@@ -429,6 +429,8 @@ void CS460Project::AnimCallback( void )
     
     int nFrames = (int)CS460Proj->armFrames.size(), nLast = nFrames - 1;
 
+    D3DXMATRIX matParent;
+    D3DXMatrixIdentity( &matParent );
     for ( int i = 0; i < nFrames; ++i )
     {
       D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ), 

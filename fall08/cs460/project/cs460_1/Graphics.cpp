@@ -401,6 +401,21 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
         joints[j] += joints[i];
       }
 
+      float det;
+      D3DXMATRIX matWorldInverse;
+      D3DXMatrixInverse( &matWorldInverse, &det, &( ( *pFramesIn )[i]->matCombined ) );
+
+      D3DXVECTOR3 v0, v1, axisLocal;
+      D3DXVec3TransformCoord( &v0, &origin, &matWorldInverse );
+      D3DXVec3TransformCoord( &v1, &axis, &matWorldInverse );
+      axisLocal = v1 - v0;
+      D3DXVec3Normalize( &axisLocal, &axisLocal );
+
+      D3DXMATRIX matRotLocal;
+      D3DXMatrixRotationAxis( &matRotLocal, &axisLocal, angle );
+
+      pMatricesOut->push_back( matRotLocal );
+
       // ------------------------
 
       /* -- compare rotated vec's alignment
@@ -439,49 +454,52 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       //*/
     }
 
-    for ( int i = nLast; i >= 0; --i )
-    {
-      // ------- new shiz -------
+    //for ( int i = nLast - 1; i >= 0; --i )
+    //{
+    //  // ------- new shiz -------
 
-      float       determinant;
-      D3DXMATRIX  matWorldInverse;
-      D3DXVECTOR3 destL;
-      D3DXMatrixInverse( &matWorldInverse, &determinant, &( ( *pFramesIn )[i]->matCombined ) );
-      D3DXVec3TransformCoord( &destL, &dest, &matWorldInverse );
+    //  float       determinant;
+    //  D3DXMATRIX  matWorldInverse;
+    //  D3DXVECTOR3 destL;
+    //  D3DXMatrixInverse( &matWorldInverse, &determinant, &( ( *pFramesIn )[i]->matCombined ) );
+    //  D3DXVec3TransformCoord( &destL, &dest, &matWorldInverse );
 
-      // find vectors
-      D3DXVECTOR3 l1( jointsL[i] );
-      D3DXVECTOR3 l2( destL );
+    //  // find vectors
+    //  D3DXVECTOR3 l1( jointsL[i] );
+    //  D3DXVECTOR3 l2( destL );
 
-      // get correct l1
-      D3DXMATRIX matLocal;
-      D3DXMatrixIdentity( &matLocal );
-      for ( int j = nLast; j > i; --j )
-        D3DXMatrixMultiply( &matLocal, &matLocal, &( ( *pFramesIn )[j]->TransformationMatrix ) );
-      D3DXVECTOR3 newL1_1;
-      D3DXVec3TransformCoord( &newL1_1, &jointsL[nLast], &matLocal );
+    //  // get correct l1
 
-      D3DXVECTOR3 newL1_2;
-      D3DXVec3TransformCoord( &newL1_2, &joints[nLast], &matWorldInverse );
+    //  // first attempt
+    //  D3DXMATRIX matLocal;
+    //  D3DXMatrixIdentity( &matLocal );
+    //  for ( int j = nLast; j > i; --j )
+    //    D3DXMatrixMultiply( &matLocal, &( ( *pFramesIn )[j]->TransformationMatrix ), &matLocal );
+    //  D3DXVECTOR3 newL1_1;
+    //  D3DXVec3TransformCoord( &newL1_1, &jointsL[nLast], &matLocal );
 
-      //l1 = newL1_2;
+    //  // second attempt
+    //  D3DXVECTOR3 newL1_2;
+    //  D3DXVec3TransformCoord( &newL1_2, &joints[nLast], &matWorldInverse );
 
-      // find angle of rotation
-      float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
+    //  l1 = newL1_1;
 
-      // find axis of rotation
-      D3DXVECTOR3 axis;
-      D3DXVec3Cross( &axis, &l1, &l2 );
-      D3DXVec3Normalize( &axis, &axis );
+    //  // find angle of rotation
+    //  float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
 
-      D3DXMATRIX matRot;
-      D3DXMatrixRotationAxis( &matRot, &axis, angle );
-      D3DXVec3TransformCoord( &jointsL[i], &jointsL[i], &matRot );
+    //  // find axis of rotation
+    //  D3DXVECTOR3 axis;
+    //  D3DXVec3Cross( &axis, &l1, &l2 );
+    //  D3DXVec3Normalize( &axis, &axis );
 
-      pMatricesOut->push_back( matRot );
+    //  D3DXMATRIX matRot;
+    //  D3DXMatrixRotationAxis( &matRot, &axis, angle );
+    //  D3DXVec3TransformCoord( &jointsL[i], &jointsL[i], &matRot );
 
-      // ------------------------
-    }
+    //  pMatricesOut->push_back( matRot );
+
+    //  // ------------------------
+    //}
 
     float       determinant;
     D3DXMATRIX  matWorldInverse;
