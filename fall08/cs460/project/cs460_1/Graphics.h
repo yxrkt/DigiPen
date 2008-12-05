@@ -64,6 +64,7 @@ class Graphics
     void PlayAnims( void );
     bool IsPaused( void ) const;
     LPDIRECT3DDEVICE9 GetDevice( void );
+    void WriteText( const std::string &text );
 
     Camera              &MainCam;
     const bool          &Ready;
@@ -92,6 +93,7 @@ class Graphics
     VertVec             linePrimitives;
     VertVec             polylinePrimitives;
     DWORD               curTime;
+    std::stringstream   infoStrings;
 
   private:
     static void IncAnimSpeed( const AnimatedModel &animModel )

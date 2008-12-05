@@ -2,6 +2,8 @@
 #include "ASSERT.h"
 #include "GlobalTime.h"
 
+extern AnimatedModel::RENDER_FLAG renderState;
+
 Graphics *Graphics::Instance( void )
 {
   static Graphics graphics;
@@ -110,7 +112,7 @@ void Graphics::Update( void )
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
     i->FrameMove( curTime, i->GetWorldTrans(), animCallback );
-    i->Render( AnimatedModel::RENDER_MESHES );
+    i->Render( renderState );
   }
 
   DrawControlPoints();
@@ -232,15 +234,21 @@ void Graphics::DisplayInfo( void )
   static DWORD lastTick = 0;
 
   RECT rcPos = { 10, 10, 0, 0 };
-  std::stringstream info;
+  static std::stringstream info;
 
   DWORD tick = timeGetTime();
-  info << "FPS: " << 1000.f/ (float)( tick - lastTick ) << std::endl << std::endl;
+  info << "FPS: " << 1000.f / (float)( tick - lastTick ) << std::endl;
   lastTick = tick;
+
+  info << infoStrings.str();
+  info << std::endl;
 
   AddModelInfo addMeshInfo( &info );
   std::for_each( animModels.begin(), animModels.end(), addMeshInfo );
   pFont->DrawText( NULL, info.str().c_str(), -1, &rcPos, DT_NOCLIP, D3DCOLOR_XRGB( 255, 0, 255 ) );
+
+  infoStrings.str( "" );
+  info.str( "" );
 }
 
 void Graphics::CreateSunLight( void )
@@ -353,17 +361,6 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
   for ( int i = 0; i < nJoints; ++i )
     D3DXVec3TransformCoord( &jointsL[i], &origin, &( ( *pFramesIn )[i]->TransformationMatrix ) );
 
-  /* draw arm in red (before ccd)
-  D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
-  for ( int i = 1; i < nJoints; ++i )
-  {
-    int j = i - 1;
-    ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, red );
-    ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, red );
-    ( (Graphics *)this )->AddLine( p0, p1 );
-  }
-  //*/
-
   pMatricesOut->reserve( nLast );
   for ( int i = 0; i < nLast; ++i )
   {
@@ -436,7 +433,6 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       if ( dist < CCD_SUCCESS ) return true;
     }
 
-    //*
     D3DXMATRIX matParent( pFramesIn->front()->matCombined );
     for ( int i = 1; i < nJoints; ++i )
     {
@@ -444,7 +440,6 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       D3DXMatrixMultiply( &( *pFramesIn )[i]->matCombined, &( *pFramesIn )[i]->matCombined, &matParent );
       matParent = ( *pFramesIn )[i]->matCombined;
     }
-    //*/
 
     /* draw arm in yellow (after full ccd)
     D3DCOLOR yellow = D3DCOLOR_XRGB( 255, 255, 0 );
@@ -460,14 +455,13 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
     D3DXVECTOR3 difVec( dest - joints[nLast] );
     float dist = D3DXVec3Length( &difVec );
 
-    //if ( dist > CCD_SUCCESS && ( dist - lastDist ) < CCD_FAIL )
     if ( ++nTries > 100 )
       return false;
 
     lastDist = dist;
   }
 
-  //* draw arm in red (after ccd)
+  /* draw arm in red (after ccd)
   D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
   for ( int i = 1; i < nJoints; ++i )
   {
@@ -499,4 +493,9 @@ bool Graphics::IsPaused( void ) const
 LPDIRECT3DDEVICE9 Graphics::GetDevice( void )
 {
   return pDevice;
+}
+
+void Graphics::WriteText( const std::string &text )
+{
+  infoStrings << text << std::endl;
 }

@@ -9,6 +9,8 @@
 
 CS460Project *CS460Project::CS460Proj = NULL;
 
+AnimatedModel::RENDER_FLAG renderState = AnimatedModel::RENDER_BONES;
+
 // =============================================================================
 // ! Constructor.
 // =============================================================================
@@ -99,6 +101,25 @@ void CS460Project::Update( void )
     UpdateModel();
   }
 
+  Gfx->WriteText( "Click M.1 to move target" );
+  Gfx->WriteText( "Hold  M.3 to pan camera" );
+  Gfx->WriteText( "Hold  Ctrl+M.3 to zoom camera" );
+  Gfx->WriteText( "Press 'P' to toggle pause" );
+  Gfx->WriteText( "Press 'R' to toggle between bones & meshes" );
+  Gfx->WriteText( "Press '+' to increase running speed" );
+  Gfx->WriteText( "Press '-' to decrease running speed" );
+  Gfx->WriteText( "Press 'Esc' to exit" );
+
+  Gfx->WriteText( "\n  Mouse (M)  " );
+  Gfx->WriteText( " ___________ " );
+  Gfx->WriteText( "/   |   |   \\" );
+  Gfx->WriteText( "| 1 | 3 | 2 |" );
+  Gfx->WriteText( "|___|___|___|" );
+  Gfx->WriteText( "|   |   |   |" );
+  Gfx->WriteText( "|   |   |   |" );
+  Gfx->WriteText( "|   |   |   |" );
+  Gfx->WriteText( "|___|___|___|" );
+
   Gfx->Update();
 }
 
@@ -148,11 +169,11 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
     {
       switch( wParam )
       {
-        case VK_ADD:
-          Gfx->IncDecAnimSpeed( true );
+        case VK_ADD: case VK_OEM_PLUS:
+          maxSpeed += 25.f;
           break;
 
-        case VK_SUBTRACT:
+        case VK_SUBTRACT: case VK_OEM_MINUS:
           maxSpeed = max( maxSpeed - 25.f, 0.f );
           break;
 
@@ -171,6 +192,10 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
             GlobalTime::Unpause();
             Gfx->PlayAnims();
           }
+          break;
+
+        case 'R':
+          renderState = (AnimatedModel::RENDER_FLAG)( ( renderState + 1 ) % AnimatedModel::RENDER_ALL );
           break;
 
         case VK_RETURN:
@@ -193,6 +218,7 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       GeneratePath( D3DXVECTOR3( 0.f, 0.f, 0.f ), isectD3D );
       Gfx->PlayAnims();
       GlobalTime::Unpause();
+      modelPos = 0.f;
       //ColoredVertex isect( isectD3D );
       //isect.color = D3DCOLOR_XRGB( 0, 255, 0 );
       //VertVec &points = Gfx->controlPoints;
@@ -405,7 +431,6 @@ void CS460Project::AddNamedFrames( const LPFRAME pRoot )
 
 void CS460Project::AnimCallback( void )
 {
-  //*
   static DWORD reachBegin;
   static MatrixVec matricesBegin, matricesEnd;
   MatrixVec matricesOut;
@@ -419,8 +444,12 @@ void CS460Project::AnimCallback( void )
       GlobalTime::Pause();
       reachBegin = timeGetTime();
       matricesBegin.clear();
+      matricesEnd.clear();
       for ( int i = 1; i < nFrames; ++i )
+      {
         matricesBegin.push_back( CS460Proj->armFrames[i]->TransformationMatrix );
+        matricesEnd.push_back( matricesOut[i - 1] );
+      }
     }
 
     if ( !matricesBegin.empty() )
@@ -431,62 +460,13 @@ void CS460Project::AnimCallback( void )
       {
         int j = i - 1;
 
-        VQS vqs0( matricesBegin[j] ), vqs1( matricesOut[j] ), vqsFinal;
+        VQS vqs0( matricesBegin[j] ), vqs1( matricesEnd[j] ), vqsFinal;
         VQS::Interpolate( vqsFinal, vqs0, vqs1, t );
         D3DXMATRIX matFinal;
         vqsFinal.GetMatrix( matFinal );
         D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ),
                             &matricesBegin[j], &matFinal );
-
-        //CS460Proj->armFrames[i]->TransformationMatrix = matricesBegin[j];
-
-        //D3DXVECTOR3 vecScale, vecTrans;
-        //D3DXQUATERNION quatBegin, quatEnd, quatCur;
-        //D3DXMATRIX matRotCur;
-        //D3DXMatrixDecompose( &vecScale, &quatEnd, &vecTrans, &matricesOut[j] );
-        //D3DXMatrixDecompose( &vecScale, &quatBegin, &vecTrans, &matricesBegin[j] );
-        //D3DXQuaternionSlerp( &quatCur, &quatBegin, &quatEnd, t );
-        //D3DXMatrixRotationQuaternion( &matRotCur, &quatCur );
-        //D3DXMATRIX matFinal;
-        //D3DXMATRIX matTrans, matScale;
-        //D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
-        //D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
-        //D3DXMatrixMultiply( &matFinal, &matScale, &matRotCur );
-        //D3DXMatrixMultiply( &matFinal, &matFinal, &matTrans );
-        //D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ),
-        //                    &matricesBegin[j], &matFinal );
       }
     }
   }
-  /*/
-  static bool       showSolution = false;
-  static MatrixVec  matricesOut;
-
-  if ( !showSolution )
-  {
-    if ( Gfx->CCD( &matricesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL ) )
-    {
-      Gfx->PauseAnims();
-      GlobalTime::Pause();
-      showSolution = true;
-    }
-  }
-
-  if ( showSolution )
-  {
-    MatrixVec shiz;
-    Gfx->CCD( &shiz, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, NULL );
-
-    if ( CS460Proj->tempSwitch )
-    {
-      int nFrames = (int)CS460Proj->armFrames.size(), nMatrices = nFrames - 1;
-
-      for ( int i = 1; i < nFrames; ++i )
-      {
-        D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ), 
-                            &( CS460Proj->armFrames[i]->TransformationMatrix ), &matricesOut[i - 1] );
-      }
-    }
-  }
-  //*/
 }
