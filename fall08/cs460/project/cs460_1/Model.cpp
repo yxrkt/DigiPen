@@ -1,10 +1,6 @@
 #include "Model.h"
 #include "ASSERT.h"
 
-void RotateToZero( LPFRAME pFrame )
-{
-  D3DXMatrixIdentity( &pFrame->matCombined );
-}
 
 // Static Model
 StaticModel::StaticModel( LPDIRECT3DDEVICE9 _pDevice )
@@ -72,25 +68,6 @@ void StaticModel::Render() const
   }
 }
 
-AnimatedModel *AnimatedModel::s_pCurAnimModel;
-
-// static functions used in 'for each'
-void AnimatedModel::DrawLinesToChildren( LPFRAME pFrame )
-{
-  LPFRAME pCurChild = (LPFRAME)pFrame->pFrameFirstChild;
-  D3DXVECTOR3 padre, origin( 0.f, 0.f, 0.f );
-  D3DXVec3TransformCoord( &padre, &origin, &pFrame->matCombined );
-  while ( pCurChild )
-  {
-    D3DXVECTOR3 child;
-    D3DXVec3TransformCoord( &child, &origin, &pCurChild->matCombined );
-    AnimatedModel::s_pCurAnimModel->boneLines.push_back( padre );
-    AnimatedModel::s_pCurAnimModel->boneLines.push_back( child );
-    pCurChild = (LPFRAME)pCurChild->pFrameSibling;
-  }
-}
-// - - -
-
 // Animated Model
 AnimatedModel::AnimatedModel( LPDIRECT3DDEVICE9 _pDevice )
 : pDevice( _pDevice )
@@ -134,7 +111,7 @@ AnimatedModel::AnimatedModel( const AnimatedModel &rhs )
   D3DXMatrixIdentity( &matTrans );
 }
 
-AnimatedModel::~AnimatedModel( void )
+AnimatedModel::~AnimatedModel()
 {
 }
 
@@ -165,7 +142,7 @@ void AnimatedModel::ReadAnimData( const std::string &file )
   }
 }
 
-void AnimatedModel::DrawBones( void ) const
+void AnimatedModel::DrawBones() const
 {
   if ( !CreateSkeleton() ) return;
 
@@ -176,69 +153,52 @@ void AnimatedModel::DrawBones( void ) const
   pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
 }
 
-bool AnimatedModel::CreateSkeleton( void ) const
-{
-  boneLines.clear();
-  AnimatedModel::s_pCurAnimModel = (AnimatedModel *)this;
-  ForEachFrame( pFrameRoot, DrawLinesToChildren );
-  return !boneLines.empty();
-}
-
-void AnimatedModel::MoveFrames( const LPFRAME pFrame, const D3DXMATRIX &matrix )
+void AnimatedModel::MoveFrame( const LPFRAME pFrame, const D3DXMATRIX &matrix )
 {
   D3DXMatrixMultiply( &pFrame->matCombined, &pFrame->TransformationMatrix, &matrix );
 
   if ( pFrame->pFrameSibling )
-    MoveFrames( (LPFRAME)pFrame->pFrameSibling, matrix );
+    MoveFrame( (LPFRAME)pFrame->pFrameSibling, matrix );
 
   if ( pFrame->pFrameFirstChild )
-    MoveFrames( (LPFRAME)pFrame->pFrameFirstChild, pFrame->matCombined );
+    MoveFrame( (LPFRAME)pFrame->pFrameFirstChild, pFrame->matCombined );
 }
 
 void AnimatedModel::MoveMeshes( const LPFRAME pFrame )
 {
-
-  LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
-  if ( pMesh )
+  if ( pFrame )
   {
-    if ( pMesh->pSkinInfo )
+    LPMESHCONTAINER pMesh = (LPMESHCONTAINER)pFrame->pMeshContainer;
+    if ( pMesh )
     {
-      if ( !pMesh->pSkinMesh )
+      if ( pMesh->pSkinInfo )
       {
-        HRESULT hr;
-        hr = pMesh->MeshData.pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMesh->MeshData.pMesh->GetFVF(), 
-          pDevice, &pMesh->pSkinMesh );
-        ASSERT( SUCCEEDED( hr ), "Cloning mesh failed" );
+        void *srcPtr, *destPtr;
+        pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
+        pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
+
+        DWORD nBones = pMesh->pSkinInfo->GetNumBones();
+        std::vector< D3DXMATRIX > boneMatrices( nBones );
+        for ( DWORD i = 0; i < nBones; ++i )
+        {
+          D3DXMATRIX out;
+
+          LPFRAME pTempFrame = (LPFRAME)D3DXFrameFind( pFrameRoot, pMesh->pSkinInfo->GetBoneName( i ) );
+          pMesh->ppFrameMatrices[i] = &pTempFrame->matCombined;
+
+          D3DXMatrixMultiply( &out, &pMesh->pBoneOffsets[i], pMesh->ppFrameMatrices[i] );
+          boneMatrices[i] = out;
+        }
+
+        pMesh->pSkinInfo->UpdateSkinnedMesh( &boneMatrices[0], NULL, srcPtr, destPtr );
+
+        pMesh->MeshData.pMesh->UnlockVertexBuffer();
+        pMesh->pSkinMesh->UnlockVertexBuffer();
       }
-
-      void *srcPtr, *destPtr;
-      pMesh->MeshData.pMesh->LockVertexBuffer( D3DLOCK_READONLY, &srcPtr );
-      pMesh->pSkinMesh->LockVertexBuffer( 0, &destPtr );
-
-      DWORD nBones = pMesh->pSkinInfo->GetNumBones();
-      std::vector< D3DXMATRIX > boneMatrices( nBones );
-      for ( DWORD i = 0; i < nBones; ++i )
-      {
-        D3DXMATRIX out;
-
-        LPFRAME pTempFrame = (LPFRAME)D3DXFrameFind( pFrameRoot, pMesh->pSkinInfo->GetBoneName( i ) );
-        pMesh->ppFrameMatrices[i] = &pTempFrame->matCombined;
-
-        D3DXMatrixMultiply( &out, &pMesh->pBoneOffsets[i], pMesh->ppFrameMatrices[i] );
-        boneMatrices[i] = out;
-      }
-
-      pMesh->pSkinInfo->UpdateSkinnedMesh( &boneMatrices[0], NULL, srcPtr, destPtr );
-
-      pMesh->MeshData.pMesh->UnlockVertexBuffer();
-      pMesh->pSkinMesh->UnlockVertexBuffer();
     }
 
-    if ( pFrame->pFrameSibling )
-      MoveMeshes( (LPFRAME)pFrame->pFrameSibling );
-
-    if ( pFrame->pFrameFirstChild )
-      MoveMeshes( (LPFRAME)pFrame->pFrameFirstChild );
+    MoveMeshes( (LPFRAME)pFrame->pFrameSibling );
+    MoveMeshes( (LPFRAME)pFrame->pFrameFirstChild );
   }
 }
 
@@ -273,12 +233,10 @@ void AnimatedModel::SetFrameMatrix( LPFRAME pFrame )
 void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, ANIMCALLBACKFN callback )
 {
   SetKeyFrame( elapsedTime );
-  
   ForEachFrame( pFrameRoot, &AnimatedModel::SetFrameMatrix );
-  MoveFrames( pFrameRoot, matWorld );
-  if ( callback )
-    callback();
-  MoveFrames( pFrameRoot, matWorld );
+  MoveFrame( pFrameRoot, matWorld );
+  if ( callback ) callback();
+  MoveFrame( pFrameRoot, matWorld );
   MoveMeshes( pFrameRoot );
 }
 
@@ -369,29 +327,35 @@ LPFRAME AnimatedModel::GetFrameRoot( void )
   return pFrameRoot;
 }
 
-D3DXVECTOR3 AnimatedModel::GetOrientVec( void ) const
+void AnimatedModel::ForEachFrame( LPFRAME pFrame, CHANGEFRAMEFN fn )
 {
-  return D3DXVECTOR3( -matRot._31, -matRot._32, -matRot._33 );
+  ( this->*fn )( pFrame );
+
+  if ( pFrame->pFrameSibling )
+    ForEachFrame( (LPFRAME)pFrame->pFrameSibling, fn );
+
+  if ( pFrame->pFrameFirstChild )
+    ForEachFrame( (LPFRAME)pFrame->pFrameFirstChild, fn );
 }
 
-void AnimatedModel::ForEachFrame( LPFRAME pRoot, MCHANGEFRAMEFN fn )
+void AnimatedModel::DrawLinesToChildren( LPFRAME pFrame )
 {
-  ( this->*fn )( pRoot );
-
-  if ( pRoot->pFrameSibling )
-    ForEachFrame( (LPFRAME)pRoot->pFrameSibling, fn );
-
-  if ( pRoot->pFrameFirstChild )
-    ForEachFrame( (LPFRAME)pRoot->pFrameFirstChild, fn );
+  LPFRAME pCurChild = (LPFRAME)pFrame->pFrameFirstChild;
+  D3DXVECTOR3 padre, origin( 0.f, 0.f, 0.f );
+  D3DXVec3TransformCoord( &padre, &origin, &pFrame->matCombined );
+  while ( pCurChild )
+  {
+    D3DXVECTOR3 child;
+    D3DXVec3TransformCoord( &child, &origin, &pCurChild->matCombined );
+    boneLines.push_back( padre );
+    boneLines.push_back( child );
+    pCurChild = (LPFRAME)pCurChild->pFrameSibling;
+  }
 }
 
-void AnimatedModel::ForEachFrame( LPFRAME pRoot, CHANGEFRAMEFN fn )
+bool AnimatedModel::CreateSkeleton( void ) const
 {
-  fn( pRoot );
-
-  if ( pRoot->pFrameSibling )
-    ForEachFrame( (LPFRAME)pRoot->pFrameSibling, fn );
-
-  if ( pRoot->pFrameFirstChild )
-    ForEachFrame( (LPFRAME)pRoot->pFrameFirstChild, fn );
+  boneLines.clear();
+  ( (AnimatedModel *)this )->ForEachFrame( pFrameRoot, &AnimatedModel::DrawLinesToChildren );
+  return !boneLines.empty();
 }

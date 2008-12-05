@@ -63,6 +63,7 @@ class Graphics
     void PauseAnims( void );
     void PlayAnims( void );
     bool IsPaused( void ) const;
+    LPDIRECT3DDEVICE9 GetDevice( void );
 
     Camera              &MainCam;
     const bool          &Ready;

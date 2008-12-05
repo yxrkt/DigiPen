@@ -111,9 +111,6 @@ HRESULT CAllocateHierarchy::CreateMeshContainer(  THIS_
     }
   }
 
-  //Release the device
-  SAFE_RELEASE( pd3dDevice );
-
   if ( pSkinInfo )
   {
     // first save off the SkinInfo and original mesh data
@@ -132,6 +129,9 @@ HRESULT CAllocateHierarchy::CreateMeshContainer(  THIS_
     //	get them later
     for ( UINT i = 0; i < uBones; ++i )
       pMeshContainer->pBoneOffsets[i] = *( pMeshContainer->pSkinInfo->GetBoneOffsetMatrix( i ) );
+
+    pMeshContainer->MeshData.pMesh->CloneMeshFVF( D3DXMESH_MANAGED, pMeshContainer->MeshData.pMesh->GetFVF(), 
+                                                  pd3dDevice, &pMeshContainer->pSkinMesh );
 	}
 	else
 	{
@@ -140,6 +140,9 @@ HRESULT CAllocateHierarchy::CreateMeshContainer(  THIS_
 		pMeshContainer->pSkinMesh       = NULL;
 		pMeshContainer->ppFrameMatrices = NULL;
 	}
+
+  //Release the device
+  SAFE_RELEASE( pd3dDevice );
 
 	pMeshContainer->pMaterials = NULL;
 	pMeshContainer->pEffects   = NULL;

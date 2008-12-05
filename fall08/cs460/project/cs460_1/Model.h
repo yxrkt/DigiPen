@@ -20,11 +20,8 @@ typedef std::vector< ColoredVertex >      VertVec;
 typedef std::vector< std::string >        StringVec;
 typedef std::vector< AnimationSet >       AnimationSetVec;
 
-class AnimatedModel;
-
-typedef void ( *CHANGEFRAMEFN )( LPFRAME );
-typedef void ( AnimatedModel::*MCHANGEFRAMEFN )( LPFRAME );
 typedef void ( *ANIMCALLBACKFN )( void );
+
 
 class StaticModel
 {
@@ -61,9 +58,10 @@ class AnimatedModel
   public:
     AnimatedModel( const LPDIRECT3DDEVICE9 _pDevice );
     AnimatedModel( const AnimatedModel &rhs );
-    ~AnimatedModel( void );
+    ~AnimatedModel();
 
-    void DrawBones( void ) const;
+    void DrawBones() const;
+    bool CreateSkeleton( void ) const;
     void FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, ANIMCALLBACKFN callback = NULL );
     void Load( const std::string &file );
     void Render( RENDER_FLAG flag = RENDER_MESHES );
@@ -72,11 +70,11 @@ class AnimatedModel
     Sphere GetBS( void ) const;
     D3DXMATRIX GetWorldTrans( void ) const;
     LPFRAME GetFrameRoot( void );
-    D3DXVECTOR3 GetOrientVec( void ) const;
-    void ForEachFrame( LPFRAME pRoot, MCHANGEFRAMEFN fn );
 
-    static void ForEachFrame( LPFRAME pRoot, CHANGEFRAMEFN fn );
-    static void DrawLinesToChildren( LPFRAME pFrame );
+    typedef void ( AnimatedModel::*CHANGEFRAMEFN )( LPFRAME pFrame );
+
+    void ForEachFrame( LPFRAME pFrame, CHANGEFRAMEFN fn );
+    void DrawLinesToChildren( LPFRAME pFrame );
 
     const DWORD           &AnimSet;
     const size_t          &KeyFrame;
@@ -85,12 +83,11 @@ class AnimatedModel
           D3DXMATRIX      &MatScale, &MatRot, &MatTrans;
 
   private:
-    void MoveFrames( const LPFRAME pFrame, const D3DXMATRIX &matrix );
+    void MoveFrame( const LPFRAME pFrame, const D3DXMATRIX &matrix );
     void MoveMeshes( const LPFRAME pFrame );
     void ReadAnimData( const std::string &file );
     void SetFrameMatrix( LPFRAME pFrame );
     void SetKeyFrame( DWORD tick );
-    bool CreateSkeleton( void ) const;
 
   private:
     LPDIRECT3DDEVICE9   pDevice;
@@ -104,8 +101,6 @@ class AnimatedModel
     D3DXMATRIX          matScale, matRot, matTrans;
 
     mutable VertVec     boneLines;
-
-    static AnimatedModel *s_pCurAnimModel;
 };
 
 

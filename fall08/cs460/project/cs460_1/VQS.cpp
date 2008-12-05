@@ -1,6 +1,16 @@
 #include "VQS.h"
 
 
+VQS::VQS( const D3DXMATRIX &matTransform )
+: V( v )
+, Q( q )
+, S( s )
+{
+  D3DXVECTOR3 vecScale;
+  D3DXMatrixDecompose( &vecScale, &q, &v, &matTransform );
+  s = vecScale.x;
+}
+
 VQS::VQS( D3DXVECTOR3 _v, D3DXQUATERNION _q, float _s )
 : v( _v )
 , q( _q )

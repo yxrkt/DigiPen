@@ -27,7 +27,9 @@ CS460Project::CS460Project( HINSTANCE hInstance )
 // =============================================================================
 // ! Destructor.
 // =============================================================================
-CS460Project::~CS460Project( void ) {}
+CS460Project::~CS460Project( void )
+{
+}
 
 // =============================================================================
 // ! Initialize.
@@ -45,6 +47,19 @@ void CS460Project::Initialize( void )
   LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( Gfx->AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
   AddNamedFrames( pFrameCur );
   Gfx->LoadStaticModel( "IceChar_RunAnimation.X", D3DXVECTOR3( 0.f, 60.f, -30.f ), .50f );
+  constraints.reserve( 10 );
+
+  // set constraints
+  constraints.push_back( -90.f ); // shoulder
+  constraints.push_back(  90.f );
+  constraints.push_back( -90.f ); // upper arm
+  constraints.push_back(  90.f );
+  constraints.push_back( -90.f ); // lower arm
+  constraints.push_back(  90.f );
+  constraints.push_back( -90.f ); // hand
+  constraints.push_back(  90.f );
+  constraints.push_back( -90.f ); // hand end
+  constraints.push_back(  90.f );
 
   AnimatedModel &model = Gfx->AnimatedModels.front();
   D3DXMatrixScaling( &model.MatScale, .15f, .15f, .15f );
@@ -390,28 +405,59 @@ void CS460Project::AddNamedFrames( const LPFRAME pRoot )
 
 void CS460Project::AnimCallback( void )
 {
-  /*
-
-  int nFrames = (int)CS460Proj->armFrames.size();
-  for ( int i = 0; i < nFrames; ++i )
+  //*
+  static DWORD reachBegin;
+  static MatrixVec matricesBegin, matricesEnd;
+  MatrixVec matricesOut;
+  if ( Gfx->CCD( &matricesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, &CS460Proj->constraints ) )
   {
-    D3DXVECTOR3 vecScale, vecTrans;
-    D3DXQUATERNION quatRot;
-    D3DXMATRIX matTrans, matRot, matScale;
-    D3DXMatrixDecompose( &vecScale, &quatRot, &vecTrans, &CS460Proj->armFrames[i]->TransformationMatrix );
-    D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
-    D3DXMatrixRotationQuaternion( &matRot, &quatRot );
-    D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
+    int nFrames = (int)CS460Proj->armFrames.size(), nMatrices = nFrames - 1;
 
-    D3DXVECTOR3 vecAxis;
-    float       angle;
-    D3DXQuaternionToAxisAngle( &quatRot, &vecAxis, &angle );
-    D3DXMatrixRotationAxis( &matRot, &vecAxis, 1.0f * angle );
+    if ( !Gfx->IsPaused() )
+    {
+      Gfx->PauseAnims();
+      GlobalTime::Pause();
+      reachBegin = timeGetTime();
+      matricesBegin.clear();
+      for ( int i = 1; i < nFrames; ++i )
+        matricesBegin.push_back( CS460Proj->armFrames[i]->TransformationMatrix );
+    }
 
-    D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &matScale, &matRot );
-    D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, &CS460Proj->armFrames[i]->TransformationMatrix, &matTrans );
+    if ( !matricesBegin.empty() )
+    {
+      float t = (float)( timeGetTime() - reachBegin ) / 1000.f;
+      t = min( t, 1.f );
+      for ( int i = 1; i < nFrames; ++i )
+      {
+        int j = i - 1;
+
+        VQS vqs0( matricesBegin[j] ), vqs1( matricesOut[j] ), vqsFinal;
+        VQS::Interpolate( vqsFinal, vqs0, vqs1, t );
+        D3DXMATRIX matFinal;
+        vqsFinal.GetMatrix( matFinal );
+        D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ),
+                            &matricesBegin[j], &matFinal );
+
+        //CS460Proj->armFrames[i]->TransformationMatrix = matricesBegin[j];
+
+        //D3DXVECTOR3 vecScale, vecTrans;
+        //D3DXQUATERNION quatBegin, quatEnd, quatCur;
+        //D3DXMATRIX matRotCur;
+        //D3DXMatrixDecompose( &vecScale, &quatEnd, &vecTrans, &matricesOut[j] );
+        //D3DXMatrixDecompose( &vecScale, &quatBegin, &vecTrans, &matricesBegin[j] );
+        //D3DXQuaternionSlerp( &quatCur, &quatBegin, &quatEnd, t );
+        //D3DXMatrixRotationQuaternion( &matRotCur, &quatCur );
+        //D3DXMATRIX matFinal;
+        //D3DXMATRIX matTrans, matScale;
+        //D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
+        //D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
+        //D3DXMatrixMultiply( &matFinal, &matScale, &matRotCur );
+        //D3DXMatrixMultiply( &matFinal, &matFinal, &matTrans );
+        //D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ),
+        //                    &matricesBegin[j], &matFinal );
+      }
+    }
   }
-  
   /*/
   static bool       showSolution = false;
   static MatrixVec  matricesOut;
@@ -441,26 +487,6 @@ void CS460Project::AnimCallback( void )
                             &( CS460Proj->armFrames[i]->TransformationMatrix ), &matricesOut[i - 1] );
       }
     }
-/*
-    int nFrames = (int)CS460Proj->armFrames.size();
-    int j = nFrames - 2;
-    for ( int i = 1; i < nFrames; ++i )
-    {
-      D3DXMATRIX matScale, matRot, matTrans, matFinal;
-      D3DXVECTOR3 vecScale, vecTrans;
-      D3DXQUATERNION quatRot;
-      D3DXMatrixDecompose( &vecScale, &quatRot, &vecTrans, &CS460Proj->armFrames[i]->TransformationMatrix );
-      D3DXMatrixScaling( &matScale, vecScale.x, vecScale.y, vecScale.z );
-      D3DXMatrixTranslation( &matTrans, vecTrans.x, vecTrans.y, vecTrans.z );
-      D3DXMatrixRotationQuaternion( &matRot, &quatRot );
-      D3DXMatrixMultiply( &matFinal, &matScale, &matRot );
-      D3DXMatrixMultiply( &matFinal, &matFinal, &matricesOut[j--] );
-      D3DXMatrixMultiply( &matFinal, &matFinal, &matTrans );
-      CS460Proj->armFrames[i]->TransformationMatrix = matFinal;
-      //D3DXMatrixMultiply( &CS460Proj->armFrames[i]->TransformationMatrix, 
-      //                    &CS460Proj->armFrames[i]->TransformationMatrix, &matricesOut[j--] );
-    }*/
   }
-
   //*/
 }

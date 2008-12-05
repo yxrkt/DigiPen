@@ -49,6 +49,8 @@ class CS460Project : WindowBase
     D3DXVECTOR3     startEyePos;
     D3DXVECTOR3     startLookatPos;
     PFrameVec       armFrames;
+    MatrixVec       ccdSolution;
+    FloatVec        constraints;
 
     bool            tempSwitch;
 };

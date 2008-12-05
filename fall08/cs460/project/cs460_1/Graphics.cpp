@@ -110,7 +110,7 @@ void Graphics::Update( void )
   for ( AnimatedModelList::iterator i = animModels.begin(); i != animModels.end(); ++i )
   {
     i->FrameMove( curTime, i->GetWorldTrans(), animCallback );
-    i->Render( AnimatedModel::RENDER_BONES );
+    i->Render( AnimatedModel::RENDER_MESHES );
   }
 
   DrawControlPoints();
@@ -340,10 +340,8 @@ void Graphics::AddPolyline( const ColoredVertex *verts, size_t nVerts, bool clos
 }
 
 bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn, 
-                    const D3DXVECTOR3 &dest, const FloatVec *pWeights ) const
+                    const D3DXVECTOR3 &dest, const FloatVec *pConstraints ) const
 {
-  pWeights;
-
   D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
   int nJoints = (int)pFramesIn->size(), nLast = nJoints - 1;
 
@@ -376,20 +374,22 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
 
   float lastDist = FLT_MAX;
 
-  int cockBalls = 0;
   int nTries = 0;
   while ( lastDist > CCD_SUCCESS )
   {
     for ( int i = nLast - 1; i >= 0; --i )
     {
-      // ------- old shiz -------
-
       // find vectors
       D3DXVECTOR3 l1( joints[nLast] - joints[i] );
       D3DXVECTOR3 l2( dest - joints[i] );
 
       // find angle of rotation
       float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
+      if ( pConstraints )
+      {
+        angle = min( ( *pConstraints )[i * 2 + 1], angle );
+        angle = max( ( *pConstraints )[i * 2    ], angle );
+      }
 
       // find axis of rotation
       D3DXVECTOR3 axis;
@@ -430,69 +430,11 @@ bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn,
       D3DXVec3Normalize( &axisWorld, &axisWorld );
 
       D3DXMatrixMultiply( &( *pMatricesOut )[i], &( *pMatricesOut )[i], &matRotLocal );
+
+      D3DXVECTOR3 difVec( dest - joints[nLast] );
+      float dist = D3DXVec3Length( &difVec );
+      if ( dist < CCD_SUCCESS ) return true;
     }
-
-    //for ( int i = nLast - 1; i >= 0; --i )
-    //{
-    //  // ------- new shiz -------
-
-    //  float       determinant;
-    //  D3DXMATRIX  matWorldInverse;
-    //  D3DXVECTOR3 destL;
-    //  D3DXMatrixInverse( &matWorldInverse, &determinant, &( ( *pFramesIn )[i]->matCombined ) );
-    //  D3DXVec3TransformCoord( &destL, &dest, &matWorldInverse );
-
-    //  // find vectors
-    //  D3DXVECTOR3 l1( jointsL[i] );
-    //  D3DXVECTOR3 l2( destL );
-
-    //  // get correct l1
-
-    //  // first attempt
-    //  D3DXMATRIX matLocal;
-    //  D3DXMatrixIdentity( &matLocal );
-    //  for ( int j = nLast; j > i; --j )
-    //    D3DXMatrixMultiply( &matLocal, &( ( *pFramesIn )[j]->TransformationMatrix ), &matLocal );
-    //  D3DXVECTOR3 newL1_1;
-    //  D3DXVec3TransformCoord( &newL1_1, &jointsL[nLast], &matLocal );
-
-    //  // second attempt
-    //  D3DXVECTOR3 newL1_2;
-    //  D3DXVec3TransformCoord( &newL1_2, &joints[nLast], &matWorldInverse );
-
-    //  l1 = newL1_1;
-
-    //  // find angle of rotation
-    //  float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
-
-    //  // find axis of rotation
-    //  D3DXVECTOR3 axis;
-    //  D3DXVec3Cross( &axis, &l1, &l2 );
-    //  D3DXVec3Normalize( &axis, &axis );
-
-    //  D3DXMATRIX matRot;
-    //  D3DXMatrixRotationAxis( &matRot, &axis, angle );
-    //  D3DXVec3TransformCoord( &jointsL[i], &jointsL[i], &matRot );
-
-    //  pMatricesOut->push_back( matRot );
-
-    //  // ------------------------
-    //}
-
-    /* draw red line
-    float       determinant;
-    D3DXMATRIX  matWorldInverse;
-    D3DXVECTOR3 destL;
-    D3DXMatrixInverse( &matWorldInverse, &determinant, &( ( *pFramesIn )[0]->matCombined ) );
-    D3DXVec3TransformCoord( &destL, &dest, &matWorldInverse );
-
-    D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
-    D3DXVECTOR3 p0L, p1L;
-    D3DXVec3TransformCoord( &p0L, &jointsL[0], &( *pFramesIn )[0]->matCombined );
-    D3DXVec3TransformCoord( &p1L, &destL, &( *pFramesIn )[0]->matCombined );
-    ( (Graphics *)this )->AddLine( ColoredVertex( p0L.x, p0L.y, p0L.z, red ), 
-                                   ColoredVertex( p1L.x, p1L.y, p1L.z, red ) );
-    //*/
 
     //*
     D3DXMATRIX matParent( pFramesIn->front()->matCombined );
@@ -554,3 +496,7 @@ bool Graphics::IsPaused( void ) const
   return paused;
 }
 
+LPDIRECT3DDEVICE9 Graphics::GetDevice( void )
+{
+  return pDevice;
+}

@@ -13,6 +13,7 @@ class VQS
     static void Slerp( D3DXQUATERNION &qOut, const D3DXQUATERNION &q0, const D3DXQUATERNION &q1, float t );
 
   public:
+    VQS( const D3DXMATRIX &matTransform );
     VQS( D3DXVECTOR3 _v = D3DXVECTOR3(), D3DXQUATERNION _q = D3DXQUATERNION(), float _s = 0 );
     VQS( const VQS &rhs );
     ~VQS();

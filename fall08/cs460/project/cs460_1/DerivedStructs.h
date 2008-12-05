@@ -26,8 +26,8 @@ typedef struct _D3DXMESHCONTAINER_DERIVED: public D3DXMESHCONTAINER
 	
   //Skinned mesh variables
   LPD3DXMESH           pSkinMesh;			// The skin mesh
-  LPD3DXMATRIX		 pBoneOffsets;		// The bone matrix Offsets
-  LPD3DXMATRIX*		 ppFrameMatrices;	// Pointer to the Frame Matrix
+  LPD3DXMATRIX         pBoneOffsets;		// The bone matrix Offsets
+  LPD3DXMATRIX        *ppFrameMatrices;	// Pointer to the Frame Matrix
 
   // Attribute table stuff
   LPD3DXATTRIBUTERANGE pAttributeTable;	// The attribute table
