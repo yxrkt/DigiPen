@@ -47,7 +47,7 @@ bool FrameWindow::CreateWindow( LPCSTR lpWindowName, DWORD dwStyles, int x, int 
     wcex.hbrBackground = (HBRUSH)GetStockObject( LTGRAY_BRUSH );
     wcex.hInstance     = m_hInstance;
     wcex.lpszClassName = m_szClassName;
-    wcex.style         = CS_HREDRAW | CS_VREDRAW;
+    wcex.style         = CS_DBLCLKS;
     wcex.hCursor       = LoadCursor( NULL, IDC_ARROW );
 
     if ( !RegisterClassEx( &wcex ) )

@@ -85,6 +85,11 @@ void Cloth::UpdateNormals( void )
   }
 }
 
+int Cloth::GetNumNodes( void ) const
+{
+  return resX * resY;
+}
+
 float Cloth::GetWidth( void ) const
 {
   return width;

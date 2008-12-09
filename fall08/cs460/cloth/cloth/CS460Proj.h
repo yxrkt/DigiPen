@@ -1,12 +1,15 @@
 #pragma once
 
+#include <sstream>
+
 #include "FrameWindow.h"
 #include "Cloth.h"
 #include "Sphere.h"
+#include "Physics.h"
 
 #define CS460PROJ CS460Proj::Instance()
 
-class CS460Proj : FrameWindow
+class CS460Proj : public FrameWindow
 {
   public:
     static CS460Proj *Instance( void );
@@ -24,7 +27,24 @@ class CS460Proj : FrameWindow
     void Update( void );
     LRESULT WndProc( UINT msg, WPARAM wParam, LPARAM lParam );
 
+    void UpdateMouseInputCam( void );
+    void UpdateCam( void );
+
   private:
-    Cloth  *pCloth;
-    Sphere *pSphere;
+    Cloth              *m_pCloth;
+    PhysCloth          *m_pPhysCloth;
+    Sphere             *m_pSphere;
+    std::stringstream   m_messageLog;
+
+    // camera stuff
+    bool                m_isCamMoving;
+    D3DXVECTOR3         m_midClickBegin;
+    D3DXVECTOR3         m_prevCamPos;
+    D3DXVECTOR3         m_prevCamLookAt;
+    D3DXVECTOR3         m_targetCamPos;
+    D3DXVECTOR3         m_targetCamLookat;
+    float               m_camMoveTPF;
+    float               m_zoomSpeed;
+    float               m_scrollZoomSpeed;
+
 };

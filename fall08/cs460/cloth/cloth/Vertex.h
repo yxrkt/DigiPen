@@ -29,7 +29,6 @@ class ColoredVertex
     D3DXVECTOR3 Pos;
     D3DXVECTOR3 Norm;
     D3DCOLOR    Color;
-    float       Mass;
 };
 
 typedef std::vector< ColoredVertex >  VertVec;

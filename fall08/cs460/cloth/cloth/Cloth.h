@@ -16,6 +16,7 @@ class Cloth : public AutoList< Cloth >
     int     GetResY( void ) const;
     VertVec &GetVertices( void );
     void    UpdateNormals( void );
+    int     GetNumNodes( void ) const;
 
     ColoredVertex &GetVertex( int r, int c );
 

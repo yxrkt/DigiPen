@@ -79,7 +79,6 @@ void Graphics::CreateSunLight( void )
 void Graphics::DrawPrimitives( void )
 {
   pD3DDevice->SetFVF( D3DFVF_COLOREDVERTEX );
-  //pD3DDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
 
   if ( !trianglePrimitives.empty() )
   {
@@ -90,6 +89,8 @@ void Graphics::DrawPrimitives( void )
     pD3DDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
   }
 
+  pD3DDevice->SetRenderState( D3DRS_LIGHTING, FALSE );
+
   if ( !linePrimitives.empty() )
   {
     pD3DDevice->DrawPrimitiveUP( D3DPT_LINELIST, (UINT)linePrimitives.size() / 2, 
@@ -98,6 +99,18 @@ void Graphics::DrawPrimitives( void )
   }
 
   pD3DDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
+}
+
+void Graphics::RenderText( void )
+{
+  size_t nStringPars = stringPars.size();
+  for ( size_t i = 0; i < nStringPars; ++i )
+  {
+    RECT rcPos = { stringPars[i].x, stringPars[i].y, 0, 0 };
+    pD3DFont->DrawText( NULL, stringPars[i].text.c_str(), -1, 
+                        &rcPos, DT_NOCLIP, stringPars[i].color );
+  }
+  stringPars.clear();
 }
 
 void Graphics::SetupMatrices( void )
@@ -138,6 +151,7 @@ void Graphics::Render( void )
   AddCloths();
   AddSpheres();
   DrawPrimitives();
+  RenderText();
 
   hr = pD3DDevice->EndScene();
   ASSERTHR( hr );
@@ -165,18 +179,36 @@ void Graphics::AddQuad( const ColoredVertex *verts )
     trianglePrimitives.push_back( verts[i < 4 ? i : 0] );
 }
 
+void Graphics::IsectPlane( D3DXVECTOR3 *pOut, float x, float y, const D3DXPLANE &plane ) const
+{
+  D3DXVECTOR3 ncp;
+  GetScreenWorldCoord( ncp, D3DXVECTOR3( x, y, 0.f ) );
+  D3DXPlaneIntersectLine( pOut, &plane, &mainCam.Eye, &ncp );
+}
+
+void Graphics::GetScreenWorldCoord( D3DXVECTOR3 &w, const D3DXVECTOR3 &s ) const
+{    
+  D3DVIEWPORT9 viewPort;
+  pD3DDevice->GetViewport( &viewPort );
+
+  D3DXMATRIX proj, view, world;
+  pD3DDevice->GetTransform( D3DTS_PROJECTION, &proj );
+  pD3DDevice->GetTransform( D3DTS_VIEW, &view );
+  pD3DDevice->GetTransform( D3DTS_WORLD, &world );
+
+  D3DXVec3Unproject( &w, &s, &viewPort, &proj, &view, &world );
+}
+
 void Graphics::WriteText( const std::string &text, int x, int y, D3DCOLOR color )
 {
-  RECT rcPos = { x, y, 0, 0 };
-  pD3DFont->DrawText( NULL, text.c_str(), -1, &rcPos, DT_NOCLIP, color );
+  stringPars.push_back( StringPars( text, x, y, color ) );
 }
 
 void Graphics::AddCloths( void )
 {
-  AutoList< Cloth >::iter_type i = AutoList< Cloth >::List.begin();
-  for ( ; i != AutoList< Cloth >::List.end(); ++i )
+  FOR_EACH_AUTO( Cloth, pCloth )
   {
-    Cloth *pCloth = *i;
+    pCloth->UpdateNormals();
     ColoredVertex vertBuf[4];
     int resX = pCloth->GetResX(), resY = pCloth->GetResY();
     int lastCol = resX - 1, lastRow = resY - 1;
@@ -200,10 +232,8 @@ void Graphics::AddCloths( void )
 void Graphics::AddSpheres( void )
 {
   VertVec vertices;
-  AutoList< Sphere >::iter_type i = AutoList< Sphere >::List.begin();
-  for ( ; i != AutoList< Sphere >::List.end(); ++i )
+  FOR_EACH_AUTO( Sphere, pSphere )
   {
-    Sphere *pSphere = *i;
     pSphere->GetTriangles( vertices );
     for ( VertVecIt j = vertices.begin(); j != vertices.end(); ++j )
       trianglePrimitives.push_back( *j );

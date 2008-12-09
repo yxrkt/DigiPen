@@ -2,6 +2,12 @@
 
 #include <list>
 
+#define FOR_EACH_AUTO( _type, _pValue ) \
+  AutoList< _type >::iter_type __iter__ = AutoList< _type >::List.begin();\
+  _type *_pValue = !AutoList< _type >::List.empty() ? ( *__iter__ ) : NULL;\
+  for ( ; __iter__ != AutoList< _type >::List.end(); ++__iter__\
+        , _pValue = __iter__ != AutoList< _type >::List.end() ? ( *__iter__ ) : NULL )
+
 
 template <typename T>
 class AutoList

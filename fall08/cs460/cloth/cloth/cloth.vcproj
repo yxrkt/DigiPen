@@ -184,6 +184,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Input.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Main.cpp"
 				>
 			</File>
@@ -223,6 +227,10 @@
 			</File>
 			<File
 				RelativePath=".\Graphics.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Input.h"
 				>
 			</File>
 			<File

@@ -10,6 +10,10 @@
 
 #define GRAPHICS Graphics::Instance()
 
+struct StringPars;
+
+typedef std::vector< StringPars > StrParVec;
+
 class Graphics
 {
   public:
@@ -21,6 +25,9 @@ class Graphics
     void AddLine( const ColoredVertex *verts );
     void AddTriangle( const ColoredVertex *verts );
     void AddQuad( const ColoredVertex *verts );
+    void GetScreenWorldCoord( D3DXVECTOR3 &w, const D3DXVECTOR3 &s ) const;
+    void IsectPlane( D3DXVECTOR3 *pOut, float x, float y, 
+                     const D3DXPLANE &plane = D3DXPLANE( 0.f, 1.f, 0.f, 0.f ) ) const;
     void WriteText( const std::string &text, int x, int y, 
                     D3DCOLOR color = D3DCOLOR_XRGB( 4, 192, 255 ) );
 
@@ -29,6 +36,7 @@ class Graphics
   private:
     void CreateSunLight( void );
     void DrawPrimitives( void );
+    void RenderText( void );
     void SetupMatrices( void );
     void AddCloths( void );
     void AddSpheres( void );
@@ -47,4 +55,15 @@ class Graphics
     VertVec           linePrimitives;
     VertVec           trianglePrimitives;
     Camera            mainCam;
+    StrParVec         stringPars;
+};
+
+struct StringPars
+{
+  StringPars( const std::string &_text, int _x, int _y, D3DCOLOR _color )
+    : text( _text ), x( _x ), y( _y ), color( _color ) {}
+
+  std::string text;
+  int         x, y;
+  D3DCOLOR    color;
 };
