@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <queue>
 
 #include "FrameWindow.h"
 #include "Cloth.h"
@@ -8,6 +9,8 @@
 #include "Physics.h"
 
 #define CS460PROJ CS460Proj::Instance()
+
+#define FRAME_HISTORY 60
 
 class CS460Proj : public FrameWindow
 {
@@ -29,6 +32,8 @@ class CS460Proj : public FrameWindow
 
     void UpdateMouseInputCam( void );
     void UpdateCam( void );
+    int  GetFPS( void );
+    void Reset( void );
 
   private:
     Cloth              *m_pCloth;

@@ -3,6 +3,7 @@
 #include "AutoList.h"
 #include "Vertex.h"
 
+
 class Cloth : public AutoList< Cloth >
 {
   public:
@@ -17,6 +18,7 @@ class Cloth : public AutoList< Cloth >
     VertVec &GetVertices( void );
     void    UpdateNormals( void );
     int     GetNumNodes( void ) const;
+    const D3DXVECTOR3 &GetPos( void ) const;
 
     ColoredVertex &GetVertex( int r, int c );
 

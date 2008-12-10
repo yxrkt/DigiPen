@@ -119,3 +119,8 @@ ColoredVertex &Cloth::GetVertex( int r, int c )
 {
   return vertices[r * resX + c];
 }
+
+const D3DXVECTOR3 &Cloth::GetPos( void ) const
+{
+  return pos;
+}

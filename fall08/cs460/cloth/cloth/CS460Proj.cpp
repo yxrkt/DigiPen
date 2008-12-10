@@ -1,4 +1,5 @@
 #include <sstream>
+#include <float.h>
 
 #include "CS460Proj.h"
 #include "Graphics.h"
@@ -52,33 +53,21 @@ void CS460Proj::Initialize( HINSTANCE hInstance )
   GRAPHICS->Initialize();
   INPUT->Initialize();
 
-  m_targetCamLookat = D3DXVECTOR3( 0.f, 0.f, 0.f );
-  m_targetCamPos    = D3DXVECTOR3( 0.f, 400.f, -500.f );
-  m_isCamMoving     = false;
-  m_camMoveTPF      = 10.f;
-  m_zoomSpeed       = 4.f;
-  m_scrollZoomSpeed = .25f;
+  m_pCloth      = new Cloth( 320.f, 320.f, 18, 18 );
+  m_pPhysCloth  = new PhysCloth( m_pCloth, 60.0f, 10.0f, 0.1f );
+  //m_pSphere     = new Sphere( D3DXVECTOR3( 0.f, 0.f, 0.f ), 50.f, 16, 32 );
 
-  m_pCloth      = new Cloth( 220.f, 220.f, 32, 32 );
-  m_pPhysCloth  = new PhysCloth( m_pCloth );
-  m_pSphere     = new Sphere( D3DXVECTOR3( 0.f, -250.f, 0.f ), 100.f, 16, 32 );
-  m_pPhysCloth->GetVertexInfo( m_pPhysCloth->resX - 1, 0 ).locked = true;
-  m_pPhysCloth->GetVertexInfo( m_pPhysCloth->resX - 1, m_pPhysCloth->resY - 1 ).locked = true;
-  m_pPhysCloth->GetVertexInfo( 0, 0 ).locked = true;
-  m_pPhysCloth->GetVertexInfo( 0, m_pPhysCloth->resY - 1 ).locked = true;
+  Reset();
 }
 
 void CS460Proj::Update( void )
 {
-  // FPS
-  static DWORD lastTick = timeGetTime();
-  DWORD tick = timeGetTime();
-  static std::stringstream ssTime;
-  ssTime << "FPS: " << ( 1000.f / (float)( tick - lastTick ) ) << std::endl;
-  ssTime << "Mouse Pos: { " << INPUT->GetMousePos().x << ", " << INPUT->GetMousePos().y << " }" << std::endl;
-  GRAPHICS->WriteText( ssTime.str().c_str(), 10, 10 );
-  ssTime.str( "" );
-  lastTick = tick;
+  // Misc info and debug data
+  static std::stringstream info;
+  info << "FPS: " << GetFPS() << std::endl;
+  info << "Mouse Pos: { " << INPUT->GetMousePos().x << ", " << INPUT->GetMousePos().y << " }" << std::endl;
+  GRAPHICS->WriteText( info.str().c_str(), 10, 10 );
+  info.str( "" );
 
   // Message log
   RECT rcWnd;
@@ -86,6 +75,25 @@ void CS460Proj::Update( void )
   GRAPHICS->WriteText( m_messageLog.str(), rcWnd.right - 250, 10 );
 
   UpdateMouseInputCam();
+
+  static bool anchored = true;
+
+  if ( INPUT->IsKeyHit( 'R' ) )
+  {
+    Reset();
+    anchored = true;
+  }
+
+  if ( INPUT->IsKeyHit( VK_SPACE ) )
+  {
+    anchored = !anchored;
+    m_pPhysCloth->ToggleAnchors( CA_ALL, anchored );
+  }
+
+  if ( INPUT->IsKeyHit( 'G' ) )
+  {
+    PHYSICS->applyGravity = !PHYSICS->applyGravity;
+  }
 
   INPUT->Update();
   UpdateCam();
@@ -225,6 +233,68 @@ void CS460Proj::UpdateCam( void )
   dirLook   *= speedLook;
   curPos    += dir;
   curLookat += dirLook;
+}
+
+int CS460Proj::GetFPS( void )
+{
+  static float fpsHist[FRAME_HISTORY] = { 0.f };
+  static int   curIndex               = 0;
+  static DWORD lastTick               = timeGetTime();
+
+  DWORD tick = timeGetTime();
+  fpsHist[curIndex++] = 1000.f / (float)( tick - lastTick );
+  if ( curIndex == FRAME_HISTORY )
+    curIndex = 0;
+  lastTick = tick;
+
+  float avgFPS = 0.f;
+  for ( int i = 0; i < FRAME_HISTORY; ++i )
+    avgFPS += fpsHist[i];
+  avgFPS /= (float)FRAME_HISTORY;
+
+  return max( (int)( avgFPS + .5f ), 0 );
+}
+
+void CS460Proj::Reset( void )
+{
+  m_targetCamLookat = D3DXVECTOR3( 0.f, 0.f, 0.f );
+  m_targetCamPos    = D3DXVECTOR3( 0.f, 400.f, -700.f );
+  m_isCamMoving     = false;
+  m_camMoveTPF      = 10.f;
+  m_zoomSpeed       = 4.f;
+  m_scrollZoomSpeed = .25f;
+
+  FOR_EACH_AUTO( PhysCloth, pPhysCloth )
+  {
+    Cloth *pCloth = pPhysCloth->pCloth;
+
+    float halfWidth  = pCloth->GetWidth()  / 2.f;
+    float halfHeight = pCloth->GetHeight() / 2.f;
+    int   lastCol    = pPhysCloth->resX - 1;
+    int   lastRow    = pPhysCloth->resY - 1;
+    float fResX      = (float)pPhysCloth->resX, fLastRow = (float)lastRow;
+    float fResY      = (float)pPhysCloth->resY, fLastCol = (float)lastCol;
+    float xStep      = pCloth->GetWidth()  / ( fResX - 1.f );
+    float yStep      = pCloth->GetHeight() / ( fResY - 1.f );
+    const D3DXVECTOR3 &pos = pCloth->GetPos();
+
+    for ( int r = 0; r < pPhysCloth->resY; ++r )
+    {
+      for ( int c = 0; c < pPhysCloth->resX; ++c )
+      {
+        D3DXVECTOR3 localPos( -halfWidth + (float)c * xStep, 0.f, -halfHeight + (float)r * yStep );
+        pCloth->GetVertex( r, c ).Pos = pos + localPos;
+        pPhysCloth->GetVertexInfo( r, c ).Reset();
+      }
+    }
+    //pPhysCloth->ToggleAnchors( CA_ALL, true );
+    pPhysCloth->ToggleAnchors( (CLOTH_ANCHOR)( CA_TL | CA_TR ), true );
+  }
+
+  FOR_EACH_AUTO( Sphere, pSphere )
+  {
+    pSphere->SetCenter( D3DXVECTOR3( 0.f, -150.f, 0.f ) );
+  }
 }
 
 LRESULT CS460Proj::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )

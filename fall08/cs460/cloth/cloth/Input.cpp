@@ -75,8 +75,8 @@ const D3DXVECTOR3 &Input::GetMousePos( void ) const
 
 LRESULT Input::HandleMessage( UINT msg, WPARAM wParam, LPARAM lParam )
 {
-  m_mousePos.x = (float)LOWORD( lParam );
-  m_mousePos.y = (float)HIWORD( lParam );
+  m_mousePos.x = (float)(short)LOWORD( lParam );
+  m_mousePos.y = (float)(short)HIWORD( lParam );
 
   switch ( msg )
   {

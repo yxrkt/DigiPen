@@ -1,0 +1,48 @@
+** Level Editor **
+• Smooth cam
+  • Going to
+  • Rotation, Pan, Zooms
+- Edge buffer
+• Change Selected Blocks
+• Select similar blocks
+- Brush size/shape
+- Player spawns
+- Select column
+->Cursor!
+  • Basic Cursor
+  - Special cases
+  - Animated
+- Copy/Paste
+- Ctrl+Drag
+• Fix Dimensions Undo
+
+Networking
+- Smooth prediction
+- Better animating
+- Text chat
+- Leave game
+- Drop/Kick
+- More debugging info
+- Fix joining problem
+- Test 3/4 players
+- Synchronized loading
+
+General
+- Player profiles
+- Player sign-in
+- Pause game
+->MT model loading
+  ->Clone anim model
+- Render movies to textures
+- MT loading screens
+- Ragdoll animations
+
+For Paul
+- Scripting errors
+- No edge checking in ghost mode
+- Spawn points
+- Handicap jumping on ice
+->Throw hammer!
+  - Change thing in script
+- Edge actions?
+- Edge checking for edge of stage
