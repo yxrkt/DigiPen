@@ -356,6 +356,7 @@ void CS460Proj::UpdateInfo( void )
          << std::endl << std::endl;
     info << "KEYBOARD CONTROLS"                                 << std::endl
          << "[SPACE]        Toggle all corner anchors"          << std::endl
+         << "[I]            Toggle info display"                << std::endl
          << "[R]            Restart simulation"                 << std::endl
          << "[S]            Toggle sphere for next simulation "
          << ( m_useSphere ? "[ON]" : "[OFF]" )                  << std::endl
