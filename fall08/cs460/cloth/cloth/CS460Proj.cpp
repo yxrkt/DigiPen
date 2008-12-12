@@ -48,52 +48,24 @@ void CS460Proj::Initialize( HINSTANCE hInstance )
 {
   m_hInstance = hInstance;
   CreateWindow( "CS460Proj" );
+  m_displayInfo = true;
+  m_anchored    = true;
+  m_useSphere   = true;
 
   PHYSICS->Initialize();
   GRAPHICS->Initialize();
   INPUT->Initialize();
 
-  m_pCloth      = new Cloth( 320.f, 320.f, 18, 18 );
-  m_pPhysCloth  = new PhysCloth( m_pCloth, 60.0f, 10.0f, 0.1f );
-  //m_pSphere     = new Sphere( D3DXVECTOR3( 0.f, 0.f, 0.f ), 50.f, 16, 32 );
+  m_pCloth      = new Cloth( 320.f, 320.f, 32, 32 );
+  m_pPhysCloth  = new PhysCloth( m_pCloth, 60.0f, 10.0f, 0.0f );
 
   Reset();
 }
 
 void CS460Proj::Update( void )
 {
-  // Misc info and debug data
-  static std::stringstream info;
-  info << "FPS: " << GetFPS() << std::endl;
-  info << "Mouse Pos: { " << INPUT->GetMousePos().x << ", " << INPUT->GetMousePos().y << " }" << std::endl;
-  GRAPHICS->WriteText( info.str().c_str(), 10, 10 );
-  info.str( "" );
-
-  // Message log
-  RECT rcWnd;
-  GetClientRect( m_hWndMain, &rcWnd );
-  GRAPHICS->WriteText( m_messageLog.str(), rcWnd.right - 250, 10 );
-
-  UpdateMouseInputCam();
-
-  static bool anchored = true;
-
-  if ( INPUT->IsKeyHit( 'R' ) )
-  {
-    Reset();
-    anchored = true;
-  }
-
-  if ( INPUT->IsKeyHit( VK_SPACE ) )
-  {
-    anchored = !anchored;
-    m_pPhysCloth->ToggleAnchors( CA_ALL, anchored );
-  }
-
-  if ( INPUT->IsKeyHit( 'G' ) )
-  {
-    PHYSICS->applyGravity = !PHYSICS->applyGravity;
-  }
+  UpdateInfo();
+  HandleInput();
 
   INPUT->Update();
   UpdateCam();
@@ -202,6 +174,52 @@ void CS460Proj::UpdateMouseInputCam( void )
   }
 }
 
+void CS460Proj::UpdateMouseInputPick( void )
+{
+  if ( !INPUT->IsMouseHit( LEFT_BUTTON ) ) return;
+
+  const D3DXVECTOR3 &clickPos = INPUT->GetMousePos();
+  FOR_EACH_AUTO( PhysCloth, pPhysCloth )
+  {
+    Cloth *pCloth = pPhysCloth->pCloth;
+
+    int lastRow = pCloth->GetResY() - 1, lastCol = pCloth->GetResX() - 1;
+
+    int corners[4] = 
+    {
+      MAKELONG( 0, 0 ),
+      MAKELONG( lastRow, 0 ),
+      MAKELONG( lastRow, lastCol ),
+      MAKELONG( 0, lastCol )
+    };
+
+    int corner = 0;
+    float bestDist = FLT_MAX;
+    for ( int i = 0; i < 4; ++i )
+    {
+      D3DXVECTOR3 s;
+      GRAPHICS->GetWorldScreenCoord( s, pCloth->GetVertex( LOWORD( corners[i] ), 
+                                                           HIWORD( corners[i] ) ).Pos );
+      float x = s.x - clickPos.x;
+      float y = s.y - clickPos.y;
+      float dist = sqrt( x * x + y * y );
+      if ( dist < bestDist )
+      {
+        bestDist = dist;
+        corner = i;
+      }
+    }
+
+    if ( bestDist < CLICK_RADIUS )
+    {
+      VertInfo &vertInfo = pPhysCloth->GetVertexInfo( LOWORD( corners[corner] ), 
+                                                      HIWORD( corners[corner] ) );
+      vertInfo.locked = !vertInfo.locked;
+      m_messageLog << "corner " << ( vertInfo.locked ? "locked" : "unlocked" ) << std::endl;
+    }
+  }
+}
+
 void CS460Proj::UpdateCam( void )
 {
   D3DXVECTOR3 &curPos    = GRAPHICS->GetMainCam().Eye;
@@ -260,40 +278,100 @@ void CS460Proj::Reset( void )
   m_targetCamLookat = D3DXVECTOR3( 0.f, 0.f, 0.f );
   m_targetCamPos    = D3DXVECTOR3( 0.f, 400.f, -700.f );
   m_isCamMoving     = false;
+  m_anchored        = true;
   m_camMoveTPF      = 10.f;
   m_zoomSpeed       = 4.f;
   m_scrollZoomSpeed = .25f;
 
-  FOR_EACH_AUTO( PhysCloth, pPhysCloth )
+  float halfWidth  = m_pCloth->GetWidth()  / 2.f;
+  float halfHeight = m_pCloth->GetHeight() / 2.f;
+  int   lastCol    = m_pPhysCloth->resX - 1;
+  int   lastRow    = m_pPhysCloth->resY - 1;
+  float xStep      = m_pCloth->GetWidth()  / ( (float)( m_pPhysCloth->resX - 1 ) );
+  float yStep      = m_pCloth->GetHeight() / ( (float)( m_pPhysCloth->resY - 1 ) );
+  const D3DXVECTOR3 &pos = m_pCloth->GetPos();
+
+  for ( int r = 0; r < m_pPhysCloth->resY; ++r )
   {
-    Cloth *pCloth = pPhysCloth->pCloth;
-
-    float halfWidth  = pCloth->GetWidth()  / 2.f;
-    float halfHeight = pCloth->GetHeight() / 2.f;
-    int   lastCol    = pPhysCloth->resX - 1;
-    int   lastRow    = pPhysCloth->resY - 1;
-    float fResX      = (float)pPhysCloth->resX, fLastRow = (float)lastRow;
-    float fResY      = (float)pPhysCloth->resY, fLastCol = (float)lastCol;
-    float xStep      = pCloth->GetWidth()  / ( fResX - 1.f );
-    float yStep      = pCloth->GetHeight() / ( fResY - 1.f );
-    const D3DXVECTOR3 &pos = pCloth->GetPos();
-
-    for ( int r = 0; r < pPhysCloth->resY; ++r )
+    float fr = (float)r;
+    for ( int c = 0; c < m_pPhysCloth->resX; ++c )
     {
-      for ( int c = 0; c < pPhysCloth->resX; ++c )
-      {
-        D3DXVECTOR3 localPos( -halfWidth + (float)c * xStep, 0.f, -halfHeight + (float)r * yStep );
-        pCloth->GetVertex( r, c ).Pos = pos + localPos;
-        pPhysCloth->GetVertexInfo( r, c ).Reset();
-      }
+      D3DXVECTOR3 localPos( -halfWidth + (float)c * xStep, 0.f, -halfHeight + fr * yStep );
+      m_pCloth->GetVertex( r, c ).Pos = pos + localPos;
+      m_pPhysCloth->GetVertexInfo( r, c ).Reset();
     }
-    //pPhysCloth->ToggleAnchors( CA_ALL, true );
-    pPhysCloth->ToggleAnchors( (CLOTH_ANCHOR)( CA_TL | CA_TR ), true );
   }
+  m_pPhysCloth->ToggleAnchors( CA_ALL, true );
 
-  FOR_EACH_AUTO( Sphere, pSphere )
+  if ( !m_useSphere )
   {
-    pSphere->SetCenter( D3DXVECTOR3( 0.f, -150.f, 0.f ) );
+    SAFE_DELETE( m_pSphere );
+  }
+  else
+  {
+    if ( !m_pSphere )
+    {
+      m_pSphere = new Sphere( D3DXVECTOR3( 0.f, 0.f, 0.f ), 50.f, 16, 32 );
+    }
+    m_pSphere->SetCenter( D3DXVECTOR3( 0.f, -150.f, 0.f ) );
+  }
+}
+
+void CS460Proj::HandleInput( void )
+{
+  UpdateMouseInputPick();
+  UpdateMouseInputCam();
+
+  if ( INPUT->IsKeyHit( VK_SPACE ) )
+  {
+    m_anchored = !m_anchored;
+    m_pPhysCloth->ToggleAnchors( CA_ALL, m_anchored );
+  }
+  if ( INPUT->IsKeyHit( 'R' ) )
+  {
+    Reset();
+  }
+  if ( INPUT->IsKeyHit( 'G' ) )
+  {
+    PHYSICS->applyGravity = !PHYSICS->applyGravity;
+  }
+  if ( INPUT->IsKeyHit( 'I' ) )
+  {
+    m_displayInfo = !m_displayInfo;
+  }
+  if ( INPUT->IsKeyHit( 'S' ) )
+  {
+    m_useSphere = !m_useSphere;
+  }
+}
+
+void CS460Proj::UpdateInfo( void )
+{
+  // Misc info and debug data
+  if ( m_displayInfo )
+  {
+    static std::stringstream info;
+    info << "FPS: " << GetFPS() << std::endl;
+    info << "Mouse Pos: { " << INPUT->GetMousePos().x << ", " << INPUT->GetMousePos().y << " }" 
+         << std::endl << std::endl;
+    info << "KEYBOARD CONTROLS"                                 << std::endl
+         << "[SPACE]        Toggle all corner anchors"          << std::endl
+         << "[R]            Restart simulation"                 << std::endl
+         << "[S]            Toggle sphere for next simulation "
+         << ( m_useSphere ? "[ON]" : "[OFF]" )                  << std::endl
+         << "[G]            Toggle gravity"                     << std::endl << std::endl;
+    info << "MOUSE CONTROLS"                                    << std::endl
+         << "[L CLICK]      Toggle corner anchor"               << std::endl
+         << "[M HOLD]       Pan camera"                         << std::endl
+         << "[M-ALT HOLD]   Rotate camera"                      << std::endl
+         << "[M-CTRL HOLD]  Zoom camera"                        << std::endl;
+    GRAPHICS->WriteText( info.str().c_str(), 10, 10 );
+    info.str( "" );
+
+    // Message log
+    RECT rcWnd;
+    GetClientRect( m_hWndMain, &rcWnd );
+    GRAPHICS->WriteText( m_messageLog.str(), rcWnd.right - 250, 10 );
   }
 }
 

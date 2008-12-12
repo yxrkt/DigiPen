@@ -20,7 +20,7 @@ Physics::~Physics( void )
 
 void Physics::Initialize( void )
 {
-  m_gravity = D3DXVECTOR3( 0.f, -1.0f, 0.f );
+  m_gravity = D3DXVECTOR3( 0.f, -0.5f, 0.f );
 }
 
 void Physics::Update( void )
@@ -32,7 +32,7 @@ void Physics::UpdateCloths( void )
 {
   static DWORD lastTick = timeGetTime();
   DWORD tick = timeGetTime();
-  float frameStep = min( (float)( tick - lastTick ) / 1000.f, 1.f / 30.f );
+  float frameStep = min( (float)( tick - lastTick ) / 1000.f, 1.f / 60.f );
   lastTick = tick;
 
   VertPair vertPairs[8]; // eight neighbors (l, tl, t, tr, r, br, b, bl)
@@ -42,6 +42,9 @@ void Physics::UpdateCloths( void )
   {
     Cloth *pCloth = (Cloth *)pPhysCloth->pCloth;
     int resY = pCloth->GetResY(), resX = pCloth->GetResX();
+
+    float pctOfB = .25f;
+    float b = pctOfB * sqrt( 4.f * pPhysCloth->mass * pPhysCloth->k );
 
     VertVec vecPrevVerts( resX * resY );
     std::copy( pCloth->GetVertices().begin(), pCloth->GetVertices().end(), vecPrevVerts.begin() );
@@ -66,11 +69,6 @@ void Physics::UpdateCloths( void )
         GetVertPair( &vertPairs[6], pPhysCloth, &vecPrevVerts, r + 1, c     );
         GetVertPair( &vertPairs[7], pPhysCloth, &vecPrevVerts, r + 1, c - 1 );
 
-        //vertPairs[1].pVert = NULL;
-        //vertPairs[3].pVert = NULL;
-        //vertPairs[5].pVert = NULL;
-        //vertPairs[7].pVert = NULL;
-
         D3DXVECTOR3 springForce( 0.f, 0.f, 0.f );
         for ( int n = 0; n < 8; ++n )
         {
@@ -85,9 +83,7 @@ void Physics::UpdateCloths( void )
               springForce += dir;
           }
         }
-        // damp here
-        float pctOfB = .143f;
-        float b = pctOfB * sqrt( 4.f * pPhysCloth->mass * pPhysCloth->k );
+        // dampen here
         springForce -= b * ( vertInfo.vel );
 
         vertInfo.accel   = ( springForce / pPhysCloth->mass );

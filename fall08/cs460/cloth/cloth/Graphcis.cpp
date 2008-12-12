@@ -186,17 +186,30 @@ void Graphics::IsectPlane( D3DXVECTOR3 *pOut, float x, float y, const D3DXPLANE 
   D3DXPlaneIntersectLine( pOut, &plane, &mainCam.Eye, &ncp );
 }
 
-void Graphics::GetScreenWorldCoord( D3DXVECTOR3 &w, const D3DXVECTOR3 &s ) const
-{    
-  D3DVIEWPORT9 viewPort;
+void Graphics::GetProjInfo( D3DVIEWPORT9 &viewPort, D3DXMATRIX &matWorld,
+                            D3DXMATRIX &matView, D3DXMATRIX &matProj ) const
+{
   pD3DDevice->GetViewport( &viewPort );
+  pD3DDevice->GetTransform( D3DTS_PROJECTION, &matProj );
+  pD3DDevice->GetTransform( D3DTS_VIEW, &matView );
+  pD3DDevice->GetTransform( D3DTS_WORLD, &matWorld );
 
+}
+
+void Graphics::GetScreenWorldCoord( D3DXVECTOR3 &w, const D3DXVECTOR3 &s ) const
+{
+  D3DVIEWPORT9 viewPort;
   D3DXMATRIX proj, view, world;
-  pD3DDevice->GetTransform( D3DTS_PROJECTION, &proj );
-  pD3DDevice->GetTransform( D3DTS_VIEW, &view );
-  pD3DDevice->GetTransform( D3DTS_WORLD, &world );
-
+  GetProjInfo( viewPort, world, view, proj );
   D3DXVec3Unproject( &w, &s, &viewPort, &proj, &view, &world );
+}
+
+void Graphics::GetWorldScreenCoord( D3DXVECTOR3 &s, const D3DXVECTOR3 &w ) const
+{
+  D3DVIEWPORT9 viewPort;
+  D3DXMATRIX proj, view, world;
+  GetProjInfo( viewPort, world, view, proj );
+  D3DXVec3Project( &s, &w, &viewPort, &proj, &view, &world );
 }
 
 void Graphics::WriteText( const std::string &text, int x, int y, D3DCOLOR color )

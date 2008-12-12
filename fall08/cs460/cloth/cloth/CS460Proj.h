@@ -10,7 +10,8 @@
 
 #define CS460PROJ CS460Proj::Instance()
 
-#define FRAME_HISTORY 60
+#define FRAME_HISTORY   30
+#define CLICK_RADIUS    10
 
 class CS460Proj : public FrameWindow
 {
@@ -31,9 +32,12 @@ class CS460Proj : public FrameWindow
     LRESULT WndProc( UINT msg, WPARAM wParam, LPARAM lParam );
 
     void UpdateMouseInputCam( void );
+    void UpdateMouseInputPick( void );
     void UpdateCam( void );
     int  GetFPS( void );
     void Reset( void );
+    void HandleInput( void );
+    void UpdateInfo( void );
 
   private:
     Cloth              *m_pCloth;
@@ -51,5 +55,7 @@ class CS460Proj : public FrameWindow
     float               m_camMoveTPF;
     float               m_zoomSpeed;
     float               m_scrollZoomSpeed;
-
+    bool                m_displayInfo;
+    bool                m_anchored;
+    bool                m_useSphere;
 };

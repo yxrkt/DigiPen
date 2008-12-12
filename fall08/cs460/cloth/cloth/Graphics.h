@@ -25,7 +25,10 @@ class Graphics
     void AddLine( const ColoredVertex *verts );
     void AddTriangle( const ColoredVertex *verts );
     void AddQuad( const ColoredVertex *verts );
+    void GetProjInfo( D3DVIEWPORT9 &viewPort, D3DXMATRIX &matWorld,
+                      D3DXMATRIX &matView, D3DXMATRIX &matProj ) const;
     void GetScreenWorldCoord( D3DXVECTOR3 &w, const D3DXVECTOR3 &s ) const;
+    void GetWorldScreenCoord( D3DXVECTOR3 &s, const D3DXVECTOR3 &w ) const;
     void IsectPlane( D3DXVECTOR3 *pOut, float x, float y, 
                      const D3DXPLANE &plane = D3DXPLANE( 0.f, 1.f, 0.f, 0.f ) ) const;
     void WriteText( const std::string &text, int x, int y, 
