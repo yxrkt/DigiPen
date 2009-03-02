@@ -5,12 +5,13 @@
 #include <stdio.h>
 
 #define ASSERT( c, msg ) if ( !(c) ) { std::cout << "** ERROR: " << msg << " **" << std::endl; return -1; }
+#define SAFE_DELETE_ARRAY( p ) if ( p != NULL ) { delete [] p; p = NULL; }
 
 template <typename T>
 int MovePastNext( T &stream, const std::string &str );
 
 template <typename T>
-int ReadAnimSet( char *&buf, T &stream, int pos );
+int ReadAnimSet( char *&buf, T &stream, int pos, const std::string &name );
 
 int main( int argc, char *argv[] )
 {
@@ -23,60 +24,96 @@ int main( int argc, char *argv[] )
   ASSERT( mainFile.is_open(), std::string( "unable to open " ) + argv[2] + " file" );
 
   std::string setName;
+  std::string baseName;
 
   // find the animation set in the anim file
   MovePastNext( animFile, "AnimationSet" );
   int readPos = MovePastNext( animFile, "AnimationSet" );
-  if ( argc > 3 )
-    setName = argv[3];
-  else
-    animFile >> setName;
+  animFile >> baseName;
+  setName  = ( argc > 3 ) ? argv[3] : baseName;
   animFile.seekg( readPos );
 
-  char *animSet;
-  int animSetSize = ReadAnimSet( animSet, animFile, readPos );
+  std::string header( "AnimationSet " + baseName );
+  int headerLen = (int)header.length() + 1;
 
-  int writePos = -1;
+  char *animSet;
+  int animSetSize = ReadAnimSet( animSet, animFile, readPos + headerLen, setName );
+
+  int headerPos = -1;
+  int writePos  = -1;
+  int backupPos =  0;
 
   // find position to insert animation set
   MovePastNext( mainFile, "AnimationSet" );
   while ( !mainFile.eof() )
   {
-    writePos = MovePastNext( mainFile, "AnimationSet" );
-    if ( writePos == -1 ) break;
-    std::string buf;
+    headerPos = MovePastNext( mainFile, "AnimationSet" );
+    if ( headerPos == -1 ) break;
+    std::string buf("");
     mainFile >> buf;
     if ( buf == setName )
     {
-      writePos = MovePastNext( mainFile, "AnimationSet" );
-      mainFile.seekg( writePos );
+      backupPos = MovePastNext( mainFile, "AnimationSet" );
       break;
     }
   }
 
   char *backup     = NULL;
   int   backupSize = 0;
+  int   endOfFile  = 0;
 
-  if ( mainFile.eof() )
+  header    = "AnimationSet " + setName;
+  headerLen = (int)header.length() + 1;
+
+  writePos  = headerPos + headerLen;
+
+  if ( headerPos == -1 )
   {
     mainFile.clear();
     mainFile.seekp( 0, std::ios_base::end );
   }
   else
   {
-    backupSize = (int)mainFile.tellg() - writePos + 1;
+    mainFile.seekg( 0, std::ios_base::end );
+    endOfFile  = (int)mainFile.tellg();
+    backupSize = endOfFile - backupPos;
     backup = new char[backupSize];
-    mainFile.seekg( writePos );
+    mainFile.seekg( backupPos );
     mainFile.read( backup, backupSize );
-    mainFile.seekp( writePos );
+    mainFile.clear(); // failbit will most likely be set from last read
+    mainFile.seekp( headerPos );
   }
 
+  char newLine = '\n';
+  mainFile.write( &newLine, sizeof( newLine ) );
   mainFile.write( animSet, animSetSize );
-  
+  mainFile.write( &newLine, sizeof( newLine ) );
+  mainFile.write( &newLine, sizeof( newLine ) );
+
   if ( backup )
-    mainFile.write( backup, backupSize );
+  {
+    int last = backupSize - 1;
+    while ( backup[last--] != '}' ) ;
+    mainFile.write( backup, last + 2 );
+
+    int curPos = mainFile.tellp();
+    if ( curPos < endOfFile )
+    {
+      int nEmptyBytes = endOfFile - curPos + 1;
+      char *emptySpace = new char[nEmptyBytes];
+      memset( emptySpace, ' ', nEmptyBytes );
+      mainFile.write( emptySpace, nEmptyBytes );
+      SAFE_DELETE_ARRAY( emptySpace );
+    }
+  }
 
   std::cout << "done" << std::endl;
+
+  mainFile.close();
+  animFile.close();
+
+  SAFE_DELETE_ARRAY( animSet );
+  SAFE_DELETE_ARRAY( backup );
 
   return 0;
 }
@@ -85,9 +122,8 @@ int main( int argc, char *argv[] )
 template <typename T>
 int MovePastNext( T &stream, const std::string &str )
 {
-  size_t strSize      = str.size();
-  size_t strSizeLess1 = strSize - 1;
-  int pos = stream.tellg();
+  int strSize      = (int)str.size();
+  int strSizeLess1 = strSize - 1;
 
   char buf[64];
   memset( buf, 0, sizeof( buf ) );
@@ -97,17 +133,18 @@ int MovePastNext( T &stream, const std::string &str )
     if ( buf[0] == str[0] )
     {
       stream.read( buf + 1, (int)strSizeLess1 );
+      if ( stream.eof() ) break;
       buf[strSize] = '\0';
       if ( !strcmp( buf, str.c_str() ) ) break;
     }
     stream.read( buf, 1 );
   }
 
-  return stream.eof() ? -1 : stream.tellg();
+  return stream.eof() ? -1 : (int)stream.tellg() - strSize;
 }
 
 template <typename T>
-int ReadAnimSet( char *&buf, T &stream, int pos )
+int ReadAnimSet( char *&buf, T &stream, int pos, const std::string &name )
 {
   bool firstLevel = true;
 
@@ -133,11 +170,22 @@ int ReadAnimSet( char *&buf, T &stream, int pos )
     if ( !firstLevel && level == 0 ) break;
   }
 
+  std::string header( "AnimationSet " + name );
+  int headerLen = (int)header.length() + 1;
   int size = (int)stream.tellg() - pos;
 
-  buf = new char[size];
+  buf = new char[size + headerLen];
+  memset( buf, 0, size + headerLen );
   stream.seekg( pos );
-  stream.read( buf, size );
+  memcpy( buf, header.c_str(), headerLen );
+  buf[headerLen - 1] = ' ';
+  stream.read( buf + headerLen, size );
 
-  return size;
+  for ( int last = headerLen + size - 1; last > 0; --last )
+  {
+      if ( buf[last] == '}' )
+        return last + 1;
+  }
+
+  return -1;
 }
