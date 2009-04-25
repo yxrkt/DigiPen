@@ -70,6 +70,8 @@ class AnimatedModel
     Sphere GetBS( void ) const;
     D3DXMATRIX GetWorldTrans( void ) const;
     LPFRAME GetFrameRoot( void );
+    float GetScale( void ) const;
+    void DrawCoordSys( LPFRAME pFrame );
 
     typedef void ( AnimatedModel::*CHANGEFRAMEFN )( LPFRAME pFrame );
 

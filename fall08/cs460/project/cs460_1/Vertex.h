@@ -12,7 +12,7 @@ class ColoredVertex
                    DWORD _color = D3DCOLOR_XRGB( 0, 255, 0 ), float _u = 0.f, float _v = 0.f )
       : x( _x ), y( _y ), z( _z ), color( _color ), u( _u ), v( _v ) {}
     ColoredVertex( const D3DXVECTOR3 &rhs )
-      : x( rhs.x ), y( rhs.y ), z( rhs.z ), color( D3DCOLOR_XRGB( 0, 255, 0 ) ), u( 0.f ), v( 0.f ) {}
+      : x( rhs.x ), y( rhs.y ), z( rhs.z ), color( D3DCOLOR_XRGB( 255, 255, 255 ) ), u( 0.f ), v( 0.f ) {}
 
     bool operator ==( const ColoredVertex &rhs )
     {

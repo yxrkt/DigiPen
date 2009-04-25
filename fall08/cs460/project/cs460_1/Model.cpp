@@ -40,8 +40,6 @@ void StaticModel::Load( const std::string &file )
     {
       std::string texFile( std::string( ASSETS_DIR ) + materialBuf[i].pTextureFilename );
       hr = D3DXCreateTextureFromFileA( pDevice, texFile.c_str(), &textures[i] );
-      if ( hr != S_OK )
-        MESSAGEOK( "Creating texture failed." );
     }
   }
 
@@ -150,6 +148,7 @@ void AnimatedModel::DrawBones() const
   pDevice->SetFVF( D3DFVF_COLOREDVERTEX );
   pDevice->DrawPrimitiveUP( D3DPT_LINELIST, (UINT)boneLines.size() / 2,
                             &boneLines[0], sizeof( ColoredVertex ) );
+  ( (AnimatedModel *)this )->ForEachFrame( pFrameRoot, &AnimatedModel::DrawCoordSys );
   pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );
 }
 
@@ -235,8 +234,11 @@ void AnimatedModel::FrameMove( DWORD elapsedTime, const D3DXMATRIX &matWorld, AN
   SetKeyFrame( elapsedTime );
   ForEachFrame( pFrameRoot, &AnimatedModel::SetFrameMatrix );
   MoveFrame( pFrameRoot, matWorld );
-  if ( callback ) callback();
-  MoveFrame( pFrameRoot, matWorld );
+  if ( callback )
+  {
+    callback();
+    MoveFrame( pFrameRoot, matWorld );
+  }
   MoveMeshes( pFrameRoot );
 }
 
@@ -272,13 +274,14 @@ void AnimatedModel::Render( RENDER_FLAG flag )
 {
   if ( flag == RENDER_BONES  || flag == RENDER_ALL )
     DrawBones();
+
   if ( flag == RENDER_MESHES || flag == RENDER_ALL )
     DrawFrameMeshes( pFrameRoot );
 }
 
 void AnimatedModel::SetAnimationSet( DWORD index )
 {
-  curAnimSet = min( index, animSets.size() - 1 );
+  curAnimSet = std::min( index, (DWORD)( animSets.size() - 1 ) );
 }
 
 void AnimatedModel::DrawFrameMeshes( LPFRAME pFrame )
@@ -325,6 +328,31 @@ D3DXMATRIX AnimatedModel::GetWorldTrans( void ) const
 LPFRAME AnimatedModel::GetFrameRoot( void )
 {
   return pFrameRoot;
+}
+
+inline float AnimatedModel::GetScale( void ) const
+{
+  return matScale._11;
+}
+
+void AnimatedModel::DrawCoordSys( LPFRAME pFrame )
+{
+  D3DCOLOR colors[3] = { 0xFFCC0000, 0xFF00CC00, 0xFF0000CC };
+
+  float size = 30.f;
+
+  for ( int i = 0; i < 3; ++i )
+  {
+    ColoredVertex line[2];
+    (*line[0].ToLPD3DXVECTOR3())[i] = size;
+    line[0].color = colors[i];
+    line[1].color = colors[i];
+
+    D3DXVec3TransformCoord( line[0].ToLPD3DXVECTOR3(), line[0].ToLPD3DXVECTOR3(), &pFrame->matCombined );
+    D3DXVec3TransformCoord( line[1].ToLPD3DXVECTOR3(), line[1].ToLPD3DXVECTOR3(), &pFrame->matCombined );
+
+    pDevice->DrawPrimitiveUP( D3DPT_LINELIST, 1, line, sizeof( ColoredVertex ) );
+  }
 }
 
 void AnimatedModel::ForEachFrame( LPFRAME pFrame, CHANGEFRAMEFN fn )

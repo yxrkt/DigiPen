@@ -122,7 +122,6 @@ void Graphics::Update( void )
 
   if ( !quadPrimitives.empty() )
   {
-    //pDevice->SetTexture( 0, pFloorTex );
     pDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
 
     pDevice->DrawPrimitiveUP( D3DPT_TRIANGLELIST, (UINT)quadPrimitives.size() / 3, 
@@ -347,132 +346,37 @@ void Graphics::AddPolyline( const ColoredVertex *verts, size_t nVerts, bool clos
   }
 }
 
-bool Graphics::CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn, 
-                    const D3DXVECTOR3 &dest, const FloatVec *pConstraints ) const
+// =============================================================================
+// ! Attempts to CCD
+// \par joints [in, out] - vector of Joints
+// \par dest   [in]      - destination in world coordinates
+// =============================================================================
+bool Graphics::CCD( JointVec &joints, const D3DXVECTOR3 &dest ) const
 {
-  D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
-  int nJoints = (int)pFramesIn->size(), nLast = nJoints - 1;
+  int    nJoints     = (int)joints.size();
+  Joint &lastJoint   = joints.back();
+  int    nLastParent = nJoints - 2;
+  float  success     = CCD_SUCCESS;
 
-  std::vector< D3DXVECTOR3 > joints( nJoints );
-  for ( int i = 0; i < nJoints; ++i )
-    D3DXVec3TransformCoord( &joints[i], &origin, &( ( *pFramesIn )[i]->matCombined ) );
+  float lastDist = lastJoint.GetWorldDistFrom( dest );
+  if ( lastDist <= success )
+    return true;
 
-  std::vector< D3DXVECTOR3 > jointsL( nJoints );
-  for ( int i = 0; i < nJoints; ++i )
-    D3DXVec3TransformCoord( &jointsL[i], &origin, &( ( *pFramesIn )[i]->TransformationMatrix ) );
-
-  pMatricesOut->reserve( nLast );
-  for ( int i = 0; i < nLast; ++i )
+  for ( int iters = 0 ; iters < CCD_MAX_ITERS; ++iters )
   {
-    D3DXMATRIX matIdentity;
-    D3DXMatrixIdentity( &matIdentity );
-    pMatricesOut->push_back( matIdentity );
-  }
+    for ( int i = nLastParent; i > 0; --i )
+      joints[i].AlignTo( dest );
 
-  float lastDist = FLT_MAX;
+    float dist = lastJoint.GetWorldDistFrom( dest );
+    if ( dist <= success )
+      return true;
 
-  int nTries = 0;
-  while ( lastDist > CCD_SUCCESS )
-  {
-    for ( int i = nLast - 1; i >= 0; --i )
-    {
-      // find vectors
-      D3DXVECTOR3 l1( joints[nLast] - joints[i] );
-      D3DXVECTOR3 l2( dest - joints[i] );
-
-      // find angle of rotation
-      float angle = acos( D3DXVec3Dot( &l1, &l2 ) / ( D3DXVec3Length( &l1 ) * D3DXVec3Length( &l2 ) ) );
-      if ( pConstraints )
-      {
-        angle = min( ( *pConstraints )[i * 2 + 1], angle );
-        angle = max( ( *pConstraints )[i * 2    ], angle );
-      }
-
-      // find axis of rotation
-      D3DXVECTOR3 axis;
-      D3DXVec3Cross( &axis, &l1, &l2 );
-      D3DXVec3Normalize( &axis, &axis );
-
-      // rotate
-      D3DXMATRIX matRot;
-      D3DXMatrixRotationAxis( &matRot, &axis, angle );
-      for ( int j = i + 1; j < nJoints; ++j )
-      {
-        joints[j] -= joints[i];
-        D3DXVec3TransformCoord( &joints[j], &joints[j], &matRot );
-        joints[j] += joints[i];
-      }
-
-      // get rotation matrix for frame
-      int nCurFrame = i + 1 - 1;
-
-      D3DXMATRIX &matCombined = ( *pFramesIn )[nCurFrame]->matCombined;
-
-      float det;
-      D3DXMATRIX matWorldInverse;
-      D3DXMatrixInverse( &matWorldInverse, &det, &matCombined );
-
-      D3DXVECTOR3 v0, v1;
-      D3DXVec3TransformCoord( &v0, &origin, &matWorldInverse );
-      D3DXVec3TransformCoord( &v1, &axis, &matWorldInverse );
-      D3DXVECTOR3 axisLocal( v1 - v0 );
-      D3DXVec3Normalize( &axisLocal, &axisLocal );
-
-      D3DXMATRIX matRotLocal;
-      D3DXMatrixRotationAxis( &matRotLocal, &axisLocal, angle );
-
-      D3DXVec3TransformCoord( &v0, &origin, &matCombined );
-      D3DXVec3TransformCoord( &v1, &axisLocal, &matCombined );
-      D3DXVECTOR3 axisWorld( v1 - v0 );
-      D3DXVec3Normalize( &axisWorld, &axisWorld );
-
-      D3DXMatrixMultiply( &( *pMatricesOut )[i], &( *pMatricesOut )[i], &matRotLocal );
-
-      D3DXVECTOR3 difVec( dest - joints[nLast] );
-      float dist = D3DXVec3Length( &difVec );
-      if ( dist < CCD_SUCCESS ) return true;
-    }
-
-    D3DXMATRIX matParent( pFramesIn->front()->matCombined );
-    for ( int i = 1; i < nJoints; ++i )
-    {
-      D3DXMatrixMultiply( &( *pFramesIn )[i]->matCombined, &( *pFramesIn )[i]->TransformationMatrix, &( *pMatricesOut )[i - 1] );
-      D3DXMatrixMultiply( &( *pFramesIn )[i]->matCombined, &( *pFramesIn )[i]->matCombined, &matParent );
-      matParent = ( *pFramesIn )[i]->matCombined;
-    }
-
-    /* draw arm in yellow (after full ccd)
-    D3DCOLOR yellow = D3DCOLOR_XRGB( 255, 255, 0 );
-    for ( int i = 1; i < nJoints; ++i )
-    {
-      int j = i - 1;
-      ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, yellow );
-      ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, yellow );
-      ( (Graphics *)this )->AddLine( p0, p1 );
-    }
-    //*/
-
-    D3DXVECTOR3 difVec( dest - joints[nLast] );
-    float dist = D3DXVec3Length( &difVec );
-
-    if ( ++nTries > 100 )
+    if ( fabs( dist - lastDist ) <= CCD_FAIL )
       return false;
-
     lastDist = dist;
   }
 
-  /* draw arm in red (after ccd)
-  D3DCOLOR red = D3DCOLOR_XRGB( 255, 0, 0 );
-  for ( int i = 1; i < nJoints; ++i )
-  {
-    int j = i - 1;
-    ColoredVertex p0( joints[j].x, joints[j].y, joints[j].z, red );
-    ColoredVertex p1( joints[i].x, joints[i].y, joints[i].z, red );
-    ( (Graphics *)this )->AddLine( p0, p1 );
-  }
-  //*/
-
-  return true;
+  return false;
 }
 
 void Graphics::PauseAnims( void )

@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "Macros.h"
 #include "Vertex.h"
+#include "Joint.h"
 
 #define Gfx Graphics::Instance()
 
@@ -15,12 +16,9 @@
 #define CP_RADIUS 5.f
 #define CP_HEIGHT .5f
 
-#define CCD_FAIL      1.f
+#define CCD_MAX_ITERS 200
+#define CCD_FAIL      0.f
 #define CCD_SUCCESS   5.f
-
-typedef std::vector< LPFRAME >    PFrameVec;
-typedef std::vector< float >      FloatVec;
-typedef std::vector< D3DXMATRIX > MatrixVec;
 
 
 struct Camera
@@ -58,8 +56,7 @@ class Graphics
     void AddLine( const ColoredVertex *verts );
     void AddLine( const ColoredVertex &begin, const ColoredVertex &end );
     void AddPolyline( const ColoredVertex *verts, size_t nVerts, bool closed = true );
-    bool CCD( MatrixVec *pMatricesOut, const PFrameVec *pFramesIn, 
-              const D3DXVECTOR3 &dest, const FloatVec *pFloats ) const;
+    bool CCD( JointVec &joints, const D3DXVECTOR3 &dest ) const;
     void PauseAnims( void );
     void PlayAnims( void );
     bool IsPaused( void ) const;

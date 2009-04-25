@@ -18,7 +18,6 @@ CS460Project::CS460Project( HINSTANCE hInstance )
 : modelPos( 0.f )
 , modelSpeed( 0.f )
 , maxSpeed( 100.f )
-, tempSwitch( true )
 {
   SAFE_DELETE( CS460Proj );
   hInstance_ = hInstance;
@@ -42,37 +41,32 @@ void CS460Project::Initialize( void )
 
   Gfx->Initialize( hWndMain_ );
   Gfx->animCallback = AnimCallback;
-  //hr = D3DXCreateTextureFromFile( Gfx->GetDevice(), ( std::string( ASSETS_DIR ) + 
-  //                                "Floor.jpg" ).c_str(), &Gfx->pFloorTex );
-  //ASSERT( SUCCEEDED( hr ), "Texture not found" );
-  Gfx->LoadAnimatedModel( "run_inPlace.x" );
-  LPFRAME pFrameCur = (LPFRAME)D3DXFrameFind( Gfx->AnimatedModels.front().GetFrameRoot(), "shoulder_l" );
-  AddNamedFrames( pFrameCur );
-  Gfx->LoadStaticModel( "IceChar_RunAnimation.X", D3DXVECTOR3( 0.f, 60.f, -30.f ), .50f );
-  constraints.reserve( 10 );
 
-  // set constraints
-  constraints.push_back( -90.f ); // shoulder
-  constraints.push_back(  90.f );
-  constraints.push_back( -90.f ); // upper arm
-  constraints.push_back(  90.f );
-  constraints.push_back( -90.f ); // lower arm
-  constraints.push_back(  90.f );
-  constraints.push_back( -90.f ); // hand
-  constraints.push_back(  90.f );
-  constraints.push_back( -90.f ); // hand end
-  constraints.push_back(  90.f );
+  Gfx->LoadAnimatedModel( "run_inPlace.x" );
+  Gfx->Update();
+
+  AddJoints( (LPFRAME)D3DXFrameFind( Gfx->AnimatedModels.front().GetFrameRoot(), "shoulder_l" ) );
+  int nLast = (int)joints.size() - 1;
+  for ( int i = 0; i <= nLast; ++i )
+  {
+    if ( i != 0 )
+      joints[i].SetParent( &joints[i - 1] );
+    if ( i != nLast )
+      joints[i].SetChild( &joints[i + 1] );
+  }
+
+  objHeight = 90.f;
+
+  Gfx->LoadStaticModel( "hammer.X", D3DXVECTOR3( 0.f, objHeight, -30.f ), .15f );
 
   AnimatedModel &model = Gfx->AnimatedModels.front();
   D3DXMatrixScaling( &model.MatScale, .15f, .15f, .15f );
 
-  AnimatedModel::Sphere bs = model.GetBS();
-
-  float angle = 1.75f * D3DX_PI + .125f * D3DX_PI;
-  float dist  = 10.f * bs.radius;
-
-  Gfx->MainCam.lookAt  = bs.center;
-  Gfx->MainCam.eye     = D3DXVECTOR3( dist * cos( angle ), 4.f * bs.radius, dist * sin( angle ) );
+  m_targetCamLookat = D3DXVECTOR3( 0.f, 0.f, 0.f );
+  m_targetCamPos    = D3DXVECTOR3( 0.f, 400.f, -700.f );
+  m_isCamMoving     = false;
+  m_camMoveTPF      = 10.f;
+  m_zoomSpeed       = 4.f;
 }
 
 // =============================================================================
@@ -82,17 +76,22 @@ void CS460Project::Update( void )
 {
   GlobalTime::Update();
 
+  memcpy( prevState, curState, sizeof( curState ) );
+  GetKeyboardState( curState );
+
+  UpdateMouseInputCam();
+  UpdateCam();
+
   // Draw Floor
-  D3DCOLOR floorColor = D3DCOLOR_XRGB( 100, 50, 35 );
   ColoredVertex floorQuad[] = 
   {
-    ColoredVertex( -250.f, 0.f, -250.f, floorColor ),// 0.f, 0.f ),
-    ColoredVertex(  250.f, 0.f, -250.f, floorColor ),// 1.f, 0.f ),
-    ColoredVertex(  250.f, 0.f,  250.f, floorColor ),// 1.f, 1.f ),
-    ColoredVertex( -250.f, 0.f,  250.f, floorColor )//, 0.f, 1.f )
+    ColoredVertex( -250.f, 0.f, -250.f, D3DCOLOR_COLORVALUE( 0.f, .5f, 1.f, 1.f ) ),
+    ColoredVertex(  250.f, 0.f, -250.f, D3DCOLOR_COLORVALUE( 1.f, .5f, 0.f, 1.f ) ),
+    ColoredVertex(  250.f, 0.f,  250.f, D3DCOLOR_COLORVALUE( .5f, 0.f, 1.f, 1.f ) ),
+    ColoredVertex( -250.f, 0.f,  250.f, D3DCOLOR_COLORVALUE( .5f, 1.f, 0.f, 1.f ) )
   };
-  //Gfx->AddQuad( floorQuad );
-  Gfx->AddPolyline( floorQuad, 4 );
+  Gfx->AddQuad( floorQuad );
+  //Gfx->AddPolyline( floorQuad, 4 );
 
   // Update Spline
   if ( Gfx->controlPoints.size() > 2 )
@@ -101,9 +100,17 @@ void CS460Project::Update( void )
     UpdateModel();
   }
 
+  DrawHelpText();
+
+  Gfx->Update();
+}
+
+void CS460Project::DrawHelpText( void )
+{
   Gfx->WriteText( "Click M.1 to move target" );
   Gfx->WriteText( "Hold  M.3 to pan camera" );
-  Gfx->WriteText( "Hold  Ctrl+M.3 to zoom camera" );
+  Gfx->WriteText( "Hold  Alt+M.3 to rotate camera" );
+  Gfx->WriteText( "Hold  Ctrl+Alt+M.3 to zoom camera" );
   Gfx->WriteText( "Press 'P' to toggle pause" );
   Gfx->WriteText( "Press 'R' to toggle between bones & meshes" );
   Gfx->WriteText( "Press '+' to increase running speed" );
@@ -119,8 +126,6 @@ void CS460Project::Update( void )
   Gfx->WriteText( "|   |   |   |" );
   Gfx->WriteText( "|   |   |   |" );
   Gfx->WriteText( "|___|___|___|" );
-
-  Gfx->Update();
 }
 
 // =============================================================================
@@ -174,7 +179,7 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
           break;
 
         case VK_SUBTRACT: case VK_OEM_MINUS:
-          maxSpeed = max( maxSpeed - 25.f, 0.f );
+          maxSpeed = std::max( maxSpeed - 25.f, 0.f );
           break;
 
         case 'C':
@@ -198,10 +203,6 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
           renderState = (AnimatedModel::RENDER_FLAG)( ( renderState + 1 ) % AnimatedModel::RENDER_ALL );
           break;
 
-        case VK_RETURN:
-          tempSwitch = !tempSwitch;
-          break;
-
         case VK_ESCAPE:
           PostQuitMessage( 0 );
           break;
@@ -213,54 +214,25 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
     {
       D3DXVECTOR3 isectD3D = Gfx->IsectGroundPlane( (int)(short)LOWORD( lParam ), 
                                                     (int)(short)HIWORD( lParam ) );
-      Gfx->StaticModels.front().Pos = isectD3D;
-      Gfx->StaticModels.front().Pos.y = 45.f;
+      Gfx->StaticModels.front().Pos   = isectD3D;
+      Gfx->StaticModels.front().Pos.y = objHeight;
       GeneratePath( D3DXVECTOR3( 0.f, 0.f, 0.f ), isectD3D );
       Gfx->PlayAnims();
       GlobalTime::Unpause();
       modelPos = 0.f;
-      //ColoredVertex isect( isectD3D );
-      //isect.color = D3DCOLOR_XRGB( 0, 255, 0 );
-      //VertVec &points = Gfx->controlPoints;
-      //if ( std::find( points.begin(), points.end(), isect ) == points.end() )
-      //{
-      //  points.push_back( isect );
-      //}
+      break;
+    }
+
+    case WM_MOUSEMOVE:
+    {
+      m_mousePos.x = (float)(int)(short)LOWORD( lParam );
+      m_mousePos.y = (float)(int)(short)HIWORD( lParam );
       break;
     }
 
     case WM_MBUTTONDOWN:
     {
       SetCapture( hWndMain_ );
-      clickPos.x      = (int)(short)LOWORD( lParam );
-      clickPos.y      = (int)(short)HIWORD( lParam );
-      startEyePos     = Gfx->MainCam.eye;
-      startLookatPos  = Gfx->MainCam.lookAt;
-      break;
-    }
-
-    case WM_MOUSEMOVE:
-    {
-      int x = (int)(short)LOWORD( lParam );
-      int y = (int)(short)HIWORD( lParam );
-
-      Camera &cam = Gfx->MainCam;
-
-      if ( wParam & MK_MBUTTON )
-      {
-        if ( wParam & MK_CONTROL  )
-        {
-          cam.eye = startEyePos + ( (float)( clickPos.y - y ) / 1000.f ) * ( cam.lookAt - cam.eye );
-        }
-        else
-        {
-          D3DXVECTOR3 newPos      = Gfx->IsectGroundPlane( x, y );
-          D3DXVECTOR3 clickIsect  = Gfx->IsectGroundPlane( clickPos.x, clickPos.y );
-          D3DXVECTOR3 panTrans    = clickIsect - newPos;
-          cam.eye                 = startEyePos + panTrans;
-          cam.lookAt              = startLookatPos + panTrans;
-        }
-      }
       break;
     }
 
@@ -269,6 +241,9 @@ LRESULT CS460Project::WndProc( UINT msg, WPARAM wParam, LPARAM lParam )
       ReleaseCapture();
       break;
     }
+
+    case WM_SYSKEYDOWN:
+      return 0;
 
     case WM_DESTROY:
       PostQuitMessage( 0 );
@@ -318,9 +293,6 @@ void CS460Project::GeneratePath( const D3DXVECTOR3 &begin, const D3DXVECTOR3 &en
   points.push_back( thirdPtOffset );
 
   points.push_back( end );
-
-  points[1].color = D3DCOLOR_XRGB( 255, 0, 0 );
-  points[2].color = D3DCOLOR_XRGB( 0, 0, 255 );
 }
 
 void CS460Project::UpdateSpline( void )
@@ -362,9 +334,9 @@ void CS460Project::UpdateModel( void )
   float velDif = accel * tick;
 
   if ( modelPos < easeInDist )
-    modelSpeed = min( modelSpeed += velDif, maxSpeed );
+    modelSpeed = std::min( modelSpeed + velDif, maxSpeed );
   else if ( modelPos >= easeOutDist )
-    modelSpeed = max( modelSpeed - velDif, velDif );
+    modelSpeed = std::max( modelSpeed - velDif, velDif );
   else
     modelSpeed = maxSpeed;
 
@@ -413,16 +385,19 @@ void CS460Project::UpdateModel( void )
   Gfx->AnimatedModels.front().AnimSpeed = modelSpeed * ANIM_RATIO;
 }
 
-void CS460Project::AddNamedFrames( const LPFRAME pRoot )
+void CS460Project::AddJoints( const LPFRAME pRoot )
 {
-  armFrames.push_back( pRoot );
+  float bound = D3DXToRadian( 360.f );
+  Constraints constraints = { -bound, bound, -bound, bound, -bound, bound }; // no constraints
+  Joint joint( pRoot, .15f, constraints ); // .15 is the haxxed scale of the model
+  joints.push_back( joint );
 
   LPFRAME pCurChild = (LPFRAME)pRoot->pFrameFirstChild;
   while ( pCurChild )
   {
     if ( pCurChild->Name && strlen( pCurChild->Name ) )
     {
-      AddNamedFrames( pCurChild );
+      AddJoints( pCurChild );
       break;
     }
     pCurChild = (LPFRAME)pCurChild->pFrameSibling;
@@ -431,42 +406,283 @@ void CS460Project::AddNamedFrames( const LPFRAME pRoot )
 
 void CS460Project::AnimCallback( void )
 {
-  static DWORD reachBegin;
-  static MatrixVec matricesBegin, matricesEnd;
-  MatrixVec matricesOut;
-  if ( Gfx->CCD( &matricesOut, &CS460Proj->armFrames, Gfx->StaticModels.front().Pos, &CS460Proj->constraints ) )
-  {
-    int nFrames = (int)CS460Proj->armFrames.size(), nMatrices = nFrames - 1;
+  if ( CS460Proj->joints.empty() ) return;
 
+  for ( JointVec::iterator i = CS460Proj->joints.begin(); i != CS460Proj->joints.end(); ++i )
+  {
     if ( !Gfx->IsPaused() )
+      i->Reset();
+  }
+
+  /*
+  CS460Proj->StepByStep();
+  /*/
+  CS460Proj->ExecuteCCD();
+  //*/
+}
+
+void CS460Project::ExecuteCCD( void )
+{
+  static DWORD pauseTime = 0;
+  static float speed     = 2.f;
+
+  if ( Gfx->IsPaused() )
+  {
+    float t = std::min( speed * (float)( timeGetTime() - pauseTime ) / 1000.f, 1.f );
+    for ( JointVec::iterator i = CS460Proj->joints.begin(); i != CS460Proj->joints.end(); ++i )
+      i->UpdateFrame( t );
+  }
+  else
+  {
+    D3DXVECTOR3 dest( Gfx->StaticModels.front().Pos );
+
+    if ( Gfx->CCD( CS460Proj->joints, dest ) )
     {
       Gfx->PauseAnims();
       GlobalTime::Pause();
-      reachBegin = timeGetTime();
-      matricesBegin.clear();
-      matricesEnd.clear();
-      for ( int i = 1; i < nFrames; ++i )
-      {
-        matricesBegin.push_back( CS460Proj->armFrames[i]->TransformationMatrix );
-        matricesEnd.push_back( matricesOut[i - 1] );
-      }
-    }
 
-    if ( !matricesBegin.empty() )
-    {
-      float t = (float)( timeGetTime() - reachBegin ) / 1000.f;
-      t = min( t, 1.f );
-      for ( int i = 1; i < nFrames; ++i )
-      {
-        int j = i - 1;
+      pauseTime = timeGetTime();
 
-        VQS vqs0( matricesBegin[j] ), vqs1( matricesEnd[j] ), vqsFinal;
-        VQS::Interpolate( vqsFinal, vqs0, vqs1, t );
-        D3DXMATRIX matFinal;
-        vqsFinal.GetMatrix( matFinal );
-        D3DXMatrixMultiply( &( CS460Proj->armFrames[i]->TransformationMatrix ),
-                            &matricesBegin[j], &matFinal );
-      }
+      //for ( JointVec::iterator i = CS460Proj->joints.begin(); i != CS460Proj->joints.end(); ++i )
+      //  i->UpdateFrame();
+
     }
   }
+}
+
+void CS460Project::StepByStep( void )
+{
+  if ( !Gfx->IsPaused() )
+  {
+    Gfx->PauseAnims();
+    GlobalTime::Pause();
+  }
+
+  D3DXVECTOR3 dest( Gfx->StaticModels.front().Pos );
+
+  JointVec &joints        = CS460Proj->joints;
+  static int nLastParent  = (int)joints.size() - 2;
+  static int nLast        = nLastParent + 1;
+
+  static int iter         = 0;
+
+  if ( KEYHIT( VK_RETURN ) )
+    iter++;
+  if ( KEYHIT( VK_BACK ) )
+    iter = std::max( iter - 1, 0 );
+
+  for ( int i = 0; i < iter; ++i )
+  {
+    Joint &joint = joints[nLast - (i % nLast)];
+    joint.AlignTo( dest );
+    joint.UpdateFrame( 1.f );
+  }
+}
+
+void CS460Project::RotationTest( void )
+{
+  // ROTATION TEST
+  if ( !Gfx->IsPaused() )
+  {
+    Gfx->PauseAnims();
+    GlobalTime::Pause();
+  }
+
+  float speed = .25f;
+  float t     = speed * fmod( (float)timeGetTime(), 1000.f / speed ) / 1000.f;
+  float angle = t * ( 2.f * D3DX_PI );
+
+  D3DXMATRIX &transform = CS460Proj->joints[3].GetFrame()->TransformationMatrix;
+
+  D3DXVECTOR3 scale, trans;
+  D3DXQUATERNION rot;
+  D3DXMatrixDecompose( &scale, &rot, &trans, &transform );
+
+  D3DXMATRIX matRot;
+  D3DXMatrixRotationY( &matRot, angle );
+  D3DXQuaternionRotationMatrix( &rot, &matRot );
+
+  D3DXMatrixTransformation( &transform, NULL, NULL, &scale, NULL, &rot, &trans );
+}
+
+void CS460Project::WorldToLocalTest( void )
+{
+  // WORLD TO LOCAL SPACE TEST
+  if ( !Gfx->IsPaused() )
+  {
+    Gfx->PauseAnims();
+    GlobalTime::Pause();
+  }
+
+  Joint &joint = CS460Proj->joints.back();
+
+  D3DXVECTOR3 dest( Gfx->StaticModels.front().Pos );
+  float dist = joint.GetWorldDistFrom( dest );
+
+  float det;
+  D3DXVECTOR3 tempVec;
+  D3DXMATRIX matInverse;
+  D3DXMatrixInverse( &matInverse, &det, &joint.GetFrame()->matCombined );
+  D3DXVec3TransformCoord( &tempVec, &dest, &matInverse );
+
+  float dist2 = D3DXVec3Length( &tempVec );
+  dist2 = dist2;
+
+  // move origin to world
+  D3DXVECTOR3 origin( 0.f, 0.f, 0.f );
+  D3DXVec3TransformCoord( &origin, &origin, &joint.GetFrame()->matCombined );
+
+  D3DXVec3TransformCoord( &tempVec, &dest, &matInverse );
+  D3DXVec3TransformCoord( &tempVec, &tempVec, &joint.GetFrame()->matCombined );
+
+  tempVec = tempVec - origin;
+  float dist3 = D3DXVec3Length( &tempVec );
+  dist3 = dist3;
+}
+
+void CS460Project::UpdateMouseInputCam( void )
+{
+  Camera &camera = Gfx->MainCam;
+  const D3DXVECTOR3 &screenPos = m_mousePos;
+  D3DXVECTOR3 isect = Gfx->IsectGroundPlane( (int)screenPos.x, (int)screenPos.y );
+
+  bool altDown  = ( KeyDown( VK_MENU ) );
+  bool altHit   = ( KeyHit( VK_MENU ) );
+  bool altRel   = ( KeyReleased( VK_MENU ) );
+  bool ctrlDown = ( KeyDown( VK_CONTROL ) );
+  bool ctrlHit  = ( KeyHit( VK_CONTROL ) );
+  bool ctrlRel  = ( KeyReleased( VK_CONTROL ) );
+
+  // panning
+  if ( KEYHIT( VK_MBUTTON ) )
+  {
+    m_midClickBegin   = screenPos;
+    m_prevCamPos      = camera.eye;
+    m_prevCamLookAt   = camera.lookAt;
+  }
+  else if ( KEYDOWN( VK_MBUTTON ) )
+  {
+    if ( altRel || altHit || ctrlHit || ctrlRel )
+    {
+      m_midClickBegin   = screenPos;
+      m_prevCamPos      = camera.eye;
+      m_prevCamLookAt   = camera.lookAt;
+    }
+    else if ( !altDown && !ctrlDown ) // pan
+    {
+      D3DXVECTOR3 prevPt = Gfx->IsectGroundPlane( (int)m_midClickBegin.x, (int)m_midClickBegin.y );
+
+      D3DXVECTOR3 trans = prevPt - isect;
+      m_targetCamPos    = m_prevCamPos + trans;
+      m_targetCamLookat = m_prevCamLookAt + trans;
+      m_camMoveTPF = 3.5f;
+    }
+    else if ( altDown && !ctrlDown )  // rotate
+    {
+      float coef  = .008f;
+      float yaw   = -coef * ( m_midClickBegin.x - screenPos.x );
+      float pitch = -coef * ( m_midClickBegin.y - screenPos.y );
+
+      D3DXVECTOR3 look( m_prevCamPos - m_prevCamLookAt );
+      D3DXVECTOR3 lookXZ( look.x, 0.f, look.z );
+      float dist     = D3DXVec3Length( &look );
+      float projDist = D3DXVec3Length( &lookXZ );
+      float denom    = dist * projDist;
+      D3DXVECTOR3 newCamPos( 0.f, 0.f, -dist );
+      float curPitch = ( look.y > 0.f ? 1.f : -1.f ) * acos( D3DXVec3Dot( &look, &lookXZ ) / denom );
+      float curYaw   = ( lookXZ.x > 0.f ? -1.f : 1.f ) * acos( D3DXVec3Dot( &lookXZ, &newCamPos ) / denom );
+
+      D3DXMATRIX rotPitch, rotYaw, rotFinal;
+      D3DXMatrixRotationX( &rotPitch, curPitch + pitch );
+      D3DXMatrixRotationY( &rotYaw, curYaw + yaw );
+      D3DXMatrixMultiply( &rotFinal, &rotPitch, &rotYaw );
+
+      D3DXVec3TransformCoord( &newCamPos, &newCamPos, &rotFinal );
+      newCamPos += m_prevCamLookAt;
+
+      m_targetCamPos = newCamPos;
+      m_camMoveTPF = 7.5f;
+    }
+    else if ( altDown && ctrlDown )   // zoom
+    {
+      float scroll = m_zoomSpeed * ( m_midClickBegin.y - screenPos.y );
+      D3DXVECTOR3 dir( m_prevCamLookAt - m_prevCamPos );
+      D3DXVec3Normalize( &dir, &dir );
+      m_targetCamPos = m_prevCamPos + scroll * dir;
+      m_camMoveTPF = 10.f;
+    }
+  }
+  else
+  {
+    m_isCamMoving = false;
+  }
+
+  // mouse scroll
+  if ( !m_isCamMoving )
+  {
+    //static float totalScroll = 0.f;
+    //float scroll = m_scrollZoomSpeed * (float)INPUT->GetMouseScrollDelta();
+    //totalScroll += scroll;
+    //if ( totalScroll )
+    //{
+    //  D3DXVECTOR3 dir( camera.LookAt - camera.Eye );
+    //  D3DXVec3Normalize( &dir, &dir );
+    //  m_prevCamPos = camera.Eye;
+    //  m_targetCamPos = camera.Eye + ( totalScroll * dir );
+    //  m_camMoveTPF = 5.f;
+    //  m_isCamMoving = false;
+    //}
+    //if ( !scroll )
+    //{
+    //  totalScroll = 0.f;
+    //}
+  }
+}
+
+void CS460Project::UpdateCam( void )
+{
+  D3DXVECTOR3 &curPos    = Gfx->MainCam.eye;
+  D3DXVECTOR3 &curLookat = Gfx->MainCam.lookAt;
+
+  if ( curPos == m_targetCamPos )
+    return;
+
+  D3DXVECTOR3 dir( m_targetCamPos - curPos );
+  float dist = D3DXVec3Length( &dir );
+
+  D3DXVECTOR3 dirLook( m_targetCamLookat - curLookat );
+  float distLook = D3DXVec3Length( &dirLook );
+
+  if ( dist < .50f )
+  {
+    curPos    = m_targetCamPos;
+    curLookat = m_targetCamLookat;
+    return;
+  }
+
+  float slowZone = 1.f;
+  float speed     = ( ( dist     > slowZone ) ? ( dist     / m_camMoveTPF ) : ( slowZone / m_camMoveTPF ) );
+  float speedLook = ( ( distLook > slowZone ) ? ( distLook / m_camMoveTPF ) : ( slowZone / m_camMoveTPF ) );
+
+  D3DXVec3Normalize( &dir, &dir );
+  D3DXVec3Normalize( &dirLook, &dirLook );
+  dir       *= speed;
+  dirLook   *= speedLook;
+  curPos    += dir;
+  curLookat += dirLook;
+}
+
+bool CS460Project::KeyDown( int key )
+{
+  return ( ( curState[key] & 0x80 ) != 0 );
+}
+
+bool CS460Project::KeyHit( int key )
+{
+  return ( !( prevState[key] & 0x80 ) && ( curState[key] & 0x80 ) );
+}
+
+bool CS460Project::KeyReleased( int key )
+{
+  return ( ( prevState[key] & 0x80 ) && !( curState[key] & 0x80 ) );
 }

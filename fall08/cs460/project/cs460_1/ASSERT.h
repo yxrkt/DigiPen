@@ -6,8 +6,8 @@
 
 template<typename T> struct _hackForAssert                    //
 {                                                             //
-	static bool _true_;                                       //
-	static bool _false_;                                      //
+	static bool _true_;                                         //
+	static bool _false_;                                        //
 };                                                            //
 #define _globalForAssert(_var) (_hackForAssert<int>::_var)    //  little hack for header variables
                                                               //
